@@ -1,12 +1,14 @@
-# 命令行
+# CLI
 
 ```bash
-./molan              # 打开本机网页
-./molan 试读
-./molan 安装
-./molan 检查         # 验收 AI / 自己的改动
-./molan 网上
-./molan 帮助
+./molan              # local homepage
+./molan try          # try studio
+./molan docs         # contribute guide
+./molan install      # editor extension
+./molan check        # acceptance checks
+./molan web          # online site
+./molan sync         # sync try from DesignWeave
+./molan help
 ```
 
-给人看的两步说明在官网 [`/docs/`](../../site/docs/index.html) 与 [`docs/ai/START.md`](../ai/START.md)。
+Human flow: https://fengshihao.github.io/molan/docs/ · [`docs/ai/START.md`](../ai/START.md)

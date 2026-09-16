@@ -50,10 +50,12 @@
       </div>
 
       <div class="ai-box" id="contribute">
-        <h4>用一句话成为贡献者</h4>
-        <p>打开 Cursor，把意图写成一句话发给它。克隆仓库、读说明、改代码、跑检查都交给 AI——你只负责说要什么、看结果。</p>
-        <pre>帮我给开源项目墨览（https://github.com/fengshihao/molan）做贡献：〈一句话〉。
-请你自己克隆、按 AGENTS.md 动手，改完跑 ./molan 检查，通过后再开 PR。</pre>
+        <h4>用 AI 成为贡献者</h4>
+        <p>先复制下面这段发给 Cursor，让它准备好环境；再说你想改什么。克隆、读说明、改代码都交给它。</p>
+        <div class="copy-block">
+          <pre id="home-setup-prompt">帮我准备开源项目墨览（https://github.com/fengshihao/molan）的贡献环境：请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md，需要时运行 ./molan。准备好后告诉我，我再说想贡献什么。</pre>
+          <button type="button" class="copy-btn" data-copy="home-setup-prompt">复制</button>
+        </div>
         <p style="margin-top:0.9rem;margin-bottom:0"><a href="./docs/">贡献两步说明</a>
           · <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md">给 AI 的完整提示</a></p>
       </div>
@@ -61,8 +63,34 @@
 
     <footer class="foot">
       <div>MIT · <a href="https://github.com/fengshihao/molan">fengshihao/molan</a></div>
-      <div>开源免费 · 欢迎试读与贡献。更多见 <a href="./docs/">文档</a>。</div>
+      <div>开源免费 · 欢迎试读与贡献。更多见 <a href="./docs/">贡献</a>。</div>
     </footer>
   </div>
+  <script>
+    document.querySelectorAll(".copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var el = document.getElementById(btn.getAttribute("data-copy"));
+        if (!el) return;
+        var text = el.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        var prev = btn.textContent;
+        btn.textContent = "已复制";
+        btn.classList.add("is-done");
+        setTimeout(function () {
+          btn.textContent = prev;
+          btn.classList.remove("is-done");
+        }, 1600);
+      });
+    });
+  </script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>开始贡献 · 墨览</title>
-  <meta name="description" content="一句话让 AI 改墨览，再用 ./molan 检查验收。" />
+  <meta name="description" content="复制一句给 AI，让它准备墨览贡献环境；再说你想改什么。" />
   <link rel="icon" type="image/png" href="../assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,9 +13,13 @@
   <style>
     .steps { max-width: 40rem; }
     .steps h3 { margin-top: 2.5rem; }
-    .steps pre {
+    .copy-block {
+      position: relative;
       margin: 0.85rem 0 0;
-      padding: 0.9rem 1rem;
+    }
+    .copy-block pre {
+      margin: 0;
+      padding: 0.9rem 4.5rem 0.9rem 1rem;
       overflow-x: auto;
       font-family: var(--mono);
       font-size: 0.78rem;
@@ -25,16 +29,24 @@
       border-radius: 2px;
       white-space: pre-wrap;
     }
+    .copy-btn {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.55rem;
+      border: 1px solid var(--hairline);
+      background: rgba(30, 42, 36, 0.92);
+      color: var(--paper);
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+    .copy-btn.is-done { color: var(--accent); }
     .steps .hint { color: var(--fog-dim); margin: 0.6rem 0 0; }
     .steps ol { margin: 0.75rem 0 0; padding-left: 1.2rem; color: var(--fog-dim); }
     .steps ol li { margin: 0.35rem 0; }
-    .prompt-slot {
-      color: var(--accent);
-      background: var(--accent-soft);
-      font-weight: 500;
-      padding: 0.05em 0.2em;
-      border-radius: 2px;
-    }
   </style>
 </head>
 <body>
@@ -50,23 +62,29 @@
 
     <section class="section steps" style="border-top: none; padding-top: 3rem;">
       <h3>两步就够</h3>
-      <p>不用先读长文档，也不用自己克隆、装依赖。你出主意，AI 干活，你负责验收。</p>
+      <p>不用先读长文档，也不用自己克隆、装依赖。先让 AI 把环境准备好，再说你想改什么。</p>
 
-      <h3>1. 一句话开工</h3>
-      <p>打开 Cursor（或别的 AI 编程工具），把下面整段发给它——只改高亮那一句即可：</p>
-      <pre>帮我给开源项目墨览（https://github.com/fengshihao/molan）做贡献：<mark class="prompt-slot">〈一句话〉</mark>（例如：增加一个书签的功能）。
-请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md、按规矩改代码，需要时运行 ./molan；改完跑 ./molan 检查，通过后再开 PR。</pre>
-      <p class="hint">例子：把首页某句文案改短；给试读页加说明；修一个错别字。</p>
+      <h3>1. 复制发给 AI，准备环境</h3>
+      <p>打开 Cursor（或别的 AI 编程工具），点复制，粘贴发给它：</p>
+      <div class="copy-block">
+        <pre id="setup-prompt">帮我准备开源项目墨览（https://github.com/fengshihao/molan）的贡献环境：请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md，需要时运行 ./molan。准备好后告诉我，我再说想贡献什么。</pre>
+        <button type="button" class="copy-btn" data-copy="setup-prompt">复制</button>
+      </div>
+      <p class="hint">环境就绪后，用一句话告诉 AI 你想做什么。例如：增加一个书签的功能；把首页某句文案改短；修一个错别字。</p>
 
       <h3>2. 验收 AI 有没有做对</h3>
       <p>让 AI 跑，或你在仓库目录运行：</p>
-      <pre>./molan 检查</pre>
+      <div class="copy-block">
+        <pre id="check-prompt">./molan check</pre>
+        <button type="button" class="copy-btn" data-copy="check-prompt">复制</button>
+      </div>
       <p class="hint">通过 = 规矩和站点冒烟都 OK。然后再肉眼看一眼（也可让 AI 执行）：</p>
       <ol>
         <li><code>./molan</code> — 打开官网</li>
-        <li><code>./molan 试读</code> — 打开试读</li>
+        <li><code>./molan try</code> — 打开试读</li>
+        <li><code>./molan docs</code> — 打开本页</li>
       </ol>
-      <p class="hint">装编辑器扩展：<code>./molan 安装</code>。更多用法：<code>./molan 帮助</code>。</p>
+      <p class="hint">装扩展：<code>./molan install</code>。全部命令：<code>./molan help</code>。</p>
 
       <h3 style="font-size:1.25rem;margin-top:3rem">给 AI 的细则（人一般不用点）</h3>
       <p class="hint">
@@ -81,5 +99,31 @@
       <div>MIT · fengshihao/molan</div>
     </footer>
   </div>
+  <script>
+    document.querySelectorAll(".copy-btn").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var el = document.getElementById(btn.getAttribute("data-copy"));
+        if (!el) return;
+        var text = el.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (e) {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        var prev = btn.textContent;
+        btn.textContent = "已复制";
+        btn.classList.add("is-done");
+        setTimeout(function () {
+          btn.textContent = prev;
+          btn.classList.remove("is-done");
+        }, 1600);
+      });
+    });
+  </script>
 </body>
 </html>

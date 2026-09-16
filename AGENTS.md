@@ -36,16 +36,17 @@
 ## 检查命令
 
 ```bash
-./molan           # 打开本机官网
-./molan 试读      # 试读
-./molan 安装      # 安装扩展
-./molan 检查      # 验收改动（贡献者 / AI 必跑）
-./molan 网上      # 打开网上主页
-./molan 帮助
-npm run sync -- --dw <DesignWeave路径>   # 维护者：刷新 try 镜像
+./molan              # local homepage
+./molan try          # try studio
+./molan docs         # contribute guide
+./molan install      # extension
+./molan check        # acceptance checks (required before PR)
+./molan web          # online homepage
+./molan sync -- --dw <DesignWeave>   # maintainers
+./molan help
 ```
 
-`./molan 检查` 与 CI 同源；不过则不要推。
+`./molan check` matches CI; do not push if it fails.
 
 ## Commit / PR 约定
 

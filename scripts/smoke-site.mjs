@@ -25,7 +25,7 @@ function mustContain(rel, needles) {
 }
 
 mustContain("index.html", ["墨览", "./try/", "fengshihao.molan-markdown", "hero"]);
-mustContain("docs/index.html", ["START.md", "AGENTS.md", "./molan 检查"]);
+mustContain("docs/index.html", ["START.md", "AGENTS.md", "./molan check"]);
 mustContain("css/site.css", ["--ink", "Instrument Serif", ".hero"]);
 
 if (!fs.existsSync(path.join(site, "try/index.html"))) {
