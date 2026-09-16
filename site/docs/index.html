@@ -28,6 +28,13 @@
     .steps .hint { color: var(--fog-dim); margin: 0.6rem 0 0; }
     .steps ol { margin: 0.75rem 0 0; padding-left: 1.2rem; color: var(--fog-dim); }
     .steps ol li { margin: 0.35rem 0; }
+    .prompt-slot {
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-weight: 500;
+      padding: 0.05em 0.2em;
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -47,7 +54,7 @@
 
       <h3>1. 一句话开工</h3>
       <p>克隆仓库，用 Cursor（或别的 AI 编程工具）打开，把下面整段发给它——只改最后一句：</p>
-      <pre>读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：〈一句话〉。
+      <pre>读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：<mark class="prompt-slot">〈一句话〉</mark>（例如：增加一个书签的功能）。
 改完跑 ./molan 检查，通过后再开 PR。</pre>
       <p class="hint">例子：把首页某句文案改短；给试读页加说明；修一个错别字。</p>
 
