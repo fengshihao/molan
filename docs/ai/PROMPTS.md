@@ -5,7 +5,8 @@
 ## 通用开工
 
 ```text
-读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：〈意图〉。按 PR_PLAYBOOK 改、跑 npm run check、开 PR。
+读 AGENTS.md 和 docs/ai/START.md。帮我给 https://github.com/fengshihao/molan 做贡献：〈意图〉。
+请你自己克隆（如需要）、改代码、跑 ./molan 检查、开 PR。
 ```
 
 ## 改官网文案

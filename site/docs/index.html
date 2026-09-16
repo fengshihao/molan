@@ -50,18 +50,18 @@
 
     <section class="section steps" style="border-top: none; padding-top: 3rem;">
       <h3>两步就够</h3>
-      <p>不用先读长文档。你出主意，AI 改代码，你负责验收。</p>
+      <p>不用先读长文档，也不用自己克隆、装依赖。你出主意，AI 干活，你负责验收。</p>
 
       <h3>1. 一句话开工</h3>
-      <p>克隆仓库，用 Cursor（或别的 AI 编程工具）打开，把下面整段发给它——只改最后一句：</p>
-      <pre>读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：<mark class="prompt-slot">〈一句话〉</mark>（例如：增加一个书签的功能）。
-改完跑 ./molan 检查，通过后再开 PR。</pre>
+      <p>打开 Cursor（或别的 AI 编程工具），把下面整段发给它——只改高亮那一句即可：</p>
+      <pre>帮我给开源项目墨览（https://github.com/fengshihao/molan）做贡献：<mark class="prompt-slot">〈一句话〉</mark>（例如：增加一个书签的功能）。
+请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md、按规矩改代码，需要时运行 ./molan；改完跑 ./molan 检查，通过后再开 PR。</pre>
       <p class="hint">例子：把首页某句文案改短；给试读页加说明；修一个错别字。</p>
 
       <h3>2. 验收 AI 有没有做对</h3>
-      <p>在仓库目录运行：</p>
+      <p>让 AI 跑，或你在仓库目录运行：</p>
       <pre>./molan 检查</pre>
-      <p class="hint">通过 = 规矩和站点冒烟都 OK。然后再肉眼看一眼：</p>
+      <p class="hint">通过 = 规矩和站点冒烟都 OK。然后再肉眼看一眼（也可让 AI 执行）：</p>
       <ol>
         <li><code>./molan</code> — 打开官网</li>
         <li><code>./molan 试读</code> — 打开试读</li>

@@ -22,15 +22,16 @@ cd molan
 
 ## 一句话贡献（推荐）
 
-1. 把意图告诉 AI（提示词在 [`docs/ai/START.md`](docs/ai/START.md)）
-2. 验收：
+打开 Cursor，把意图告诉 AI（完整提示在 [`docs/ai/START.md`](docs/ai/START.md)）。**克隆仓库、读说明、改代码、跑检查都让 AI 做**；你只负责说要什么、看结果。
+
+验收：
 
 ```bash
 ./molan 检查       # 必须通过
 ./molan            # 肉眼看官网
 ```
 
-官网贡献页也写了这两步：https://fengshihao.github.io/molan/docs/
+两步说明：https://fengshihao.github.io/molan/docs/
 
 ## 许可
 
