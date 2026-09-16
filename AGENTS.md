@@ -5,33 +5,24 @@
 ## 项目是什么
 
 墨览（molan）是开源 Markdown 纸面工具：**打开即阅读，要点再编辑。**  
-本仓库一期职责：官网、文档、贡献规矩、试读镜像。  
-编辑器行为与扩展发版的真源在 DesignWeave，见 [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md)。
+本仓库是**编辑器 / 扩展 / 工作室 / 官网**的真源。DesignWeave 工作台通过并列 `file:../molan` 引用 `@molan/host`。
 
 ## 默认允许改的路径
 
 | 路径 | 用途 |
 |------|------|
-| `site/**` | 官网与试读壳 |
-| `docs/**` | 人读 / AI 读文档 |
-| `.github/**` | Issue / PR / CI |
-| `.cursor/rules/**` | Cursor 规则 |
-| `scripts/**` | 检查与同步脚本 |
-| `README.md`、`AGENTS.md`、`CONTRIBUTING.md` 等根文档 | 门户文案 |
-
-## 默认不要改（除非 issue 声明迁码例外）
-
-- `site/try/**` 内由 `npm run sync` 生成的工作室资产（应改 DesignWeave 后同步）
-- 在本仓「重写」编辑器内核、Vditor 裁剪、扩展 `package.json` 发版逻辑
-
-若任务需要改编辑器行为：开 issue 打上 `needs-source-sync`，或直接向 DesignWeave 提 PR，并在本仓文档交叉链接。
+| `packages/**` | 协议 / 核心 / 宿主 |
+| `apps/studio/**` | 浏览器工作室 |
+| `apps/vscode-molan/**` | 扩展（勿提交 `.vsix`） |
+| `site/**` | 官网（`site/try` 多为 sync 生成） |
+| `docs/**`、`.github/**`、`scripts/**`、`bin/**`、根文档 | 门户与工具 |
 
 ## 开工步骤（强制）
 
 1. 读本文件 + [`docs/ai/START.md`](docs/ai/START.md) + [`docs/ai/CHECKLIST.md`](docs/ai/CHECKLIST.md)
-2. 一个 PR 一件事；优先小改动
-3. 改完运行：`npm run check`
-4. 按 [`docs/ai/PR_PLAYBOOK.md`](docs/ai/PR_PLAYBOOK.md) 开 PR；模板字段填全
+2. 一个 PR 一件事
+3. `pnpm build && ./molan check`（改扩展再 `./molan package` 或 filter check）
+4. 按 [`docs/ai/PR_PLAYBOOK.md`](docs/ai/PR_PLAYBOOK.md) 开 PR
 
 ## 检查命令
 

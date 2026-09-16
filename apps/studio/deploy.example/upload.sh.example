@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# 模板：复制到 tools/markdown-viewer/deploy/upload.sh 并 chmod +x
+# 同步 markdown-viewer 静态站到 https://molan.guoyoutech.cn/
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REMOTE="${MOLAN_DEPLOY_HOST:-user@your-server}"
+REMOTE_DIR="${MOLAN_DEPLOY_DIR:-/var/www/molan}"
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "需要 ${1}" >&2
+    exit 1
+  }
+}
+
+need rsync
+need ssh
+
+echo "==> rsync ${ROOT} -> ${REMOTE}:${REMOTE_DIR}"
+rsync -avz --delete \
+  --exclude deploy/ \
+  --exclude deploy.example/ \
+  --exclude .vercel \
+  --exclude .env* \
+  --exclude vendor/ \
+  --exclude .table-e2e.html \
+  --exclude .editor-e2e.html \
+  --exclude .buttons-e2e.html \
+  --exclude .table-e2e-shots/ \
+  "${ROOT}/" "${REMOTE}:${REMOTE_DIR}/"
+
+echo "已同步到 https://molan.guoyoutech.cn/"

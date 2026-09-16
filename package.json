@@ -4,15 +4,23 @@
   "private": true,
   "description": "墨览 · Open to read. Click to edit.",
   "type": "module",
+  "packageManager": "pnpm@8.6.9",
   "bin": {
     "molan": "./bin/molan.mjs"
   },
   "scripts": {
+    "build": "pnpm --filter @molan/protocol build && pnpm --filter @molan/core build && pnpm --filter @molan/host build",
+    "test": "pnpm --filter @molan/protocol test && pnpm --filter @molan/host test && pnpm --filter @molan/core test",
     "check": "node scripts/check-pr.mjs && node scripts/smoke-site.mjs",
     "smoke": "node scripts/smoke-site.mjs",
-    "sync": "node scripts/sync-from-designweave.mjs",
+    "sync": "node scripts/sync-studio-to-site.mjs",
     "serve": "node scripts/serve-site.mjs",
-    "molan": "node bin/molan.mjs"
+    "molan": "node bin/molan.mjs",
+    "vscode:molan": "node scripts/run-bash.mjs scripts/vscode-molan.sh",
+    "vscode:molan:package": "node scripts/run-bash.mjs scripts/vscode-molan.sh package",
+    "vscode:molan:install": "node scripts/run-bash.mjs scripts/vscode-molan.sh install",
+    "vscode:molan:check": "node scripts/run-bash.mjs scripts/vscode-molan.sh check",
+    "publish:extension": "node scripts/run-bash.mjs scripts/molan-publish.sh --skip-site"
   },
   "engines": {
     "node": ">=20"

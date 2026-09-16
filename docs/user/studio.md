@@ -7,4 +7,4 @@
 
 侧栏可切换纸面与语言。未选文件夹时提供内置样例。
 
-真源：DesignWeave `tools/markdown-viewer`；本仓 `site/try` 为同步镜像。
+真源：DesignWeave `apps/studio`；本仓 `site/try` 为同步镜像。

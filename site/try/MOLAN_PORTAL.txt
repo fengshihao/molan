@@ -1,2 +1,1 @@
-This folder is synced from DesignWeave tools/markdown-viewer. Edit the source there, then npm run sync.
-Portal home: ../index.html
+Synced from apps/studio. Edit the studio, then ./molan sync.

@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
- * Molan CLI — simple English commands.
+ * Molan CLI
  *
  *   ./molan              open local site
- *   ./molan try          open try studio
- *   ./molan docs         open contribute guide
- *   ./molan install      install editor extension
- *   ./molan check        run acceptance checks
- *   ./molan web          open online homepage
- *   ./molan sync         refresh try assets from DesignWeave
- *   ./molan help
+ *   ./molan try|docs     open pages
+ *   ./molan install      install editor extension from marketplace
+ *   ./molan check        site + package gates
+ *   ./molan build        build @molan/* packages
+ *   ./molan package      build .vsix
+ *   ./molan publish      publish extension (needs OVSX_PAT)
+ *   ./molan sync         sync apps/studio → site/try
+ *   ./molan web|help
  */
 import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
@@ -35,11 +36,14 @@ Usage:
   molan              Open local homepage
   molan try          Open local try studio
   molan docs         Open local contribute guide
-  molan install      Install Cursor / VS Code extension
-  molan check        Run acceptance checks (for AI / contributors)
+  molan install      Install Cursor / VS Code extension (marketplace)
+  molan check        Run acceptance checks
+  molan build        Build @molan/protocol, core, host
+  molan package      Build extension .vsix
+  molan publish      Publish extension (Open VSX; needs OVSX_PAT)
+  molan sync         Sync apps/studio → site/try
   molan web          Open online homepage
-  molan sync         Sync try assets from DesignWeave (optional --dw path)
-  molan help         Show this help
+  molan help
 `);
 }
 
@@ -61,6 +65,17 @@ function openUrl(url) {
   child.unref();
 }
 
+function run(cmd, args, opts = {}) {
+  const result = spawnSync(cmd, args, {
+    stdio: "inherit",
+    cwd: root,
+    shell: process.platform === "win32",
+    ...opts,
+  });
+  process.exitCode = result.status || 0;
+  return result.status || 0;
+}
+
 function normalize(argv) {
   const raw = (argv[0] || "open").trim().toLowerCase();
   const map = {
@@ -76,6 +91,10 @@ function normalize(argv) {
     extension: "install",
     check: "check",
     test: "check",
+    build: "build",
+    package: "package",
+    pkg: "package",
+    publish: "publish",
     web: "web",
     online: "web",
     site: "web",
@@ -141,49 +160,16 @@ Stores:
   }
 
   console.log(`Installing molan into ${editor.label}…`);
-  const result = spawnSync(
-    editor.name,
-    ["--install-extension", EXT_ID, "--force"],
-    { stdio: "inherit" }
-  );
-  if (result.status === 0) {
-    console.log("Done. Open any .md file to read with molan.");
-  } else {
-    console.log(`Install failed. Search for "墨览" inside ${editor.label}.`);
-    process.exitCode = result.status || 1;
-  }
+  const code = run(editor.name, ["--install-extension", EXT_ID, "--force"]);
+  if (code === 0) console.log("Done. Open any .md file to read with molan.");
+  else console.log(`Install failed. Search for "墨览" inside ${editor.label}.`);
 }
 
 function runCheck() {
   console.log("Running checks…");
-  const result = spawnSync(
-    process.execPath,
-    [path.join(root, "scripts/check-pr.mjs")],
-    { stdio: "inherit", cwd: root }
-  );
-  if (result.status !== 0) {
-    process.exitCode = result.status || 1;
-    return;
-  }
-  const smoke = spawnSync(
-    process.execPath,
-    [path.join(root, "scripts/smoke-site.mjs")],
-    { stdio: "inherit", cwd: root }
-  );
-  if (smoke.status === 0) {
-    console.log("Checks passed. Run ./molan to review the site.");
-  } else {
-    process.exitCode = smoke.status || 1;
-  }
-}
-
-function runSync(argv) {
-  const args = [path.join(root, "scripts/sync-from-designweave.mjs"), ...argv];
-  const result = spawnSync(process.execPath, args, {
-    stdio: "inherit",
-    cwd: root,
-  });
-  process.exitCode = result.status || 0;
+  if (run(process.execPath, [path.join(root, "scripts/check-pr.mjs")]) !== 0) return;
+  if (run(process.execPath, [path.join(root, "scripts/smoke-site.mjs")]) !== 0) return;
+  console.log("Checks passed. Run ./molan to review the site.");
 }
 
 const argv = process.argv.slice(2);
@@ -208,8 +194,17 @@ switch (action) {
   case "check":
     runCheck();
     break;
+  case "build":
+    run("pnpm", ["build"]);
+    break;
+  case "package":
+    run("bash", [path.join(root, "scripts/vscode-molan.sh"), "package"]);
+    break;
+  case "publish":
+    run("bash", [path.join(root, "scripts/molan-publish.sh"), "--skip-site"]);
+    break;
   case "sync":
-    runSync(argv.slice(1));
+    run(process.execPath, [path.join(root, "scripts/sync-studio-to-site.mjs"), ...argv.slice(1)]);
     break;
   case "web":
     openUrl(WEB_HOME);

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨览 Markdown · Cursor / VS Code</title>
+  <meta name="description" content="Molan Markdown for Cursor and VS Code. Open to read, click to edit. Publisher: fengshihao." />
+  <link rel="canonical" href="https://molan.guoyoutech.cn/extension.html" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1c1914;
+      --ink-soft: #4a453c;
+      --ink-muted: #8a8276;
+      --paper: #f4efe6;
+      --paper-lift: #faf7f1;
+      --accent: #d4773b;
+      --moss: #1e2a24;
+      --link: #a85a24;
+      --hairline: rgba(28, 25, 20, 0.12);
+      --font-display: "Cormorant Garamond", "Songti SC", Georgia, serif;
+      --font-ui: "DM Sans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(212, 119, 59, 0.14), transparent 55%),
+        radial-gradient(900px 420px at 100% 0%, rgba(30, 42, 36, 0.08), transparent 50%),
+        var(--paper);
+      font-family: var(--font-ui);
+      line-height: 1.55;
+    }
+    .sheet {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 56px 28px 80px;
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .brand span { color: var(--accent); }
+    .brand em {
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--ink-muted);
+      font-weight: 500;
+      letter-spacing: 0.12em;
+    }
+    .lede {
+      margin: 0 0 36px;
+      max-width: 38em;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+    }
+    .lede strong { color: var(--ink); font-weight: 600; }
+    .shot {
+      display: block;
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--hairline);
+      margin: 0 0 36px;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+    .install {
+      display: grid;
+      gap: 12px;
+      margin: 0 0 40px;
+    }
+    .install a {
+      display: block;
+      padding: 16px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      background: var(--paper-lift);
+      border: 1px solid var(--hairline);
+    }
+    .install a:hover { border-color: rgba(212, 119, 59, 0.45); }
+    .install .where {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+    }
+    .install .name {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      color: var(--link);
+    }
+    .meta {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+    .meta p { margin: 0 0 8px; }
+    .meta a { color: var(--link); }
+    .back {
+      display: inline-block;
+      margin-top: 28px;
+      color: var(--ink-muted);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="sheet">
+    <p class="brand">墨<span>览</span> <em>molan</em></p>
+    <p class="lede">
+      在 Cursor / VS Code 里打开 Markdown：<strong>先阅读，要点再编辑</strong>，保存写回原文件。<br />
+      Open Markdown in Cursor or VS Code: <strong>read first, click to edit</strong>, save back to the file.
+    </p>
+    <img class="shot" src="./intro.gif" width="1280" height="800" alt="Molan: read first, click to edit" />
+
+    <h2>Installation · 安装</h2>
+    <div class="install">
+      <a href="https://open-vsx.org/extension/fengshihao/molan-markdown">
+        <span class="where">Cursor · Open VSX</span>
+        <span class="name">open-vsx.org/extension/fengshihao/molan-markdown</span>
+      </a>
+      <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">
+        <span class="where">Visual Studio Code</span>
+        <span class="name">marketplace.visualstudio.com · fengshihao.molan-markdown</span>
+      </a>
+    </div>
+
+    <div class="meta">
+      <p>Publisher / 发布者：<strong>fengshihao</strong></p>
+      <p>Extension ID：<code>fengshihao.molan-markdown</code></p>
+      <p>Source：<a href="https://github.com/fengshihao/DesignWeave/tree/main/apps/vscode-molan">github.com/fengshihao/DesignWeave</a></p>
+      <p>Studio (browser)：<a href="https://molan.guoyoutech.cn/">molan.guoyoutech.cn</a> · <a href="./guide.html">使用教程</a></p>
+    </div>
+    <a class="back" href="./">← 打开浏览器工作室 / Open the browser studio</a>
+  </main>
+</body>
+</html>

@@ -1,0 +1,43 @@
+name: Publish extension
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8.6.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Package
+        run: bash scripts/vscode-molan.sh package
+      - name: Upload vsix
+        uses: actions/upload-artifact@v4
+        with:
+          name: molan-markdown-vsix
+          path: apps/vscode-molan/molan-markdown-*.vsix
+      - name: Publish Open VSX
+        if: ${{ secrets.OVSX_PAT != '' }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          VSIX="$(ls -t apps/vscode-molan/molan-markdown-*.vsix | head -n 1)"
+          npx --yes ovsx publish "$VSIX" -p "$OVSX_PAT"
+      - name: Reminder
+        run: |
+          echo "VS Marketplace: upload the artifact manually or set VSCE_PAT and extend this workflow."
+          echo "https://marketplace.visualstudio.com/manage/publishers/fengshihao"

@@ -68,7 +68,7 @@ if (!dw || !fs.existsSync(dw)) {
   process.exit(1);
 }
 
-const viewer = path.join(dw, "tools/markdown-viewer");
+const viewer = path.join(dw, "apps/studio");
 if (!fs.existsSync(path.join(viewer, "index.html"))) {
   console.error(`No studio at ${viewer}`);
   process.exit(1);
@@ -111,7 +111,7 @@ for (const name of [
 const notePath = path.join(tryDir, "MOLAN_PORTAL.txt");
 fs.writeFileSync(
   notePath,
-  "This folder is synced from DesignWeave tools/markdown-viewer. Edit the source there, then npm run sync.\nPortal home: ../index.html\n",
+  "This folder is synced from DesignWeave apps/studio. Edit the source there, then npm run sync.\nPortal home: ../index.html\n",
   "utf8"
 );
 

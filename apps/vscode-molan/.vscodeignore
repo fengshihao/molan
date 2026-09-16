@@ -1,0 +1,13 @@
+.vscode/**
+src/**
+scripts/**
+tsconfig.json
+**/*.map
+**/*.ts
+.gitignore
+node_modules/**
+out/**/*.map
+*.vsix
+media/icon-1024.png
+MARKETPLACE.md
+DEV.md

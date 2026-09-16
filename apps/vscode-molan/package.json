@@ -1,0 +1,176 @@
+{
+  "name": "molan-markdown",
+  "displayName": "墨览 Markdown",
+  "description": "打开即阅读，要点再编辑。所见即所得：主题、表格、Mermaid、公式。Open to read, click to edit. WYSIWYG with themes, tables, Mermaid, math.",
+  "version": "0.1.27",
+  "publisher": "fengshihao",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1E2A24",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fengshihao/molan.git",
+    "directory": "apps/vscode-molan"
+  },
+  "bugs": {
+    "url": "https://github.com/fengshihao/molan/issues"
+  },
+  "homepage": "https://fengshihao.github.io/molan/",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other"],
+  "keywords": ["markdown", "vditor", "wysiwyg", "墨览", "mermaid", "typora"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "molan.markdownEditor",
+        "displayName": "墨览",
+        "selector": [
+          { "filenamePattern": "*.md" },
+          { "filenamePattern": "*.markdown" },
+          { "filenamePattern": "*.mdown" },
+          { "filenamePattern": "*.mdx" }
+        ],
+        "priority": "default"
+      }
+    ],
+    "configurationDefaults": {
+      "workbench.editorAssociations": {
+        "*.md": "molan.markdownEditor",
+        "*.markdown": "molan.markdownEditor",
+        "*.mdown": "molan.markdownEditor",
+        "*.mdx": "molan.markdownEditor"
+      }
+    },
+    "commands": [
+      {
+        "command": "molan.openWith",
+        "title": "用墨览打开",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.setAsDefault",
+        "title": "将墨览设为 Markdown 默认编辑器",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.reopenAsText",
+        "title": "用文本编辑器打开",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.find",
+        "title": "查找",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.findNext",
+        "title": "查找下一个",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.findPrev",
+        "title": "查找上一个",
+        "category": "墨览"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "molan.find",
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.findNext",
+        "key": "f3",
+        "mac": "f3",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.findNext",
+        "key": "ctrl+g",
+        "mac": "cmd+g",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.findPrev",
+        "key": "shift+f3",
+        "mac": "shift+f3",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.findPrev",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "molan.openWith",
+          "when": "resourceExtname =~ /\\.(md|markdown|mdown|mdx)$/",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "molan.reopenAsText",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "molan.openWith",
+          "when": "resourceExtname =~ /\\.(md|markdown|mdown|mdx)$/"
+        },
+        {
+          "command": "molan.find",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.findNext",
+          "when": "false"
+        },
+        {
+          "command": "molan.findPrev",
+          "when": "false"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "sync-media": "node ./scripts/sync-media.mjs",
+    "bundle": "node ./scripts/bundle.mjs",
+    "compile": "node ./scripts/ensure-deps.mjs && pnpm --filter @molan/protocol build && pnpm --filter @molan/core build && pnpm --filter @molan/host build && node ./scripts/sync-media.mjs && tsc -p ./ --noEmit && node ./scripts/bundle.mjs",
+    "watch": "node ./scripts/bundle.mjs --watch",
+    "typecheck": "tsc -p ./ --noEmit",
+    "check": "pnpm compile && node ./scripts/check.mjs && node ./scripts/zod-compile.test.mjs && node ./scripts/vscode-install-e2e.mjs",
+    "package": "pnpm compile && npx --yes @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://molan.guoyoutech.cn",
+    "publish": "pnpm compile && npx --yes @vscode/vsce publish --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://molan.guoyoutech.cn"
+  },
+  "dependencies": {
+    "@molan/host": "file:../../packages/molan-host",
+    "@molan/protocol": "file:../../packages/molan-protocol",
+    "vditor": "3.10.9",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^5.8.2"
+  },
+  "vsce": {
+    "dependencies": false,
+    "baseContentUrl": "https://github.com/fengshihao/molan/blob/main/apps/vscode-molan",
+    "baseImagesUrl": "https://molan.guoyoutech.cn"
+  }
+}
