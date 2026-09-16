@@ -1,7 +1,7 @@
+# portal ships vendor for Pages try/
 .vercel
 .env*
 deploy/
-vendor/
 .table-e2e.html
 .table-e2e-shots/
 .editor-e2e.html

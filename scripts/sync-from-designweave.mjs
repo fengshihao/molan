@@ -130,4 +130,18 @@ if (fs.existsSync(tryIndex)) {
   }
 }
 
+// Studio upstream ignores vendor/; portal must ship it for GitHub Pages try/
+const tryGitignore = path.join(tryDir, ".gitignore");
+if (fs.existsSync(tryGitignore)) {
+  let gi = fs.readFileSync(tryGitignore, "utf8");
+  gi = gi
+    .split("\n")
+    .filter((line) => line.trim() !== "vendor/" && line.trim() !== "vendor")
+    .join("\n");
+  if (!gi.includes("# portal ships vendor")) {
+    gi = `# portal ships vendor for Pages try/\n${gi}`;
+  }
+  fs.writeFileSync(tryGitignore, gi, "utf8");
+}
+
 console.log("Synced site/try and site/assets.");
