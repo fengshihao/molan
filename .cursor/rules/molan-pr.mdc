@@ -1,0 +1,13 @@
+---
+description: 墨览 PR 与贡献契约
+globs:
+alwaysApply: true
+---
+
+# 墨览贡献
+
+- 先读 AGENTS.md 与 docs/ai/START.md。
+- 一期默认只改 site/**、docs/**、.github/**、scripts/** 与根文档。
+- 不要在本仓重写 molan-core / 扩展发版逻辑。
+- 提交前必须 `npm run check`。
+- 开 PR 用 docs/ai/PR_PLAYBOOK.md 与 .github/PULL_REQUEST_TEMPLATE.md。

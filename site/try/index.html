@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨览 · Markdown Studio</title>
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <script>
+    (function () {
+      var theme = "night";
+      try {
+        var t = localStorage.getItem("molan-theme");
+        if (t === "night" || t === "hack" || t === "rose" || t === "xuan" || t === "slate" || t === "mist" || t === "cinnabar") theme = t;
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", theme);
+      try {
+        var l = localStorage.getItem("molan-lang");
+        if (l === "ar") document.documentElement.setAttribute("dir", "rtl");
+        if (l === "zh") document.documentElement.lang = "zh-CN";
+        else if (l === "zh-Hant") document.documentElement.lang = "zh-TW";
+        else if (l) document.documentElement.lang = l;
+      } catch (e) {}
+      try {
+        var ty = JSON.parse(localStorage.getItem("molan-type") || "null");
+        if (ty && typeof ty === "object") {
+          var s = document.documentElement.style;
+          if (ty.size) s.setProperty("--reader-size", ty.size + "rem");
+          if (ty.leading) s.setProperty("--reader-leading", String(ty.leading));
+          if (ty.gap != null) s.setProperty("--reader-gap", ty.gap + "em");
+          if (ty.tracking != null) s.setProperty("--reader-tracking", ty.tracking + "em");
+        }
+      } catch (e) {}
+      var fonts = {
+        night: "family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500",
+        hack: "family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400",
+        xuan: "family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500",
+        rose: "family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500"
+      };
+      var href = "https://fonts.googleapis.com/css2?" + (fonts[theme] || fonts.night) + "&display=swap";
+      var link = document.createElement("link");
+      link.id = "molan-fonts";
+      link.rel = "stylesheet";
+      link.href = href;
+      link.media = "print";
+      link.onload = function () { link.media = "all"; };
+      document.head.appendChild(link);
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="./vendor/vditor/dist/js/lute/lute.min.js" as="script" />
+  <link rel="preload" href="./vendor/vditor/dist/method.min.js" as="script" />
+  <link rel="stylesheet" href="./vendor/vditor/dist/index.css" />
+  <link rel="stylesheet" href="./molan.css?v=20260905c" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar is-compact">
+      <div class="brand">
+        <div class="brand-mark">
+          <h1>墨<span>览</span><em class="brand-latin">molan</em></h1>
+        </div>
+        <div class="prefs">
+          <button class="prefs-toggle" id="prefsToggle" type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="prefsMenu" title="界面配置" aria-label="界面配置" data-i18n-title="prefsAria" data-i18n-aria="prefsAria">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2.5 4.5h11M2.5 11.5h11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <circle cx="6" cy="4.5" r="1.55" fill="currentColor"/>
+              <circle cx="10.25" cy="11.5" r="1.55" fill="currentColor"/>
+            </svg>
+          </button>
+          <div class="prefs-menu" id="prefsMenu" hidden role="dialog" aria-labelledby="prefsToggle">
+            <div class="prefs-section">
+              <div class="prefs-label" id="prefsThemeLabel" data-i18n="prefsTheme">纸面</div>
+              <div class="theme-switch" id="themeSwitch" role="radiogroup" aria-labelledby="prefsThemeLabel" data-i18n-aria="themeAria">
+                <button type="button" role="radio" data-theme="xuan" title="宣纸 · 暖色纸面" aria-label="宣纸" data-i18n-title="themeXuanTitle" data-i18n-aria="themeXuan" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="night" title="墨夜 · 暗色夜读" aria-label="墨夜" data-i18n-title="themeNightTitle" data-i18n-aria="themeNight" aria-checked="true">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="hack" title="终端 · 程序员" aria-label="终端" data-i18n-title="themeHackTitle" data-i18n-aria="themeHack" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="rose" title="胭脂 · 柔粉纸面" aria-label="胭脂" data-i18n-title="themeRoseTitle" data-i18n-aria="themeRose" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="slate" title="青石 · 冷灰夜读" aria-label="青石" data-i18n-title="themeSlateTitle" data-i18n-aria="themeSlate" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="mist" title="薄雾 · 冷白纸面" aria-label="薄雾" data-i18n-title="themeMistTitle" data-i18n-aria="themeMist" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+                <button type="button" role="radio" data-theme="cinnabar" title="朱砂 · 赭石纸面" aria-label="朱砂" data-i18n-title="themeCinnabarTitle" data-i18n-aria="themeCinnabar" aria-checked="false">
+                  <svg viewBox="0 0 32 32" aria-hidden="true"><circle class="theme-ring" cx="16" cy="16" r="14.25"/><circle class="theme-fill" cx="16" cy="16" r="10"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="prefs-section">
+              <label class="prefs-label" for="langSelect" data-i18n="prefsLang">语言</label>
+              <div class="lang-switch">
+                <select id="langSelect" aria-label="界面语言" data-i18n-aria="langAria"></select>
+              </div>
+            </div>
+            <div class="prefs-section">
+              <div class="prefs-label" data-i18n="prefsEditors">编辑器</div>
+              <div class="prefs-links">
+                <a class="prefs-link" href="vscode:extension/fengshihao.molan-markdown" data-i18n="installVscode">安装 VS Code 插件</a>
+                <a class="prefs-link" href="cursor:extension/fengshihao.molan-markdown" data-i18n="installCursor">安装 Cursor 插件</a>
+                <a class="prefs-link" href="./guide.html" data-i18n="guideLink">使用教程</a>
+                <a class="prefs-link" href="./extension.html" data-i18n="extensionLink">扩展介绍</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+            <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input class="search" id="searchInput" type="search" placeholder="搜索文档或最近目录…" data-i18n-placeholder="searchPlaceholder" tabindex="-1" />
+        </div>
+        <button class="toolbar-pick" id="pickBtn" type="button" title="打开文件夹" aria-label="打开文件夹" data-i18n-title="welcomeCta" data-i18n-aria="welcomeCta">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M8 3.25v9.5M3.25 8h9.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span class="toolbar-pick-label" data-i18n="welcomeCta">打开文件夹</span>
+        </button>
+      </div>
+
+      <div class="file-list" id="fileList" hidden></div>
+    </aside>
+
+    <main class="main is-idle">
+      <header class="reader-header">
+        <div class="reader-title">
+          <h2 id="readerTitle">墨览</h2>
+        </div>
+        <div class="reader-actions">
+          <button class="icon-btn molan-find-btn" id="molanFindBtn" type="button" hidden title="在文档中查找" aria-label="在文档中查找" data-i18n-title="findAria" data-i18n-aria="findAria">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+              <path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="icon-btn" id="copyBtn" type="button" hidden title="复制原文" aria-label="复制原文" data-i18n-title="copySource" data-i18n-aria="copySource">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/><rect x="4" y="8" width="12" height="12" rx="2"/></svg>
+          </button>
+          <div class="export-prefs" id="exportPrefs">
+            <button class="icon-btn" id="pdfBtn" type="button" hidden title="导出" aria-label="导出" aria-expanded="false" aria-haspopup="menu" aria-controls="exportMenu" data-i18n-title="exportAria" data-i18n-aria="exportAria">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 8H6.8A1.8 1.8 0 0 0 5 9.8v7.4A1.8 1.8 0 0 0 6.8 19h10.4a1.8 1.8 0 0 0 1.8-1.8V9.8A1.8 1.8 0 0 0 17.2 8H15"/><path d="M12 15V4"/><path d="M8.7 7.2 12 4l3.3 3.2"/></svg>
+            </button>
+            <div class="export-menu" id="exportMenu" hidden role="menu" aria-label="导出">
+              <button type="button" role="menuitem" data-export="pdf" data-i18n="exportPdf">导出 PDF</button>
+              <button type="button" role="menuitem" data-export="png" data-i18n="exportPng">导出图片</button>
+            </div>
+          </div>
+          <button class="icon-btn" id="reloadBtn" type="button" hidden title="从磁盘重新加载" aria-label="从磁盘重新加载" data-i18n-title="reloadAria" data-i18n-aria="reloadAria">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 12a8 8 0 1 1-2.34-5.66"/>
+              <path d="M20 5v5h-5"/>
+            </svg>
+          </button>
+          <button class="icon-btn is-preview" id="modeBtn" type="button" hidden title="编辑" aria-label="编辑">
+            <svg class="icon-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+            <svg class="icon-preview" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.8-7 9.5-7 9.5 7 9.5 7-3.8 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="icon-btn" id="saveBtn" type="button" hidden disabled title="保存" aria-label="保存">
+            <svg class="icon-save" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h11l3 3v11H5V5z"/><path d="M9 5v4h7V5"/><path d="M8 19v-6h8v6"/></svg>
+            <svg class="icon-download" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7.5 11.5 12 16l4.5-4.5"/><path d="M5 19h14"/></svg>
+          </button>
+          <div class="type-prefs" id="typePrefs">
+            <button class="icon-btn" id="typeBtn" type="button" hidden title="调节字号、行距与字体" aria-label="排版" aria-expanded="false" aria-haspopup="dialog" aria-controls="typeMenu" data-i18n-title="typeTitle" data-i18n-aria="typeAria">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 19L8.2 5.5h1.7L14.5 19"/><path d="M5.4 13.6h7.2"/><path d="M16.4 19l2.6-8h1.1L22.6 19"/><path d="M17.5 15.6h4.1"/></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="reader-body" id="readerBody">
+        <section class="welcome" id="welcome">
+          <article class="welcome-folio" id="aphorismFolio">
+            <span class="folio-watermark" aria-hidden="true">墨</span>
+            <div class="folio-verse">
+              <blockquote class="aphorism" id="aphorismText" tabindex="0" aria-live="polite"></blockquote>
+              <button class="welcome-cta" id="welcomePickBtn" type="button" data-i18n="welcomeCta">打开文件夹</button>
+            </div>
+          </article>
+        </section>
+        <div class="editor-wrap" id="editorWrap">
+          <div class="molan-preview vditor-preview" id="molanPreview">
+            <div class="vditor-reset" id="molanPreviewBody"></div>
+          </div>
+          <div id="vditor"></div>
+        </div>
+      </div>
+
+      <footer class="status-bar">
+        <span id="statusLeft"></span>
+        <span id="statusRight" data-i18n="localOffline">本地 · 不上云</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <input class="hidden-input" id="dirInput" type="file" webkitdirectory directory multiple tabindex="-1" aria-hidden="true" />
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox-panel" role="dialog" aria-modal="true" aria-label="流程图观看" data-i18n-aria="lightboxTitle">
+      <div class="lightbox-bar">
+        <div>
+          <strong data-i18n="lightboxTitle">流程图观看</strong>
+          <span class="hint" data-i18n="lightboxHint">拖动平移 · 滚轮缩放 · Esc 关闭</span>
+        </div>
+        <div class="lightbox-actions">
+          <button class="icon-btn" type="button" id="lightboxZoomOut" title="缩小" aria-label="缩小" data-i18n-title="zoomOut" data-i18n-aria="zoomOut">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M21 21l-4.3-4.3"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="lightboxZoomIn" title="放大" aria-label="放大" data-i18n-title="zoomIn" data-i18n-aria="zoomIn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M21 21l-4.3-4.3"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="lightboxEdit" title="编辑流程图" aria-label="编辑流程图" data-i18n-title="mermaidEditorTitle" data-i18n-aria="mermaidEditorTitle">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="lightboxReset" title="复位" aria-label="复位" data-i18n-title="resetView" data-i18n-aria="resetView">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="lightboxCopyImage" title="复制图片" aria-label="复制图片" data-i18n-title="copyImage" data-i18n-aria="copyImage">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>
+          </button>
+          <button class="icon-btn" type="button" id="lightboxClose" title="关闭" aria-label="关闭" data-i18n-title="close" data-i18n-aria="close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="lightbox-stage" id="lightboxStage">
+        <div class="lightbox-canvas" id="lightboxCanvas"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./vendor/vditor/dist/method.min.js"></script>
+  <script src="./molan-i18n.js?v=20260905c"></script>
+  <script src="./molan-aphorisms.js?v=20260815n"></script>
+  <script src="./molan-editor.js?v=20260905c"></script>
+  <script src="./molan-app.js?v=20260905c"></script>
+<a data-molan-portal-home href="../" style="position:fixed;z-index:9999;right:12px;bottom:12px;padding:8px 12px;font:500 13px/1.2 system-ui,sans-serif;color:#e8efe9;background:rgba(30,42,36,.92);border:1px solid rgba(232,239,233,.18);border-radius:2px;text-decoration:none">← 墨览官网</a>
+</body>
+</html>

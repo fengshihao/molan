@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>墨览 · molan — 打开即阅读，要点再编辑</title>
+  <meta name="description" content="墨览：打开即阅读，要点再编辑。开源 Markdown 纸面 — 浏览器工作室与 Cursor / VS Code 扩展。" />
+  <link rel="icon" type="image/png" href="./assets/favicon.png" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/site.css" />
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <div class="frame">
+    <header class="top">
+      <a class="brand-mark" href="./">墨<span>览</span><em>molan</em></a>
+      <nav aria-label="主导航">
+        <a href="./try/">试读</a>
+        <a href="./docs/">文档</a>
+        <a href="https://github.com/fengshihao/molan">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main" class="hero">
+      <div class="hero-copy">
+        <p class="hero-brand" aria-label="墨览 molan">墨<span>览</span><span class="latin">molan</span></p>
+        <h2>打开即阅读，要点再编辑。</h2>
+        <p class="lede">纸面上的 Markdown。默认预览，点一下再改。浏览器工作室与 Cursor / VS Code 同一套体验。</p>
+        <div class="cta-row">
+          <a class="cta cta-primary" href="./try/">立即试读</a>
+          <a class="cta cta-ghost" href="#install">安装扩展</a>
+        </div>
+      </div>
+      <figure class="hero-stage">
+        <img src="./assets/intro.gif" width="960" height="540" alt="墨览：打开即阅读，要点再编辑" />
+      </figure>
+    </main>
+
+    <section class="section" id="install" aria-labelledby="install-title">
+      <h3 id="install-title">装进编辑器</h3>
+      <p>在 Cursor 或 VS Code 中搜索墨览，或直接使用扩展 ID。</p>
+      <code class="install-id">fengshihao.molan-markdown</code>
+      <div class="links">
+        <a href="https://open-vsx.org/extension/fengshihao/molan-markdown">Open VSX（Cursor）</a>
+        <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Code Marketplace</a>
+        <a href="https://molan.guoyoutech.cn/">正式站 molan.guoyoutech.cn</a>
+      </div>
+
+      <div class="ai-box">
+        <h4>用一句话开始贡献</h4>
+        <p>把意图告诉 AI 即可。契约在仓库里，不在聊天记录里。</p>
+        <pre>读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：〈一句话〉。
+按 docs/ai/PR_PLAYBOOK.md 改、跑 npm run check、开 PR。</pre>
+        <p style="margin-top:0.9rem;margin-bottom:0"><a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md">docs/ai/START.md</a>
+          · <a href="https://github.com/fengshihao/molan/blob/main/CONTRIBUTING.md">CONTRIBUTING</a></p>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <div>MIT · <a href="https://github.com/fengshihao/molan">fengshihao/molan</a></div>
+      <div>编辑器真源暂在 DesignWeave；本仓为开源门户与试读。详见 <a href="./docs/">文档</a>。</div>
+    </footer>
+  </div>
+</body>
+</html>

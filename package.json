@@ -1,0 +1,22 @@
+{
+  "name": "molan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "墨览 · Open to read. Click to edit.",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-pr.mjs && node scripts/smoke-site.mjs",
+    "smoke": "node scripts/smoke-site.mjs",
+    "sync": "node scripts/sync-from-designweave.mjs",
+    "serve": "node scripts/serve-site.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fengshihao/molan.git"
+  },
+  "homepage": "https://fengshihao.github.io/molan/"
+}

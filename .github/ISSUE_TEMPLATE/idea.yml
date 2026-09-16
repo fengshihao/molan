@@ -1,0 +1,27 @@
+name: Idea
+description: 功能或文档想法
+title: "idea: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: intent
+    attributes:
+      label: 一句话意图
+      description: 也可以直接把这句话交给 AI（见 docs/ai/START.md）
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 一期范围
+      options:
+        - 官网 / 文档 / CI（本仓可直接做）
+        - 编辑器行为（需 DesignWeave / needs-source-sync）
+        - 不确定
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 细节
+      description: 可选

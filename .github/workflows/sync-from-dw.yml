@@ -1,0 +1,61 @@
+name: Sync from DesignWeave
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "DesignWeave ref to sync from"
+        required: false
+        default: "main"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: molan
+      - uses: actions/checkout@v4
+        with:
+          repository: fengshihao/DesignWeave
+          ref: ${{ inputs.ref }}
+          path: DesignWeave
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Sync
+        working-directory: molan
+        run: node scripts/sync-from-designweave.mjs --dw ../DesignWeave
+      - name: Check
+        working-directory: molan
+        run: npm run check
+      - name: Open PR if changed
+        working-directory: molan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="chore/sync-dw-$(date +%Y%m%d%H%M)"
+          git checkout -b "$branch"
+          git add -A
+          git commit -m "chore: sync try assets from DesignWeave"
+          git push -u origin HEAD
+          gh pr create --title "chore: sync try assets from DesignWeave" --body "$(cat <<'EOF'
+          ## Summary
+          - Refresh site/try and site/assets from DesignWeave tools/markdown-viewer
+
+          ## User-facing
+          - Try studio matches upstream snapshot
+
+          ## Test plan
+          - [x] npm run check
+
+          ## AI-assisted
+          - [ ] 否
+          EOF
+          )"

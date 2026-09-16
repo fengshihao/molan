@@ -1,0 +1,2 @@
+This folder is synced from DesignWeave tools/markdown-viewer. Edit the source there, then npm run sync.
+Portal home: ../index.html

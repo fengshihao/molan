@@ -1,0 +1,39 @@
+name: Bug
+description: 报告扩展或工作室问题
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 表面
+      options:
+        - VS Code / Cursor 扩展
+        - 浏览器工作室
+        - 官网 site
+        - 文档
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 扩展版本、浏览器、或 commit
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际
+    validations:
+      required: true

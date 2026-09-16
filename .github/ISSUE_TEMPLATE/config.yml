@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 给 AI 的开工白
+    url: https://github.com/fengshihao/molan/blob/main/docs/ai/START.md
+    about: 复制提示词即可开始贡献
+  - name: DesignWeave（编辑器真源）
+    url: https://github.com/fengshihao/DesignWeave
+    about: 内核与扩展源码一期仍在此仓库

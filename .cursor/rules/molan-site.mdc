@@ -1,0 +1,14 @@
+---
+description: 墨览官网视觉与首屏预算
+globs: site/**/*
+alwaysApply: false
+---
+
+# 墨览 site 规则
+
+- 默认品牌面是墨夜青绿（`#1E2A24` 一带），禁止紫系 SaaS 渐变作为主视觉。
+- 首页第一视口只保留：品牌「墨览 / molan」+ 一句 headline + 一句支撑 + CTA + 全宽纸面影像。
+- 禁止首屏统计条、功能卡片墙、浮层徽章、多段营销模块。
+- 字体：Instrument Serif（或 Cormorant）+ DM Sans + JetBrains Mono；不要用 Inter/Roboto/Arial 当品牌字体。
+- 改动保持克制；动效 2～3 个有意动作即可。
+- `site/try/**` 多为 sync 生成物；功能修复走 DesignWeave 再 `npm run sync`。
