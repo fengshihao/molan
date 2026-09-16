@@ -6,7 +6,8 @@ node_modules/
 !.env.example
 .vscode/
 .idea/
-dist/
+# package build outputs (not site/try/vendor/**/dist)
+/packages/**/dist/
 .cache/
 *.vsix
 .sync-cache/
