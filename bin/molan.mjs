@@ -30,10 +30,11 @@ function help() {
   molan              在本机打开墨览网页
   molan 试读         打开试读工作室
   molan 安装         安装 Cursor / VS Code 扩展
+  molan 检查         验收改动是否合格（给 AI / 贡献者）
   molan 网上         打开网上的墨览主页
   molan 帮助         显示这段说明
 
-也可以写英文：open / try / install / web / help
+也可以写英文：open / try / install / check / web / help
 `);
 }
 
@@ -60,6 +61,14 @@ function normalize(argv) {
   if (!raw || raw === "打开" || raw === "open" || raw === "start") return "open";
   if (raw === "试读" || raw === "try" || raw === "studio") return "try";
   if (raw === "安装" || raw === "install" || raw === "扩展") return "install";
+  if (
+    raw === "检查" ||
+    raw === "check" ||
+    raw === "验收" ||
+    raw === "测试"
+  ) {
+    return "check";
+  }
   if (raw === "网上" || raw === "web" || raw === "online" || raw === "site") {
     return "web";
   }
@@ -137,6 +146,30 @@ function installExtension() {
   }
 }
 
+function runCheck() {
+  const root = path.resolve(__dirname, "..");
+  console.log("正在验收…");
+  const result = spawnSync(
+    process.execPath,
+    [path.join(root, "scripts/check-pr.mjs")],
+    { stdio: "inherit", cwd: root }
+  );
+  if (result.status !== 0) {
+    process.exitCode = result.status || 1;
+    return;
+  }
+  const smoke = spawnSync(
+    process.execPath,
+    [path.join(root, "scripts/smoke-site.mjs")],
+    { stdio: "inherit", cwd: root }
+  );
+  if (smoke.status === 0) {
+    console.log("验收通过。可以再用 ./molan 打开网页，肉眼看一下效果。");
+  } else {
+    process.exitCode = smoke.status || 1;
+  }
+}
+
 const action = normalize(process.argv.slice(2));
 
 switch (action) {
@@ -151,6 +184,9 @@ switch (action) {
     break;
   case "install":
     installExtension();
+    break;
+  case "check":
+    runCheck();
     break;
   case "web":
     openUrl(WEB_HOME);

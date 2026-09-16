@@ -1,13 +1,12 @@
 # 命令行
 
-普通人请用仓库根目录的：
-
 ```bash
-./molan
+./molan              # 打开本机网页
 ./molan 试读
 ./molan 安装
+./molan 检查         # 验收 AI / 自己的改动
 ./molan 网上
 ./molan 帮助
 ```
 
-实现在 [`bin/molan.mjs`](../bin/molan.mjs)。贡献者自检仍用 `npm run check`。
+给人看的两步说明在官网 [`/docs/`](../../site/docs/index.html) 与 [`docs/ai/START.md`](../ai/START.md)。

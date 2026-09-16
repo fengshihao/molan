@@ -3,66 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>文档 · 墨览</title>
-  <meta name="description" content="墨览文档：用户说明与面向 AI 的贡献契约。" />
+  <title>开始贡献 · 墨览</title>
+  <meta name="description" content="一句话让 AI 改墨览，再用 ./molan 检查验收。" />
   <link rel="icon" type="image/png" href="../assets/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/site.css" />
   <style>
-    .doc-list { list-style: none; padding: 0; margin: 1.5rem 0 0; max-width: 36rem; }
-    .doc-list li { margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--hairline); }
-    .doc-list a { color: var(--paper); font-size: 1.1rem; text-decoration: none; }
-    .doc-list a:hover { color: var(--accent); }
-    .doc-list span { display: block; margin-top: 0.25rem; color: var(--fog-dim); font-size: 0.92rem; }
+    .steps { max-width: 40rem; }
+    .steps h3 { margin-top: 2.5rem; }
+    .steps pre {
+      margin: 0.85rem 0 0;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: var(--fog);
+      background: var(--ink-deep);
+      border-radius: 2px;
+      white-space: pre-wrap;
+    }
+    .steps .hint { color: var(--fog-dim); margin: 0.6rem 0 0; }
+    .steps ol { margin: 0.75rem 0 0; padding-left: 1.2rem; color: var(--fog-dim); }
+    .steps ol li { margin: 0.35rem 0; }
   </style>
 </head>
 <body>
   <div class="frame">
     <header class="top">
-      <a class="brand-mark is-quiet" href="../">墨<span>览</span><em>molan</em></a>
+      <a class="brand-mark" href="../" aria-label="墨览 molan">墨<span>览</span><em>molan</em></a>
       <nav aria-label="主导航">
         <a href="../try/">试读</a>
-        <a href="./">文档</a>
+        <a href="./">贡献</a>
         <a href="https://github.com/fengshihao/molan">GitHub</a>
       </nav>
     </header>
 
-    <section class="section" style="border-top: none; padding-top: 3rem;">
-      <h3>文档</h3>
-      <p>用户说明在下面；贡献请优先走「给 AI」入口。</p>
-      <p style="margin:1.25rem 0 0;max-width:36rem;color:var(--fog-dim)">本地一键体验：克隆仓库后运行 <code class="install-id" style="margin:0.5rem 0;display:inline-block">./molan</code>，会自动打开网页。试读用 <code>./molan 试读</code>，装扩展用 <code>./molan 安装</code>。</p>
-      <ul class="doc-list">
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/README.md#%E6%9C%AC%E5%9C%B0%E4%B8%80%E9%94%AE%E4%BD%93%E9%AA%8C">本地一键体验</a>
-          <span>命令是 <code>./molan</code>，详见 README。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md">给 AI：一句话开工</a>
-          <span>复制 START.md 里的提示词，即可按规矩贡献。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/AGENTS.md">AGENTS.md</a>
-          <span>机器契约总闸。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/docs/user/extension.md">扩展使用</a>
-          <span>Cursor / VS Code 安装与打开方式。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/docs/user/studio.md">浏览器工作室</a>
-          <span>本地文件夹试读与写回。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/ARCHITECTURE.md">架构与真源</a>
-          <span>本仓与 DesignWeave 的关系。</span>
-        </li>
-        <li>
-          <a href="https://github.com/fengshihao/molan/blob/main/CONTRIBUTING.md">贡献指南</a>
-          <span>人类摘要。</span>
-        </li>
-      </ul>
+    <section class="section steps" style="border-top: none; padding-top: 3rem;">
+      <h3>两步就够</h3>
+      <p>不用先读长文档。你出主意，AI 改代码，你负责验收。</p>
+
+      <h3>1. 一句话开工</h3>
+      <p>克隆仓库，用 Cursor（或别的 AI 编程工具）打开，把下面整段发给它——只改最后一句：</p>
+      <pre>读 AGENTS.md 和 docs/ai/START.md。我要为墨览贡献：〈一句话〉。
+改完跑 ./molan 检查，通过后再开 PR。</pre>
+      <p class="hint">例子：把首页某句文案改短；给试读页加说明；修一个错别字。</p>
+
+      <h3>2. 验收 AI 有没有做对</h3>
+      <p>在仓库目录运行：</p>
+      <pre>./molan 检查</pre>
+      <p class="hint">通过 = 规矩和站点冒烟都 OK。然后再肉眼看一眼：</p>
+      <ol>
+        <li><code>./molan</code> — 打开官网</li>
+        <li><code>./molan 试读</code> — 打开试读</li>
+      </ol>
+      <p class="hint">装编辑器扩展：<code>./molan 安装</code>。更多用法：<code>./molan 帮助</code>。</p>
+
+      <h3 style="font-size:1.25rem;margin-top:3rem">给 AI 的细则（人一般不用点）</h3>
+      <p class="hint">
+        <a href="https://github.com/fengshihao/molan/blob/main/AGENTS.md">AGENTS.md</a>
+        · <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md">START.md</a>
+        · <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/CHECKLIST.md">CHECKLIST.md</a>
+      </p>
     </section>
 
     <footer class="foot">

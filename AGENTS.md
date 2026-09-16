@@ -36,13 +36,16 @@
 ## 检查命令
 
 ```bash
-./molan           # 一键打开本机官网（也可用：试读 / 安装 / 网上 / 帮助）
-npm run check     # check-pr + smoke-site（给贡献者 / AI）
-npm run smoke     # 仅站点冒烟
+./molan           # 打开本机官网
+./molan 试读      # 试读
+./molan 安装      # 安装扩展
+./molan 检查      # 验收改动（贡献者 / AI 必跑）
+./molan 网上      # 打开网上主页
+./molan 帮助
 npm run sync -- --dw <DesignWeave路径>   # 维护者：刷新 try 镜像
 ```
 
-CI 与本地使用同一套检查脚本；本地不过则不要推。
+`./molan 检查` 与 CI 同源；不过则不要推。
 
 ## Commit / PR 约定
 
