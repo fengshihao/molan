@@ -70,12 +70,13 @@ img {
   margin-inline: auto;
 }
 
-/* nav: quiet */
+/* top: brand is the hero signal; nav stays quiet */
 .top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 1.25rem 0 0.5rem;
+  gap: 1.5rem;
+  padding: 1.75rem 0 0;
   font-size: 0.92rem;
   color: var(--fog-dim);
 }
@@ -83,21 +84,24 @@ img {
 .top nav {
   display: flex;
   gap: 1.25rem;
+  padding-top: 0.55rem;
+  flex-shrink: 0;
 }
 
-.top a {
+.top nav a {
   text-decoration: none;
   transition: color 0.25s var(--ease);
 }
-.top a:hover {
+.top nav a:hover {
   color: var(--paper);
 }
 
 .brand-mark {
   font-family: var(--serif);
-  font-size: 1.35rem;
+  font-size: clamp(3.2rem, 8vw, 5.2rem);
   font-weight: 400;
-  letter-spacing: 0.04em;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
   color: var(--paper);
   text-decoration: none;
 }
@@ -105,16 +109,31 @@ img {
   color: var(--accent);
 }
 .brand-mark em {
+  display: block;
+  margin-top: 0.35rem;
   font-style: italic;
-  font-size: 0.72em;
-  margin-left: 0.35em;
+  font-size: 0.38em;
+  letter-spacing: 0.12em;
   color: var(--fog-dim);
   font-family: var(--serif);
 }
 
+/* secondary pages: quiet wordmark in the bar */
+.brand-mark.is-quiet {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+.brand-mark.is-quiet em {
+  display: inline;
+  margin: 0 0 0 0.35em;
+  font-size: 0.72em;
+  letter-spacing: 0.04em;
+}
+
 /* hero: one composition */
 .hero {
-  min-height: calc(100vh - 4.5rem);
+  min-height: calc(100vh - 7.5rem);
   display: grid;
   grid-template-rows: auto 1fr;
   padding-bottom: 2rem;
@@ -133,29 +152,8 @@ img {
 }
 
 .hero-copy {
-  padding: 12vh 0 2.5rem;
+  padding: 1.75rem 0 2.5rem;
   max-width: 36rem;
-}
-
-.hero-brand {
-  margin: 0 0 1.25rem;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(3.2rem, 8vw, 5.2rem);
-  line-height: 0.95;
-  letter-spacing: 0.02em;
-  color: var(--paper);
-}
-.hero-brand span {
-  color: var(--accent);
-}
-.hero-brand .latin {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.38em;
-  font-style: italic;
-  letter-spacing: 0.12em;
-  color: var(--fog-dim);
 }
 
 .hero h2 {
@@ -345,9 +343,16 @@ img {
 
 @media (max-width: 640px) {
   .hero-copy {
-    padding-top: 8vh;
+    padding-top: 1.25rem;
+  }
+  .top {
+    flex-wrap: wrap;
   }
   .top nav {
     gap: 0.85rem;
+    width: 100%;
+    padding-top: 0;
+    order: -1;
+    justify-content: flex-end;
   }
 }
