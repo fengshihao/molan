@@ -23,20 +23,24 @@ Open to read. Click to edit.
 扩展 ID：fengshihao.molan-markdown
 ```
 
-## 本地一键预览
+## 本地一键体验
 
-克隆后只需一条命令：
+克隆后，在仓库目录里：
 
 ```bash
-git clone https://github.com/fengshihao/molan.git
-cd molan
-npm run serve
+./molan
 ```
 
-浏览器打开 [http://127.0.0.1:4173/](http://127.0.0.1:4173/)（试读：`/try/`，文档：`/docs/`）。
+会启动本机预览并自动打开浏览器。
 
-改完想自检再跑：`npm run check`。  
-刷新试读镜像（需本机有 DesignWeave）：`npm run sync -- --dw ../DesignWeave`。
+```bash
+./molan 试读      # 打开试读工作室
+./molan 安装      # 安装 Cursor / VS Code 扩展
+./molan 网上      # 打开网上主页
+./molan 帮助
+```
+
+Windows 可用：`node bin/molan.mjs` 或 `npm run molan`。
 
 ## 用一句话开始贡献
 

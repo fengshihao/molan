@@ -36,13 +36,13 @@
 ## 检查命令
 
 ```bash
-npm run serve    # 一键本地预览官网 + 试读 → http://127.0.0.1:4173/
-npm run check    # check-pr + smoke-site
-npm run smoke    # 仅站点冒烟
+./molan           # 一键打开本机官网（也可用：试读 / 安装 / 网上 / 帮助）
+npm run check     # check-pr + smoke-site（给贡献者 / AI）
+npm run smoke     # 仅站点冒烟
 npm run sync -- --dw <DesignWeave路径>   # 维护者：刷新 try 镜像
 ```
 
-CI 与本地使用同一套脚本；本地不过则不要推。
+CI 与本地使用同一套检查脚本；本地不过则不要推。
 
 ## Commit / PR 约定
 

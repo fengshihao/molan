@@ -4,7 +4,7 @@
 
 ## 最快路径
 
-1. 本地预览：`npm run serve` → [http://127.0.0.1:4173/](http://127.0.0.1:4173/)
+1. 本地体验：`./molan`（自动打开网页）
 2. 打开 [`docs/ai/START.md`](docs/ai/START.md)，复制「开工白」
 3. 把最后一句换成你的意图
 4. 让 AI 跑 `npm run check` 并开 PR
