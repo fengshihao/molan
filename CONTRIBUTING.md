@@ -4,9 +4,10 @@
 
 ## 最快路径
 
-1. 打开 [`docs/ai/START.md`](docs/ai/START.md)，复制「开工白」
-2. 把最后一句换成你的意图
-3. 让 AI 跑 `npm run check` 并开 PR
+1. 本地预览：`npm run serve` → [http://127.0.0.1:4173/](http://127.0.0.1:4173/)
+2. 打开 [`docs/ai/START.md`](docs/ai/START.md)，复制「开工白」
+3. 把最后一句换成你的意图
+4. 让 AI 跑 `npm run check` 并开 PR
 
 人类若手改：同样遵守 [`AGENTS.md`](AGENTS.md) 与 [`docs/ai/CHECKLIST.md`](docs/ai/CHECKLIST.md)。
 

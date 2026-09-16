@@ -36,6 +36,7 @@
 ## 检查命令
 
 ```bash
+npm run serve    # 一键本地预览官网 + 试读 → http://127.0.0.1:4173/
 npm run check    # check-pr + smoke-site
 npm run smoke    # 仅站点冒烟
 npm run sync -- --dw <DesignWeave路径>   # 维护者：刷新 try 镜像

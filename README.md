@@ -23,6 +23,21 @@ Open to read. Click to edit.
 扩展 ID：fengshihao.molan-markdown
 ```
 
+## 本地一键预览
+
+克隆后只需一条命令：
+
+```bash
+git clone https://github.com/fengshihao/molan.git
+cd molan
+npm run serve
+```
+
+浏览器打开 [http://127.0.0.1:4173/](http://127.0.0.1:4173/)（试读：`/try/`，文档：`/docs/`）。
+
+改完想自检再跑：`npm run check`。  
+刷新试读镜像（需本机有 DesignWeave）：`npm run sync -- --dw ../DesignWeave`。
+
 ## 用一句话开始贡献
 
 把下面整段复制给 Cursor / Claude / Codex（把括号里换成你的意图）：
@@ -41,17 +56,6 @@ Open to read. Click to edit.
 编辑器内核与扩展的**代码真源**仍在 [DesignWeave](https://github.com/fengshihao/DesignWeave)（`packages/molan-*`、`apps/vscode-molan`、`tools/markdown-viewer`）。本仓通过 `npm run sync` 镜像试读资产。完整迁码是二期。
 
 关系说明：[`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md)。
-
-## 本地
-
-```bash
-git clone https://github.com/fengshihao/molan.git
-cd molan
-npm run check          # PR 规矩 + 站点冒烟
-npm run serve          # http://127.0.0.1:4173/
-# 若本机有 DesignWeave 并列目录：
-npm run sync -- --dw ../DesignWeave
-```
 
 ## 能力速览
 
