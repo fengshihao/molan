@@ -13,7 +13,7 @@
     "test": "node ../../scripts/run-ts-tests.mjs"
   },
   "dependencies": {
-    "@molan/protocol": "file:../molan-protocol",
+    "@molan/protocol": "workspace:*",
     "vditor": "3.10.9"
   },
   "devDependencies": {

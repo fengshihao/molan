@@ -17,11 +17,11 @@ importers:
   apps/vscode-molan:
     dependencies:
       '@molan/host':
-        specifier: file:../../packages/molan-host
-        version: file:packages/molan-host
+        specifier: workspace:*
+        version: link:../../packages/molan-host
       '@molan/protocol':
-        specifier: file:../../packages/molan-protocol
-        version: file:packages/molan-protocol
+        specifier: workspace:*
+        version: link:../../packages/molan-protocol
       vditor:
         specifier: 3.10.9
         version: 3.10.9
@@ -42,8 +42,8 @@ importers:
   packages/molan-core:
     dependencies:
       '@molan/protocol':
-        specifier: file:../molan-protocol
-        version: file:packages/molan-protocol
+        specifier: workspace:*
+        version: link:../molan-protocol
       vditor:
         specifier: 3.10.9
         version: 3.10.9
@@ -58,8 +58,8 @@ importers:
   packages/molan-host:
     dependencies:
       '@molan/protocol':
-        specifier: file:../molan-protocol
-        version: file:packages/molan-protocol
+        specifier: workspace:*
+        version: link:../molan-protocol
       zod:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1414,19 +1414,4 @@ packages:
 
   /zod@4.0.0:
     resolution: {integrity: sha512-9diLdTPc/L7w/5jI4C3gHYNiGHDV9IZYxo1e5LSD8cabi65WVTWWb+g2BGPEpUUCOxR4D+6O5B0AzyMdUAXwrw==}
-    dev: false
-
-  file:packages/molan-host:
-    resolution: {directory: packages/molan-host, type: directory}
-    name: '@molan/host'
-    dependencies:
-      '@molan/protocol': file:packages/molan-protocol
-      zod: 4.0.0
-    dev: false
-
-  file:packages/molan-protocol:
-    resolution: {directory: packages/molan-protocol, type: directory}
-    name: '@molan/protocol'
-    dependencies:
-      zod: 4.0.0
     dev: false

@@ -31,10 +31,13 @@ jobs:
           name: molan-markdown-vsix
           path: apps/vscode-molan/molan-markdown-*.vsix
       - name: Publish Open VSX
-        if: ${{ secrets.OVSX_PAT != '' }}
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
+          if [ -z "${OVSX_PAT}" ]; then
+            echo "OVSX_PAT not set; skip Open VSX publish."
+            exit 0
+          fi
           VSIX="$(ls -t apps/vscode-molan/molan-markdown-*.vsix | head -n 1)"
           npx --yes ovsx publish "$VSIX" -p "$OVSX_PAT"
       - name: Reminder

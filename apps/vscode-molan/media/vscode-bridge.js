@@ -11144,7 +11144,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   // ../../node_modules/.pnpm/zod@4.0.0/node_modules/zod/v4/classic/external.js
   config(en_default());
 
-  // ../../node_modules/.pnpm/file+packages+molan-protocol/node_modules/@molan/protocol/dist/run.js
+  // ../molan-protocol/dist/run.js
   var AGUI_EVENT_TYPES = [
     "RUN_STARTED",
     "TEXT_MESSAGE_START",
@@ -11177,7 +11177,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   });
   var AGUI_TYPE_SET = new Set(AGUI_EVENT_TYPES);
 
-  // ../../node_modules/.pnpm/file+packages+molan-protocol/node_modules/@molan/protocol/dist/index.js
+  // ../molan-protocol/dist/index.js
   var MolanThemeSchema = external_exports.enum(["night", "hack", "rose", "xuan"]);
   var MolanStateSchema = external_exports.object({
     value: external_exports.string(),

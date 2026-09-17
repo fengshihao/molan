@@ -158,8 +158,8 @@
     "publish": "pnpm compile && npx --yes @vscode/vsce publish --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://molan.guoyoutech.cn"
   },
   "dependencies": {
-    "@molan/host": "file:../../packages/molan-host",
-    "@molan/protocol": "file:../../packages/molan-protocol",
+    "@molan/host": "workspace:*",
+    "@molan/protocol": "workspace:*",
     "vditor": "3.10.9",
     "zod": "^4.0.0"
   },
