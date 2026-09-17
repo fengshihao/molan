@@ -1,73 +1,115 @@
-# 墨览 · molan
-
 <p align="center">
-  <img src="site/assets/favicon.png" alt="molan" width="72" height="72" />
+  <img src="site/assets/favicon.png" alt="molan" width="88" height="88" />
 </p>
+
+<h1 align="center">墨览 · molan</h1>
 
 <p align="center">
   <strong>打开即阅读，要点再编辑。</strong><br />
-  Open to read. Click to edit.
+  <em>Open to read. Click to edit.</em>
 </p>
 
 <p align="center">
-  <a href="https://fengshihao.github.io/molan/"><img src="https://img.shields.io/badge/website-GitHub%20Pages-1E2A24?style=flat-square" alt="Website" /></a>
-  <a href="https://fengshihao.github.io/molan/try/"><img src="https://img.shields.io/badge/try-studio-7EB89A?style=flat-square" alt="Try studio" /></a>
-  <a href="https://open-vsx.org/extension/fengshihao/molan-markdown"><img src="https://img.shields.io/badge/Open%20VSX-molan--markdown-444?style=flat-square" alt="Open VSX" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-8A9A90?style=flat-square" alt="MIT" /></a>
+  Open-source Markdown on paper — browser studio, Cursor / VS Code extension,<br />
+  and a shared editor core for the DesignWeave workbench.
 </p>
 
 <p align="center">
-  <img src="site/assets/intro.gif" alt="墨览：打开即阅读，要点再编辑" width="720" />
+  <a href="https://fengshihao.github.io/molan/"><img alt="Website" src="https://img.shields.io/badge/Website-fengshihao.github.io%2Fmolan-1E2A24?style=for-the-badge&labelColor=141C18" /></a>
+  <a href="https://fengshihao.github.io/molan/try/"><img alt="Try" src="https://img.shields.io/badge/Try-Studio-7EB89A?style=for-the-badge&labelColor=141C18" /></a>
+  <a href="https://open-vsx.org/extension/fengshihao/molan-markdown"><img alt="Open VSX" src="https://img.shields.io/badge/Open%20VSX-molan--markdown-3D4A42?style=for-the-badge&labelColor=141C18" /></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-8A9A90?style=for-the-badge&labelColor=141C18" /></a>
 </p>
 
-开源 Markdown 纸面：浏览器工作室、Cursor / VS Code 扩展、以及 DesignWeave 工作台共用的编辑器核心。
+<p align="center">
+  <a href="https://fengshihao.github.io/molan/">官网（多语言）</a> ·
+  <a href="https://fengshihao.github.io/molan/try/">在线试读</a> ·
+  <a href="https://molan.guoyoutech.cn/">正式站</a> ·
+  <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Marketplace</a>
+</p>
 
-**官网（可切换简中 / 繁中 / English / 日本語 / 한국어）** → https://fengshihao.github.io/molan/
+<p align="center">
+  <img src="site/assets/intro.gif" alt="墨览：打开即阅读，要点再编辑" width="760" />
+</p>
 
-## 立刻用
+---
+
+## Why molan
+
+| | |
+| --- | --- |
+| **先读后改** | 默认预览；要点处再进入编辑，不必一打开就面对源码墙 |
+| **纸面气质** | 宣纸 / 墨夜 / 终端等多种纸面，为长时间阅读设计 |
+| **同一套核心** | 浏览器工作室与 Cursor / VS Code 扩展共用编辑体验 |
+| **面向 AI 贡献** | 官网可复制一句提示，让 AI 自己准备环境并开 PR |
+
+扩展 ID：`fengshihao.molan-markdown`
+
+---
+
+## Quick start
 
 ```bash
 git clone https://github.com/fengshihao/molan.git
 cd molan
 pnpm install
 pnpm build
-./molan              # local site
+./molan              # local homepage
 ./molan try          # studio
 ./molan install      # marketplace extension
 ./molan help
 ```
 
-网上试读：[GitHub Pages](https://fengshihao.github.io/molan/try/) · [molan.guoyoutech.cn](https://molan.guoyoutech.cn/)  
-扩展：`fengshihao.molan-markdown`
+| Command | Purpose |
+| --- | --- |
+| `./molan` | Open local site |
+| `./molan try` | Open studio |
+| `./molan docs` | Contribute guide |
+| `./molan check` | Acceptance checks (required before PR) |
+| `./molan e2e` | Studio browser e2e (auto Chromium) |
 
-## 仓库结构
+---
+
+## Repository
 
 ```text
 packages/molan-protocol   @molan/protocol
 packages/molan-core       @molan/core
 packages/molan-host       @molan/host
-apps/studio               浏览器工作室
-apps/vscode-molan         VS Code / Cursor 扩展
-site/                     官网（Pages）
+apps/studio               Browser studio
+apps/vscode-molan         VS Code / Cursor extension
+site/                     Website (GitHub Pages)
 ```
 
-## 用 AI 贡献
+---
 
-见 https://fengshihao.github.io/molan/docs/ — 复制准备环境提示发给 AI，再说你想改什么；验收：`./molan check`（改工作室/编辑器再加 `./molan e2e`）。
+## Contribute with AI
 
-## 发版（维护者）
+1. Open https://fengshihao.github.io/molan/docs/ and copy the setup prompt into Cursor (or another coding agent).
+2. Tell the agent what to change — one thing per PR.
+3. Require `./molan check` (and `./molan e2e` when editing studio / editor UI).
+
+Machine contract: [`AGENTS.md`](AGENTS.md) · [`docs/ai/START.md`](docs/ai/START.md)
+
+---
+
+## Release (maintainers)
 
 ```bash
-./molan package          # .vsix
-./molan publish          # Open VSX（需 OVSX_PAT）
+./molan package          # build .vsix
+./molan publish          # Open VSX (needs OVSX_PAT)
 ```
 
-GitHub Actions：打 `v*` tag 或手动跑 `Publish extension`；Secrets 里配置 `OVSX_PAT`（不要把 token 写进仓库）。VS Marketplace 可继续人工上传 artifact。
+GitHub Actions: tag `v*` or run **Publish extension**. Configure `OVSX_PAT` in repo secrets (never commit tokens). VS Marketplace can still upload artifacts manually.
+
+---
 
 ## DesignWeave
 
-工作台并列 clone 本仓，用 `file:../molan` 依赖。详见 [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md)。
+Clone this repo beside DesignWeave and depend via `file:../molan`. See [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md).
 
-## 许可
+---
 
-[MIT](LICENSE)
+## License
+
+[MIT](LICENSE) · © molan contributors
