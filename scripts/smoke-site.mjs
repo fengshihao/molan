@@ -24,10 +24,10 @@ function mustContain(rel, needles) {
   }
 }
 
-mustContain("index.html", ["墨览", "./try/", "fengshihao.molan-markdown", "hero", "site-i18n.js", "siteLang"]);
-mustContain("docs/index.html", ["START.md", "AGENTS.md", "./molan check", "site-i18n.js", "siteLang"]);
-mustContain("js/site-i18n.js", ["molan-lang", "English", "日本語"]);
-mustContain("css/site.css", ["--ink", "Instrument Serif", ".hero", ".lang-switch"]);
+mustContain("index.html", ["墨览", "./try/", "fengshihao.molan-markdown", "hero", "site-i18n.js", "siteLang", "mark-icon", "lang-switch"]);
+mustContain("docs/index.html", ["START.md", "AGENTS.md", "./molan check", "site-i18n.js", "siteLang", "mark-icon"]);
+mustContain("js/site-i18n.js", ["molan-lang", "English", "日本語", "storeOvsxHint"]);
+mustContain("css/site.css", ["--ink", "Instrument Serif", ".hero", ".lang-switch", ".shell-top", ".mark-icon"]);
 
 if (!fs.existsSync(path.join(site, "try/index.html"))) {
   errors.push("try/index.html missing");

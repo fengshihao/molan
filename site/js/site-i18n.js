@@ -39,6 +39,9 @@
       linkOvsx: "Open VSX（Cursor）",
       linkMarketplace: "VS Code Marketplace",
       linkFormal: "正式站 molan.guoyoutech.cn",
+      storeOvsxHint: "Cursor 用户首选商店",
+      storeVsHint: "Visual Studio Code 扩展",
+      storeFormalHint: "完整工作室与教程",
       aiTitle: "用 AI 成为贡献者",
       aiBody:
         "先复制下面这段发给 Cursor，让它准备好环境；再说你想改什么。克隆、读说明、改代码都交给它。",
@@ -95,6 +98,9 @@
       linkOvsx: "Open VSX（Cursor）",
       linkMarketplace: "VS Code Marketplace",
       linkFormal: "正式站 molan.guoyoutech.cn",
+      storeOvsxHint: "Cursor 使用者首選商店",
+      storeVsHint: "Visual Studio Code 擴充功能",
+      storeFormalHint: "完整工作室與教程",
       aiTitle: "用 AI 成為貢獻者",
       aiBody:
         "先複製下面這段發給 Cursor，讓它準備好環境；再說你想改什麼。複製、讀說明、改程式都交給它。",
@@ -150,6 +156,9 @@
       linkOvsx: "Open VSX (Cursor)",
       linkMarketplace: "VS Code Marketplace",
       linkFormal: "Formal site molan.guoyoutech.cn",
+      storeOvsxHint: "Preferred store for Cursor",
+      storeVsHint: "Visual Studio Code extension",
+      storeFormalHint: "Full studio and guides",
       aiTitle: "Contribute with AI",
       aiBody:
         "Copy the prompt below into Cursor to set up the repo. Then tell it what you want to change — cloning, docs, and code can stay with the AI.",
@@ -205,6 +214,9 @@
       linkOvsx: "Open VSX（Cursor）",
       linkMarketplace: "VS Code Marketplace",
       linkFormal: "正式サイト molan.guoyoutech.cn",
+      storeOvsxHint: "Cursor 向けのストア",
+      storeVsHint: "Visual Studio Code 拡張",
+      storeFormalHint: "フルスタジオとガイド",
       aiTitle: "AI と一緒に貢献",
       aiBody:
         "下の文を Cursor に貼って環境を用意してもらい、次に変えたいことを伝えてください。クローンや説明・コードは AI に任せられます。",
@@ -260,6 +272,9 @@
       linkOvsx: "Open VSX (Cursor)",
       linkMarketplace: "VS Code Marketplace",
       linkFormal: "공식 사이트 molan.guoyoutech.cn",
+      storeOvsxHint: "Cursor 권장 스토어",
+      storeVsHint: "Visual Studio Code 확장",
+      storeFormalHint: "전체 스튜디오와 가이드",
       aiTitle: "AI와 함께 기여",
       aiBody:
         "아래 문장을 Cursor에 붙여 환경을 준비시킨 뒤, 바꾸고 싶은 것을 말하세요. 클론·문서·코드는 AI에게 맡겨도 됩니다.",
