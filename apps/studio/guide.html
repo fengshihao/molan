@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="guideTitle" data-i18n-desc="guideDescription">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -210,82 +210,134 @@
       color: var(--ink-muted);
       font-size: 0.9rem;
     }
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      margin-left: auto;
+    }
+    .lang-switch select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid var(--hairline);
+      background: var(--paper-lift)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238a8276' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
+        no-repeat right 0.55rem center / 10px;
+      color: var(--ink-soft);
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      padding: 0.3rem 1.55rem 0.3rem 0.55rem;
+      border-radius: 999px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .lang-switch select:hover,
+    .lang-switch select:focus {
+      border-color: rgba(212, 119, 59, 0.5);
+      outline: none;
+    }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     @media (max-width: 720px) {
       .themes { grid-template-columns: 1fr; }
-      .eyebrow { flex-direction: column; gap: 6px; }
+      .eyebrow { flex-direction: column; gap: 6px; align-items: flex-start; }
+      .lang-switch { margin-left: 0; }
     }
   </style>
+  <script>
+    (function () {
+      try {
+        var l = localStorage.getItem("molan-lang");
+        if (l === "zh") document.documentElement.lang = "zh-CN";
+        else if (l === "zh-Hant") document.documentElement.lang = "zh-TW";
+        else if (l) document.documentElement.lang = l;
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <main class="wrap">
     <p class="eyebrow">
-      <a href="./">墨览工作室</a>
-      <a href="./extension.html">Cursor / VS Code 扩展</a>
+      <a href="./" data-i18n="guideEyebrowStudio">墨览工作室</a>
+      <a href="./extension.html" data-i18n="guideEyebrowExt">Cursor / VS Code 扩展</a>
+      <label class="lang-switch">
+        <span class="visually-hidden" data-i18n="langAria">界面语言</span>
+        <select id="siteLang" data-i18n-aria="langAria" aria-label="界面语言"></select>
+      </label>
     </p>
     <h1 class="brand">墨<span>览</span> <em>studio guide</em></h1>
-    <p class="lede">
+    <p class="lede" data-i18n-html="guideLedeHtml">
       在浏览器里打开本地 Markdown：<strong>先阅读，要点再编辑</strong>。
       四种纸面随时换；Chrome / Edge 可以把改动写回原文件。
     </p>
     <div class="cta-row">
-      <a class="cta primary" href="./?demo=1">打开工作室并试读示例</a>
-      <a class="cta" href="./extension.html">安装编辑器扩展</a>
+      <a class="cta primary" href="./?demo=1" data-i18n="guideCtaOpen">打开工作室并试读示例</a>
+      <a class="cta" href="./extension.html" data-i18n="guideCtaExt">安装编辑器扩展</a>
     </div>
-    <img class="hero" src="./studio-intro.gif" width="1280" height="800" alt="墨览工作室：打开样例、切换纸面、编辑标题代码与表格" />
+    <img class="hero" src="./studio-intro.gif" width="1280" height="800" data-i18n-alt="guideHeroAlt" alt="墨览工作室：打开样例、切换纸面、编辑标题代码与表格" />
 
-    <h2><span class="n">01</span>打开</h2>
-    <p>打开 <a href="./">molan.guoyoutech.cn</a> 就是工作室。左侧是目录，右侧是纸面。第一次可以直接点侧栏里的样例文档，不必立刻授权本地文件夹。</p>
-    <img class="shot" src="./shots/welcome.jpg" width="1440" height="900" alt="墨览开卷页，侧栏有一份样例文档" />
-    <p class="cap">开卷。红印是「打开文件夹」，左侧列出内置样例。</p>
-    <div class="note">
+    <h2><span class="n">01</span><span data-i18n="guideH01">打开</span></h2>
+    <p data-i18n-html="guideP01Html">打开 <a href="./">molan.guoyoutech.cn</a> 就是工作室。左侧是目录，右侧是纸面。第一次可以直接点侧栏里的样例文档，不必立刻授权本地文件夹。</p>
+    <img class="shot" src="./shots/welcome.jpg" width="1440" height="900" data-i18n-alt="guideWelcomeAlt" alt="墨览开卷页，侧栏有一份样例文档" />
+    <p class="cap" data-i18n="guideCap01">开卷。红印是「打开文件夹」，左侧列出内置样例。</p>
+    <div class="note" data-i18n="guideNote01">
       要用自己的文档：点「打开文件夹」，选择本机目录。Chrome 与 Edge 支持写回原文件；其他浏览器仍可阅读、编辑，保存时会下载一份 Markdown。
     </div>
 
-    <h2><span class="n">02</span>先阅读</h2>
-    <p>文档默认是<strong>预览</strong>。表格、流程图、公式都在纸面上排好。没有改动就关掉，不会弹出保存。</p>
-    <img class="shot" src="./shots/preview-night.jpg" width="1440" height="900" alt="墨夜纸面预览：流程图与分层表格" />
-    <p class="cap">墨夜是默认纸面。顶栏放大镜可在正文里查找；流程图可点进去放大观看。</p>
+    <h2><span class="n">02</span><span data-i18n="guideH02">先阅读</span></h2>
+    <p data-i18n-html="guideP02Html">文档默认是<strong>预览</strong>。表格、流程图、公式都在纸面上排好。没有改动就关掉，不会弹出保存。</p>
+    <img class="shot" src="./shots/preview-night.jpg" width="1440" height="900" data-i18n-alt="guidePreviewAlt" alt="墨夜纸面预览：流程图与分层表格" />
+    <p class="cap" data-i18n="guideCap02">墨夜是默认纸面。顶栏放大镜可在正文里查找；流程图可点进去放大观看。</p>
 
-    <h2><span class="n">03</span>换纸面</h2>
-    <p>点左上角齿轮，打开「纸面」。四种都是给长时间阅读用的，不是简单的亮/暗开关。</p>
+    <h2><span class="n">03</span><span data-i18n="guideH03">换纸面</span></h2>
+    <p data-i18n="guideP03">点左上角齿轮，打开「纸面」。四种都是给长时间阅读用的，不是简单的亮/暗开关。</p>
     <div class="themes">
       <figure class="theme-card">
-        <img src="./shots/preview-xuan.jpg" alt="宣纸：暖色纸面" />
-        <figcaption><strong>宣纸</strong>暖色纸面，白天写字。</figcaption>
+        <img src="./shots/preview-xuan.jpg" data-i18n-alt="themeXuanAlt" alt="宣纸：暖色纸面" />
+        <figcaption data-i18n-html="themeXuanCapHtml"><strong>宣纸</strong>暖色纸面，白天写字。</figcaption>
       </figure>
       <figure class="theme-card">
-        <img src="./shots/preview-night.jpg" alt="墨夜：暗色夜读" />
-        <figcaption><strong>墨夜</strong>默认。油灯金，夜里读。</figcaption>
+        <img src="./shots/preview-night.jpg" data-i18n-alt="themeNightAlt" alt="墨夜：暗色夜读" />
+        <figcaption data-i18n-html="themeNightCapHtml"><strong>墨夜</strong>默认。油灯金，夜里读。</figcaption>
       </figure>
       <figure class="theme-card">
-        <img src="./shots/preview-hack.jpg" alt="终端：磷光绿" />
-        <figcaption><strong>终端</strong>磷光绿，给写代码的人。</figcaption>
+        <img src="./shots/preview-hack.jpg" data-i18n-alt="themeHackAlt" alt="终端：磷光绿" />
+        <figcaption data-i18n-html="themeHackCapHtml"><strong>终端</strong>磷光绿，给写代码的人。</figcaption>
       </figure>
       <figure class="theme-card">
-        <img src="./shots/preview-rose.jpg" alt="胭脂：柔粉衬线" />
-        <figcaption><strong>胭脂</strong>柔粉衬线，长文更耐看。</figcaption>
+        <img src="./shots/preview-rose.jpg" data-i18n-alt="themeRoseAlt" alt="胭脂：柔粉衬线" />
+        <figcaption data-i18n-html="themeRoseCapHtml"><strong>胭脂</strong>柔粉衬线，长文更耐看。</figcaption>
       </figure>
     </div>
-    <img class="shot" src="./shots/prefs.jpg" width="1440" height="900" alt="侧栏配置：纸面、语言、扩展安装" />
-    <p class="cap">同一菜单里也可以换界面语言，或一键去安装 VS Code / Cursor 扩展。</p>
+    <img class="shot" src="./shots/prefs.jpg" width="1440" height="900" data-i18n-alt="guidePrefsAlt" alt="侧栏配置：纸面、语言、扩展安装" />
+    <p class="cap" data-i18n="guideCap03">同一菜单里也可以换界面语言，或一键去安装 VS Code / Cursor 扩展。</p>
 
-    <h2><span class="n">04</span>要点再编辑</h2>
-    <p>要改字时，点顶栏铅笔进入类 Typora 的即时渲染：标题、代码、表格都在纸面上改，不必先面对一屏源码。 <kbd>Ctrl</kbd> / <kbd>Cmd</kbd> + <kbd>S</kbd> 保存。Chrome / Edge 写回原文件；兼容模式会下载。</p>
-    <img class="shot" src="./shots/edit-title.jpg" width="1440" height="900" alt="编辑标题：在纸面上把「软件架构」改成「软件架构草案」" />
-    <p class="cap">点进标题，直接改字。井号还在，但读起来仍是标题。</p>
-    <img class="shot" src="./shots/edit-code.jpg" width="1440" height="900" alt="编辑代码：展开 TypeScript 代码块并补上一行" />
-    <p class="cap">点代码块顶部展开源码，改完仍按阅读样式着色。</p>
-    <img class="shot" src="./shots/edit-table.jpg" width="1440" height="900" alt="编辑表格：在技术栈单元格里加上 Pinia" />
-    <p class="cap">表格单元格也能点进去写。点工具条表格按钮可选行列数；选中单元格后，上方会出现增删行列的操作条。再点眼睛回到预览。</p>
-    <img class="shot" src="./shots/preview-edited.jpg" width="1440" height="900" alt="回到预览：标题、代码、表格都已更新" />
-    <p class="cap">预览里就是刚写下的内容，流程图仍在纸面上。</p>
+    <h2><span class="n">04</span><span data-i18n="guideH04">要点再编辑</span></h2>
+    <p data-i18n-html="guideP04Html">要改字时，点顶栏铅笔进入类 Typora 的即时渲染：标题、代码、表格都在纸面上改，不必先面对一屏源码。 <kbd>Ctrl</kbd> / <kbd>Cmd</kbd> + <kbd>S</kbd> 保存。Chrome / Edge 写回原文件；兼容模式会下载。</p>
+    <img class="shot" src="./shots/edit-title.jpg" width="1440" height="900" data-i18n-alt="guideEditTitleAlt" alt="编辑标题：在纸面上把「软件架构」改成「软件架构草案」" />
+    <p class="cap" data-i18n="guideCap04a">点进标题，直接改字。井号还在，但读起来仍是标题。</p>
+    <img class="shot" src="./shots/edit-code.jpg" width="1440" height="900" data-i18n-alt="guideEditCodeAlt" alt="编辑代码：展开 TypeScript 代码块并补上一行" />
+    <p class="cap" data-i18n="guideCap04b">点代码块顶部展开源码，改完仍按阅读样式着色。</p>
+    <img class="shot" src="./shots/edit-table.jpg" width="1440" height="900" data-i18n-alt="guideEditTableAlt" alt="编辑表格：在技术栈单元格里加上 Pinia" />
+    <p class="cap" data-i18n="guideCap04c">表格单元格也能点进去写。点工具条表格按钮可选行列数；选中单元格后，上方会出现增删行列的操作条。再点眼睛回到预览。</p>
+    <img class="shot" src="./shots/preview-edited.jpg" width="1440" height="900" data-i18n-alt="guideEditedAlt" alt="回到预览：标题、代码、表格都已更新" />
+    <p class="cap" data-i18n="guideCap04d">预览里就是刚写下的内容，流程图仍在纸面上。</p>
 
-    <h2><span class="n">05</span>也在编辑器里用</h2>
-    <p>同一套墨览可以装进 Cursor 或 VS Code：点击 <code>.md</code> 就是预览，不必先面对一屏源码。</p>
+    <h2><span class="n">05</span><span data-i18n="guideH05">也在编辑器里用</span></h2>
+    <p data-i18n-html="guideP05Html">同一套墨览可以装进 Cursor 或 VS Code：点击 <code>.md</code> 就是预览，不必先面对一屏源码。</p>
     <div class="links">
       <a href="./extension.html">
-        <small>Website</small>
-        <span>扩展介绍页 · 安装链接与动画</span>
+        <small data-i18n="guideLinkExtSmall">Website</small>
+        <span data-i18n="guideLinkExt">扩展介绍页 · 安装链接与动画</span>
       </a>
       <a href="https://open-vsx.org/extension/fengshihao/molan-markdown">
         <small>Cursor · Open VSX</small>
@@ -298,9 +350,11 @@
     </div>
 
     <footer>
-      <p>源码：<a href="https://github.com/fengshihao/DesignWeave/tree/main/tools/markdown-viewer">github.com/fengshihao/DesignWeave</a></p>
-      <p><a href="./">← 打开浏览器工作室</a></p>
+      <p><span data-i18n="guideSrcLabel">源码：</span><a href="https://github.com/fengshihao/molan">github.com/fengshihao/molan</a></p>
+      <p><a href="./" data-i18n="guideBack">← 打开浏览器工作室</a></p>
     </footer>
   </main>
+  <script src="./molan-pages-i18n.js"></script>
+  <script src="./molan-pages-i18n-studio.js"></script>
 </body>
 </html>

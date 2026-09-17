@@ -11,86 +11,77 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/site.css" />
+  <script>
+    (function () {
+      try {
+        var l = localStorage.getItem("molan-lang");
+        if (l === "zh") document.documentElement.lang = "zh-CN";
+        else if (l === "zh-Hant") document.documentElement.lang = "zh-TW";
+        else if (l) document.documentElement.lang = l;
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-  <a class="skip" href="#main">跳到正文</a>
+  <a class="skip" href="#main" data-i18n="skip">跳到正文</a>
   <div class="frame">
     <header class="top">
-      <a class="brand-mark" href="./" aria-label="墨览 molan">墨<span>览</span><em>molan</em></a>
-      <nav aria-label="主导航">
-        <a href="./try/">试读</a>
-        <a href="./docs/">贡献</a>
-        <a href="https://github.com/fengshihao/molan">GitHub</a>
-      </nav>
+      <a class="brand-mark" href="./" data-i18n-aria="brandAria" aria-label="墨览 molan">墨<span>览</span><em>molan</em></a>
+      <div class="top-end">
+        <label class="lang-switch">
+          <span class="visually-hidden" data-i18n="langAria">界面语言</span>
+          <select id="siteLang" data-i18n-aria="langAria" aria-label="界面语言"></select>
+        </label>
+        <nav data-i18n-aria="navAria" aria-label="主导航">
+          <a href="./try/" data-i18n="navTry">试读</a>
+          <a href="./docs/" data-i18n="navDocs">贡献</a>
+          <a href="https://github.com/fengshihao/molan" data-i18n="navGitHub">GitHub</a>
+        </nav>
+      </div>
     </header>
 
     <main id="main" class="hero">
       <div class="hero-copy">
-        <h2>打开即阅读，要点再编辑。</h2>
-        <p class="lede">纸面上的 Markdown。默认预览，点一下再改。浏览器工作室与 Cursor / VS Code 同一套体验。</p>
+        <h2 data-i18n="headline">打开即阅读，要点再编辑。</h2>
+        <p class="lede" data-i18n="lede">纸面上的 Markdown。默认预览，点一下再改。浏览器工作室与 Cursor / VS Code 同一套体验。</p>
         <div class="cta-row">
-          <a class="cta cta-ghost" href="./try/">立即试读</a>
-          <a class="cta cta-ghost" href="#install">安装扩展</a>
-          <a class="cta cta-ghost" href="#contribute">用 AI 改进项目</a>
+          <a class="cta cta-ghost" href="./try/" data-i18n="ctaTry">立即试读</a>
+          <a class="cta cta-ghost" href="#install" data-i18n="ctaInstall">安装扩展</a>
+          <a class="cta cta-ghost" href="#contribute" data-i18n="ctaContribute">用 AI 改进项目</a>
         </div>
       </div>
       <figure class="hero-stage">
-        <img src="./assets/intro.gif" width="960" height="540" alt="墨览：打开即阅读，要点再编辑" />
+        <img src="./assets/intro.gif" width="960" height="540" data-i18n-alt="heroAlt" alt="墨览：打开即阅读，要点再编辑" />
       </figure>
     </main>
 
     <section class="section" id="install" aria-labelledby="install-title">
-      <h3 id="install-title">装进编辑器</h3>
-      <p>在 Cursor 或 VS Code 中搜索墨览，或直接使用扩展 ID。</p>
+      <h3 id="install-title" data-i18n="installTitle">装进编辑器</h3>
+      <p data-i18n="installBody">在 Cursor 或 VS Code 中搜索墨览，或直接使用扩展 ID。</p>
       <code class="install-id">fengshihao.molan-markdown</code>
       <div class="links">
-        <a href="https://open-vsx.org/extension/fengshihao/molan-markdown">Open VSX（Cursor）</a>
-        <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Code Marketplace</a>
-        <a href="https://molan.guoyoutech.cn/">正式站 molan.guoyoutech.cn</a>
+        <a href="https://open-vsx.org/extension/fengshihao/molan-markdown" data-i18n="linkOvsx">Open VSX（Cursor）</a>
+        <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown" data-i18n="linkMarketplace">VS Code Marketplace</a>
+        <a href="https://molan.guoyoutech.cn/" data-i18n="linkFormal">正式站 molan.guoyoutech.cn</a>
       </div>
 
       <div class="ai-box" id="contribute">
-        <h4>用 AI 成为贡献者</h4>
-        <p>先复制下面这段发给 Cursor，让它准备好环境；再说你想改什么。克隆、读说明、改代码都交给它。</p>
+        <h4 data-i18n="aiTitle">用 AI 成为贡献者</h4>
+        <p data-i18n="aiBody">先复制下面这段发给 Cursor，让它准备好环境；再说你想改什么。克隆、读说明、改代码都交给它。</p>
         <div class="copy-block">
-          <pre id="home-setup-prompt">帮我准备开源项目墨览（https://github.com/fengshihao/molan）的贡献环境：请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md，需要时运行 ./molan。准备好后告诉我，我再说想贡献什么。</pre>
-          <button type="button" class="copy-btn" data-copy="home-setup-prompt">复制</button>
+          <pre id="home-setup-prompt" data-i18n="setupPrompt">帮我准备开源项目墨览（https://github.com/fengshihao/molan）的贡献环境：请你自己克隆仓库、读 AGENTS.md 和 docs/ai/START.md，需要时运行 ./molan。准备好后告诉我，我再说想贡献什么。</pre>
+          <button type="button" class="copy-btn" data-copy="home-setup-prompt" data-i18n="copy">复制</button>
         </div>
-        <p style="margin-top:0.9rem;margin-bottom:0"><a href="./docs/">贡献两步说明</a>
-          · <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md">给 AI 的完整提示</a></p>
+        <p style="margin-top:0.9rem;margin-bottom:0"><a href="./docs/" data-i18n="aiMore">贡献两步说明</a>
+          · <a href="https://github.com/fengshihao/molan/blob/main/docs/ai/START.md" data-i18n="aiFull">给 AI 的完整提示</a></p>
       </div>
     </section>
 
     <footer class="foot">
-      <div>MIT · <a href="https://github.com/fengshihao/molan">fengshihao/molan</a></div>
-      <div>开源免费 · 欢迎试读与贡献。更多见 <a href="./docs/">贡献</a>。</div>
+      <div><span data-i18n="footMit">MIT · </span><a href="https://github.com/fengshihao/molan">fengshihao/molan</a></div>
+      <div><span data-i18n="footNote">开源免费 · 欢迎试读与贡献。更多见 </span><a href="./docs/" data-i18n="footDocs">贡献</a><span data-i18n="footNoteEnd">。</span></div>
     </footer>
   </div>
-  <script>
-    document.querySelectorAll(".copy-btn").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        var el = document.getElementById(btn.getAttribute("data-copy"));
-        if (!el) return;
-        var text = el.textContent.trim();
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch (e) {
-          var ta = document.createElement("textarea");
-          ta.value = text;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand("copy");
-          ta.remove();
-        }
-        var prev = btn.textContent;
-        btn.textContent = "已复制";
-        btn.classList.add("is-done");
-        setTimeout(function () {
-          btn.textContent = prev;
-          btn.classList.remove("is-done");
-        }, 1600);
-      });
-    });
-  </script>
+  <script src="./js/site-i18n.js"></script>
 </body>
 </html>

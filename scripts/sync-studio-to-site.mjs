@@ -40,10 +40,21 @@ if (!fs.existsSync(path.join(studio, "index.html"))) {
 }
 
 console.log(`Sync from ${studio}`);
+
+// 门户文案真源在 site/js；同步前拷进 studio，供 guide / extension 与 try 使用
+for (const [fromName, toName] of [
+  ["site-i18n.js", "molan-pages-i18n.js"],
+  ["site-i18n-studio.js", "molan-pages-i18n-studio.js"],
+]) {
+  const from = path.join(root, "site/js", fromName);
+  const to = path.join(studio, toName);
+  if (fs.existsSync(from)) copyFile(from, to);
+}
+
 fs.rmSync(tryDir, { recursive: true, force: true });
 ensureDir(tryDir);
 copyDir(studio, tryDir, {
-  skip: ["node_modules", "deploy", "deploy.example", "scripts", ".DS_Store"],
+  skip: ["node_modules", "deploy", "deploy.example", "scripts", ".DS_Store", "package.json"],
 });
 
 ensureDir(assetsDir);

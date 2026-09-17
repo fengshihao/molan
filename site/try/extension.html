@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="extTitle" data-i18n-desc="extDescription">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -40,6 +40,41 @@
       max-width: 720px;
       margin: 0 auto;
       padding: 56px 28px 80px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0 0 18px;
+    }
+    .lang-switch select {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid var(--hairline);
+      background: var(--paper-lift)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238a8276' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
+        no-repeat right 0.55rem center / 10px;
+      color: var(--ink-soft);
+      font-family: var(--font-ui);
+      font-size: 0.78rem;
+      padding: 0.3rem 1.55rem 0.3rem 0.55rem;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .lang-switch select:hover,
+    .lang-switch select:focus {
+      border-color: rgba(212, 119, 59, 0.5);
+      outline: none;
+    }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .brand {
       display: flex;
@@ -121,17 +156,32 @@
       font-size: 0.92rem;
     }
   </style>
+  <script>
+    (function () {
+      try {
+        var l = localStorage.getItem("molan-lang");
+        if (l === "zh") document.documentElement.lang = "zh-CN";
+        else if (l === "zh-Hant") document.documentElement.lang = "zh-TW";
+        else if (l) document.documentElement.lang = l;
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <main class="sheet">
+    <div class="top-bar">
+      <label class="lang-switch">
+        <span class="visually-hidden" data-i18n="langAria">界面语言</span>
+        <select id="siteLang" data-i18n-aria="langAria" aria-label="界面语言"></select>
+      </label>
+    </div>
     <p class="brand">墨<span>览</span> <em>molan</em></p>
-    <p class="lede">
-      在 Cursor / VS Code 里打开 Markdown：<strong>先阅读，要点再编辑</strong>，保存写回原文件。<br />
-      Open Markdown in Cursor or VS Code: <strong>read first, click to edit</strong>, save back to the file.
+    <p class="lede" data-i18n-html="extLedeHtml">
+      在 Cursor / VS Code 里打开 Markdown：<strong>先阅读，要点再编辑</strong>，保存写回原文件。
     </p>
-    <img class="shot" src="./intro.gif" width="1280" height="800" alt="Molan: read first, click to edit" />
+    <img class="shot" src="./intro.gif" width="1280" height="800" data-i18n-alt="extShotAlt" alt="Molan: read first, click to edit" />
 
-    <h2>Installation · 安装</h2>
+    <h2 data-i18n="extInstall">安装</h2>
     <div class="install">
       <a href="https://open-vsx.org/extension/fengshihao/molan-markdown">
         <span class="where">Cursor · Open VSX</span>
@@ -144,12 +194,14 @@
     </div>
 
     <div class="meta">
-      <p>Publisher / 发布者：<strong>fengshihao</strong></p>
-      <p>Extension ID：<code>fengshihao.molan-markdown</code></p>
-      <p>Source：<a href="https://github.com/fengshihao/DesignWeave/tree/main/apps/vscode-molan">github.com/fengshihao/DesignWeave</a></p>
-      <p>Studio (browser)：<a href="https://molan.guoyoutech.cn/">molan.guoyoutech.cn</a> · <a href="./guide.html">使用教程</a></p>
+      <p><span data-i18n="extPublisher">发布者：</span><strong>fengshihao</strong></p>
+      <p><span data-i18n="extId">扩展 ID：</span><code>fengshihao.molan-markdown</code></p>
+      <p><span data-i18n="extSource">源码：</span><a href="https://github.com/fengshihao/molan">github.com/fengshihao/molan</a></p>
+      <p><span data-i18n="extStudio">浏览器工作室：</span><a href="https://molan.guoyoutech.cn/">molan.guoyoutech.cn</a> · <a href="./guide.html" data-i18n="extGuide">使用教程</a></p>
     </div>
-    <a class="back" href="./">← 打开浏览器工作室 / Open the browser studio</a>
+    <a class="back" href="./" data-i18n="extBack">← 打开浏览器工作室</a>
   </main>
+  <script src="./molan-pages-i18n.js"></script>
+  <script src="./molan-pages-i18n-studio.js"></script>
 </body>
 </html>
