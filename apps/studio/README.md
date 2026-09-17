@@ -15,9 +15,10 @@ pnpm molan            # 停旧后启动，本机 http://127.0.0.1:5500/ ，局�
 pnpm molan:stop       # 仅停止
 MOLAN_PORT=5600 pnpm molan   # 自定义端口
 MOLAN_BIND=127.0.0.1 pnpm molan   # 只允许本机访问
+./molan e2e           # 浏览器回归（自动装 Chromium / vendor，无需手配）
 ```
 
-介绍动画与教程截图（需本机 Chrome）：
+介绍动画与教程截图（需浏览器；同样走自动 Chromium）：
 
 ```bash
 MOLAN_URL=http://127.0.0.1:5500/ node apps/studio/scripts/record-studio-intro.mjs

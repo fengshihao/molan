@@ -14,14 +14,13 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { findChromePath, loadPuppeteer, requireChromePath } from "./e2e-chrome.mjs";
+import { ensureBrowser } from "./e2e-chrome.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = join(root, "..", "..");
 const shotsDir = join(root, "shots");
 const gifPath = join(root, "studio-intro.gif");
 const workDir = join(tmpdir(), "molan-studio-intro");
-const chrome = findChromePath() || requireChromePath();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -42,7 +41,7 @@ const CURSOR_SVG = `<svg viewBox="0 0 24 24" width="22" height="22" xmlns="http:
 </svg>`;
 
 async function main() {
-  const puppeteer = loadPuppeteer(repoRoot);
+  const { puppeteer, executablePath: chrome } = ensureBrowser(repoRoot);
   const url = process.env.MOLAN_URL || "http://127.0.0.1:5500/";
   mkdirSync(workDir, { recursive: true });
   mkdirSync(shotsDir, { recursive: true });

@@ -6,7 +6,7 @@
 
 ```text
 读 AGENTS.md 和 docs/ai/START.md。帮我给 https://github.com/fengshihao/molan 做贡献：〈意图〉。
-请你自己克隆（如需要）、改代码、跑 ./molan check、开 PR。
+请你自己克隆（如需要）、改代码、跑 ./molan check（改 studio/编辑器再跑 ./molan e2e）、开 PR。
 ```
 
 ## 改官网文案

@@ -1,0 +1,16 @@
+{
+  "name": "@molan/studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "墨览浏览器工作室（含自举 e2e）",
+  "type": "module",
+  "scripts": {
+    "e2e": "node ../../scripts/run-studio-e2e.mjs",
+    "e2e:editor": "node ./scripts/editor-e2e.mjs",
+    "e2e:buttons": "node ./scripts/buttons-e2e.mjs",
+    "e2e:table": "node ./scripts/table-e2e.mjs"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.22.3"
+  }
+}

@@ -37,7 +37,7 @@ site/                     官网
 
 ## 用 AI 贡献
 
-见 https://fengshihao.github.io/molan/docs/ — 复制准备环境提示发给 AI，再说你想改什么；验收：`./molan check`。
+见 https://fengshihao.github.io/molan/docs/ — 复制准备环境提示发给 AI，再说你想改什么；验收：`./molan check`（改工作室/编辑器再加 `./molan e2e`）。
 
 ## 发版（维护者）
 

@@ -32,12 +32,14 @@
 ./molan docs         # contribute guide
 ./molan install      # extension
 ./molan check        # acceptance checks (required before PR)
+./molan e2e          # studio browser e2e（自动装 Chromium / vendor，勿手配）
 ./molan web          # online homepage
 ./molan sync -- --dw <DesignWeave>   # maintainers
 ./molan help
 ```
 
-`./molan check` matches CI; do not push if it fails.
+`./molan check` matches CI portal gates; do not push if it fails.  
+改 `apps/studio/**`、编辑器核心或扩展 UI 时，再跑 `./molan e2e`（与 CI Studio e2e 同源；无需本机预装 Chrome）。
 
 ## Commit / PR 约定
 

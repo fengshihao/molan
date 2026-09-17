@@ -27,6 +27,8 @@ jobs:
         run: pnpm build
       - name: Unit tests
         run: pnpm test
+      - name: Studio browser e2e
+        run: pnpm e2e
       - name: Portal smoke
         run: |
           node scripts/sync-studio-to-site.mjs

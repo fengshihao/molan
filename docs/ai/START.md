@@ -15,6 +15,7 @@
 
 ```text
 我要贡献：〈一件事〉。按 AGENTS.md 与 docs/ai/CHECKLIST.md 改；改完必须 ./molan check 通过，再按 docs/ai/PR_PLAYBOOK.md 开 PR。
+改 studio / 编辑器时再跑 ./molan e2e（自动配置浏览器，无需人工装 Chrome）。
 一期默认只改 site/**、docs/**、.github/**、scripts/**、bin/** 与根文档。不要重写 DesignWeave 里的编辑器内核。
 ```
 
@@ -22,6 +23,7 @@
 
 ```bash
 ./molan check
+./molan e2e    # 仅当改了 studio / 编辑器 / 扩展 UI
 ./molan
 ./molan try
 ```

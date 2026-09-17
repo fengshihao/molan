@@ -2,19 +2,19 @@
 /**
  * 墨览主要按钮回归：复制原文 / 流程图复制 / 灯箱 / 查找 / 主题 / 排版 / 导出菜单 / 原文 / 大纲 / 行首插入。
  * 用法（仓库根目录）：
+ *   ./molan e2e
  *   node apps/studio/scripts/buttons-e2e.mjs
  */
 import { spawn } from "node:child_process";
-import { writeFileSync, unlinkSync, existsSync } from "node:fs";
+import { writeFileSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import http from "node:http";
-import { findChromePath, loadPuppeteer, requireChromePath } from "./e2e-chrome.mjs";
+import { ensureBrowser } from "./e2e-chrome.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = join(root, "..", "..");
 const port = Number(process.env.MOLAN_E2E_PORT || 5513);
-const chrome = findChromePath() || requireChromePath();
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -164,9 +164,7 @@ const harness = `<!DOCTYPE html>
 `;
 
 async function main() {
-  if (!existsSync(join(root, "vendor/vditor/dist/index.min.js"))) {
-    throw new Error("缺少 vendor/vditor，请先运行 apps/vscode-molan/scripts/sync-media.mjs");
-  }
+  const { puppeteer, executablePath: chrome } = ensureBrowser(repoRoot);
 
   const harnessPath = join(root, ".buttons-e2e.html");
   writeFileSync(harnessPath, harness);
@@ -184,7 +182,6 @@ async function main() {
 
   await waitForServer(`http://127.0.0.1:${port}/.buttons-e2e.html`);
 
-  const puppeteer = loadPuppeteer(repoRoot);
   const browser = await puppeteer.launch({
     executablePath: chrome,
     headless: "new",

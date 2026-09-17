@@ -6,6 +6,7 @@
  *   ./molan try|docs     open pages
  *   ./molan install      install editor extension from marketplace
  *   ./molan check        site + package gates
+ *   ./molan e2e          studio browser e2e (auto Chrome/puppeteer)
  *   ./molan build        build @molan/* packages
  *   ./molan package      build .vsix
  *   ./molan publish      publish extension (needs OVSX_PAT)
@@ -38,6 +39,7 @@ Usage:
   molan docs         Open local contribute guide
   molan install      Install Cursor / VS Code extension (marketplace)
   molan check        Run acceptance checks
+  molan e2e          Studio browser e2e (auto-installs Chrome/puppeteer)
   molan build        Build @molan/protocol, core, host
   molan package      Build extension .vsix
   molan publish      Publish extension (Open VSX; needs OVSX_PAT)
@@ -91,6 +93,8 @@ function normalize(argv) {
     extension: "install",
     check: "check",
     test: "check",
+    e2e: "e2e",
+    "studio-e2e": "e2e",
     build: "build",
     package: "package",
     pkg: "package",
@@ -193,6 +197,9 @@ switch (action) {
     break;
   case "check":
     runCheck();
+    break;
+  case "e2e":
+    run(process.execPath, [path.join(root, "scripts/run-studio-e2e.mjs"), ...argv.slice(1)]);
     break;
   case "build":
     run("pnpm", ["build"]);
