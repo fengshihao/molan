@@ -17,6 +17,7 @@
 <p align="center">
   <a href="https://fengshihao.github.io/molan/"><img alt="Website" src="https://img.shields.io/badge/Website-fengshihao.github.io%2Fmolan-1E2A24?style=for-the-badge&labelColor=141C18" /></a>
   <a href="https://fengshihao.github.io/molan/try/"><img alt="Try" src="https://img.shields.io/badge/Try-Studio-7EB89A?style=for-the-badge&labelColor=141C18" /></a>
+  <a href="https://github.com/fengshihao/molan/issues/new/choose"><img alt="Feedback" src="https://img.shields.io/badge/Feedback-GitHub%20Issues-7EB89A?style=for-the-badge&labelColor=141C18" /></a>
   <a href="https://open-vsx.org/extension/fengshihao/molan-markdown"><img alt="Open VSX" src="https://img.shields.io/badge/Open%20VSX-molan--markdown-3D4A42?style=for-the-badge&labelColor=141C18" /></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-8A9A90?style=for-the-badge&labelColor=141C18" /></a>
 </p>
@@ -25,7 +26,8 @@
   <a href="https://fengshihao.github.io/molan/">官网（多语言）</a> ·
   <a href="https://fengshihao.github.io/molan/try/">在线试读</a> ·
   <a href="https://molan.guoyoutech.cn/">正式站</a> ·
-  <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Marketplace</a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Marketplace</a> ·
+  <a href="https://github.com/fengshihao/molan/issues/new/choose">反馈 / Issues</a>
 </p>
 
 <p align="center">

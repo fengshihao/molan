@@ -11201,7 +11201,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     external_exports.object({ type: external_exports.literal("findNext") }),
     external_exports.object({ type: external_exports.literal("findPrev") }),
     external_exports.object({ type: external_exports.literal("clearSelection") }),
-    external_exports.object({ type: external_exports.literal("expandSection") })
+    external_exports.object({ type: external_exports.literal("expandSection") }),
+    external_exports.object({ type: external_exports.literal("openFeedback") })
   ]);
   var FrameToHostMessageSchema = external_exports.discriminatedUnion("type", [
     external_exports.object({ type: external_exports.literal("ready") }),
@@ -11513,7 +11514,123 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     };
   }
 
+  // src/feedback.ts
+  var MOLAN_ISSUES_NEW = "https://github.com/fengshihao/molan/issues/new";
+  var MAX_FIELD = 1800;
+  function trimField(text, max = MAX_FIELD) {
+    const t = text.trim();
+    if (t.length <= max) return t;
+    return `${t.slice(0, max - 1)}\u2026`;
+  }
+  function envLine(env) {
+    const ext = env.extensionVersion.trim() || "unknown";
+    const ide = env.editorVersion.trim() || "unknown";
+    return `\u6269\u5C55 ${ext} \xB7 \u7F16\u8F91\u5668 ${ide}`;
+  }
+  function buildFeedbackIssueUrl(draft) {
+    const title = trimField(draft.title, 200);
+    const body = trimField(draft.body);
+    const version2 = envLine(draft.env);
+    const params = new URLSearchParams();
+    if (draft.kind === "bug") {
+      params.set("template", "bug.yml");
+      params.set("title", title.startsWith("bug:") ? title : `bug: ${title}`);
+      params.set("surface", "VS Code / Cursor \u6269\u5C55");
+      params.set("version", version2);
+      params.set("steps", body);
+      params.set("expected", "\uFF08\u8BF7\u8865\u5145\u671F\u671B\u884C\u4E3A\uFF09");
+      params.set("actual", "\uFF08\u8BF7\u8865\u5145\u5B9E\u9645\u884C\u4E3A\uFF1B\u8BE6\u89C1\u4E0A\u65B9\u6B65\u9AA4\uFF09");
+    } else {
+      params.set("template", "idea.yml");
+      params.set("title", title.startsWith("idea:") ? title : `idea: ${title}`);
+      params.set("intent", title);
+      params.set("scope", "\u4E0D\u786E\u5B9A");
+      params.set("detail", `${body}
+
+---
+\u73AF\u5883\uFF1A${version2}`);
+    }
+    return `${MOLAN_ISSUES_NEW}?${params.toString()}`;
+  }
+
   // src/vscode-bridge.ts
+  function readFeedbackEnv() {
+    const raw = window.__MOLAN_FEEDBACK__;
+    return {
+      extensionVersion: raw?.extensionVersion?.trim() || "",
+      editorVersion: raw?.editorVersion?.trim() || ""
+    };
+  }
+  function bindFeedbackPanel(post, toast) {
+    const root = document.getElementById("molanFeedback");
+    const kindEl = document.getElementById("molanFeedbackKind");
+    const titleEl = document.getElementById("molanFeedbackTitleInput");
+    const bodyEl = document.getElementById("molanFeedbackBody");
+    const envEl = document.getElementById("molanFeedbackEnv");
+    const submitBtn = document.getElementById("molanFeedbackSubmit");
+    const openBtn = document.getElementById("feedbackBtn");
+    const syncEnvLabel = () => {
+      const env = readFeedbackEnv();
+      if (!envEl) return;
+      const parts = [
+        env.extensionVersion ? `\u6269\u5C55 ${env.extensionVersion}` : "",
+        env.editorVersion ? `\u7F16\u8F91\u5668 ${env.editorVersion}` : ""
+      ].filter(Boolean);
+      envEl.textContent = parts.length ? parts.join(" \xB7 ") : "\u73AF\u5883\u4FE1\u606F\u672A\u6CE8\u5165";
+    };
+    const close = () => {
+      if (!root) return;
+      root.hidden = true;
+      root.setAttribute("aria-hidden", "true");
+      openBtn?.setAttribute("aria-expanded", "false");
+    };
+    const open = () => {
+      if (!root) return;
+      syncEnvLabel();
+      root.hidden = false;
+      root.setAttribute("aria-hidden", "false");
+      openBtn?.setAttribute("aria-expanded", "true");
+      queueMicrotask(() => titleEl?.focus());
+    };
+    openBtn?.addEventListener("click", () => {
+      if (root && !root.hidden) close();
+      else open();
+    });
+    root?.querySelectorAll("[data-feedback-close]").forEach((el) => {
+      el.addEventListener("click", () => close());
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && root && !root.hidden) {
+        e.preventDefault();
+        close();
+      }
+    });
+    submitBtn?.addEventListener("click", () => {
+      const title = titleEl?.value.trim() || "";
+      const body = bodyEl?.value.trim() || "";
+      if (!title) {
+        toast("\u8BF7\u586B\u5199\u6807\u9898");
+        titleEl?.focus();
+        return;
+      }
+      if (!body) {
+        toast("\u8BF7\u586B\u5199\u63CF\u8FF0");
+        bodyEl?.focus();
+        return;
+      }
+      const kind = kindEl?.value === "idea" ? "idea" : "bug";
+      const url2 = buildFeedbackIssueUrl({
+        kind,
+        title,
+        body,
+        env: readFeedbackEnv()
+      });
+      post({ type: "openExternal", value: url2 });
+      close();
+      toast("\u5DF2\u6253\u5F00 GitHub\uFF0C\u8BF7\u767B\u5F55\u540E\u63D0\u4EA4");
+    });
+    return { open };
+  }
   function bootVscodeBridge() {
     const vscode = acquireVsCodeApi();
     const toast = (msg) => window.MolanEditor.toast(msg);
@@ -11551,6 +11668,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         return editorReady;
       }
     });
+    const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
     window.addEventListener("message", async (event) => {
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
@@ -11566,6 +11684,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       if (msg.type === "findPrev") {
         window.MolanEditor.find?.prev();
+        return;
+      }
+      if (msg.type === "openFeedback") {
+        feedback.open();
       }
     });
     document.getElementById("copyBtn")?.addEventListener("click", async () => {

@@ -4,6 +4,11 @@
  */
 import type { EditorApi } from "@molan/protocol";
 import { createBridgeCore } from "./core.js";
+import {
+  buildFeedbackIssueUrl,
+  type FeedbackEnv,
+  type FeedbackKind,
+} from "./feedback.js";
 import { isExternalHttp, isMarkdownHref, relativeToLinkBase } from "./link-utils.js";
 
 declare global {
@@ -17,9 +22,99 @@ declare global {
     };
     __MOLAN_VDITOR_CDN__?: string;
     __MOLAN_LINK_BASE__?: string;
+    __MOLAN_FEEDBACK__?: FeedbackEnv;
     __molanHostCopyText?: (text: string) => Promise<void>;
   }
   function acquireVsCodeApi(): { postMessage(msg: unknown): void };
+}
+
+function readFeedbackEnv(): FeedbackEnv {
+  const raw = window.__MOLAN_FEEDBACK__;
+  return {
+    extensionVersion: raw?.extensionVersion?.trim() || "",
+    editorVersion: raw?.editorVersion?.trim() || "",
+  };
+}
+
+function bindFeedbackPanel(post: (msg: unknown) => void, toast: (msg: string) => void): {
+  open(): void;
+} {
+  const root = document.getElementById("molanFeedback");
+  const kindEl = document.getElementById("molanFeedbackKind") as HTMLSelectElement | null;
+  const titleEl = document.getElementById("molanFeedbackTitleInput") as HTMLInputElement | null;
+  const bodyEl = document.getElementById("molanFeedbackBody") as HTMLTextAreaElement | null;
+  const envEl = document.getElementById("molanFeedbackEnv");
+  const submitBtn = document.getElementById("molanFeedbackSubmit");
+  const openBtn = document.getElementById("feedbackBtn");
+
+  const syncEnvLabel = () => {
+    const env = readFeedbackEnv();
+    if (!envEl) return;
+    const parts = [
+      env.extensionVersion ? `扩展 ${env.extensionVersion}` : "",
+      env.editorVersion ? `编辑器 ${env.editorVersion}` : "",
+    ].filter(Boolean);
+    envEl.textContent = parts.length ? parts.join(" · ") : "环境信息未注入";
+  };
+
+  const close = () => {
+    if (!root) return;
+    root.hidden = true;
+    root.setAttribute("aria-hidden", "true");
+    openBtn?.setAttribute("aria-expanded", "false");
+  };
+
+  const open = () => {
+    if (!root) return;
+    syncEnvLabel();
+    root.hidden = false;
+    root.setAttribute("aria-hidden", "false");
+    openBtn?.setAttribute("aria-expanded", "true");
+    queueMicrotask(() => titleEl?.focus());
+  };
+
+  openBtn?.addEventListener("click", () => {
+    if (root && !root.hidden) close();
+    else open();
+  });
+
+  root?.querySelectorAll("[data-feedback-close]").forEach((el) => {
+    el.addEventListener("click", () => close());
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && root && !root.hidden) {
+      e.preventDefault();
+      close();
+    }
+  });
+
+  submitBtn?.addEventListener("click", () => {
+    const title = titleEl?.value.trim() || "";
+    const body = bodyEl?.value.trim() || "";
+    if (!title) {
+      toast("请填写标题");
+      titleEl?.focus();
+      return;
+    }
+    if (!body) {
+      toast("请填写描述");
+      bodyEl?.focus();
+      return;
+    }
+    const kind = (kindEl?.value === "idea" ? "idea" : "bug") as FeedbackKind;
+    const url = buildFeedbackIssueUrl({
+      kind,
+      title,
+      body,
+      env: readFeedbackEnv(),
+    });
+    post({ type: "openExternal", value: url });
+    close();
+    toast("已打开 GitHub，请登录后提交");
+  });
+
+  return { open };
 }
 
 function bootVscodeBridge() {
@@ -62,6 +157,8 @@ function bootVscodeBridge() {
     },
   });
 
+  const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
+
   window.addEventListener("message", async (event) => {
     const msg = event.data;
     if (!msg || typeof msg !== "object") return;
@@ -79,6 +176,10 @@ function bootVscodeBridge() {
     }
     if (msg.type === "findPrev") {
       window.MolanEditor.find?.prev();
+      return;
+    }
+    if (msg.type === "openFeedback") {
+      feedback.open();
     }
   });
 

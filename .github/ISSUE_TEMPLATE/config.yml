@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: 反馈问题（选模板）
+    url: https://github.com/fengshihao/molan/issues/new/choose
+    about: Bug 或想法 — 扩展内「反馈」也会预填后打开此处
   - name: 给 AI 的开工白
     url: https://github.com/fengshihao/molan/blob/main/docs/ai/START.md
     about: 复制提示词即可开始贡献

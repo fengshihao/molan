@@ -62,15 +62,16 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
     );
   }
 
-  static postToActive(type: "find" | "findNext" | "findPrev"): void {
+  static postToActive(type: "find" | "findNext" | "findPrev" | "openFeedback"): boolean {
     const provider = MolanEditorProvider.instance;
-    if (!provider) return;
+    if (!provider) return false;
     for (const panel of provider.panels.values()) {
       if (panel.active) {
         void panel.webview.postMessage({ type });
-        return;
+        return true;
       }
     }
+    return false;
   }
 
   constructor(private readonly context: vscode.ExtensionContext) {}
@@ -306,6 +307,10 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
       csp,
       defaultTheme: "night",
       statusRight: "VS Code · 写回原文件",
+      feedback: {
+        extensionVersion: String(this.context.extension.packageJSON.version ?? ""),
+        editorVersion: vscode.version,
+      },
       assets: {
         molanCss: molanCss.toString(),
         vditorCss: vditorCss.toString(),

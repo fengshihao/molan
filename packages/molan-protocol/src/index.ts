@@ -67,6 +67,7 @@ export const HostToFrameMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("findPrev") }),
   z.object({ type: z.literal("clearSelection") }),
   z.object({ type: z.literal("expandSection") }),
+  z.object({ type: z.literal("openFeedback") }),
 ]);
 export type HostToFrameMessage = z.infer<typeof HostToFrameMessageSchema>;
 

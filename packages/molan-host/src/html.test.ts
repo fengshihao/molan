@@ -34,9 +34,21 @@ test("renderHostHtml vscode 含 type-prefs 与 nonce", () => {
     assets: { ...assets, bridgeJs: "./vscode-bridge.js" },
     nonce: "abc123",
     csp: "script-src 'nonce-abc123'",
+    feedback: { extensionVersion: "0.1.28", editorVersion: "1.96.0" },
   });
   assert.match(html, /type-prefs/);
   assert.match(html, /nonce="abc123"/);
   assert.match(html, /vscode-bridge\.js/);
+  assert.match(html, /id="feedbackBtn"/);
+  assert.match(html, /id="molanFeedback"/);
+  assert.match(html, /__MOLAN_FEEDBACK__/);
+  assert.match(html, /0\.1\.28/);
   assert.doesNotMatch(html, /readerEyebrow/);
+});
+
+test("renderHostHtml iframe 不含反馈面板", () => {
+  const html = renderHostHtml({ variant: "iframe", assets });
+  assert.doesNotMatch(html, /id="feedbackBtn"/);
+  assert.doesNotMatch(html, /id="molanFeedback"/);
+  assert.doesNotMatch(html, /__MOLAN_FEEDBACK__/);
 });

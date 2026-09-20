@@ -23,6 +23,8 @@ export type RenderHostHtmlOptions = {
   defaultTheme?: "night" | "hack" | "rose" | "xuan";
   statusRight?: string;
   title?: string;
+  /** VS Code 反馈面板环境信息 */
+  feedback?: { extensionVersion: string; editorVersion: string };
 };
 
 function scriptTag(src: string, nonce?: string, id?: string): string {
@@ -36,7 +38,7 @@ function inlineScript(body: string, nonce?: string): string {
   return `<script${nonceAttr}>${body}</script>`;
 }
 
-const HEADER_ACTIONS = `
+const HEADER_ACTIONS_LEAD = `
           <button class="icon-btn molan-find-btn" id="molanFindBtn" type="button" title="在文档中查找" aria-label="在文档中查找">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
@@ -45,7 +47,17 @@ const HEADER_ACTIONS = `
           </button>
           <button class="icon-btn" id="copyBtn" type="button" title="复制原文" aria-label="复制原文">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/><rect x="4" y="8" width="12" height="12" rx="2"/></svg>
-          </button>
+          </button>`;
+
+const FEEDBACK_BTN = `
+          <button class="icon-btn" id="feedbackBtn" type="button" title="反馈问题" aria-label="反馈问题" aria-haspopup="dialog" aria-controls="molanFeedback">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4.5 6.5h15A1.5 1.5 0 0 1 21 8v7.5a1.5 1.5 0 0 1-1.5 1.5H12l-4.5 3v-3H4.5A1.5 1.5 0 0 1 3 15.5V8A1.5 1.5 0 0 1 4.5 6.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M8 10.2h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </button>`;
+
+const HEADER_ACTIONS_TRAIL = `
           <div class="export-prefs" id="exportPrefs">
             <button class="icon-btn" id="pdfBtn" type="button" title="导出" aria-label="导出" aria-expanded="false" aria-haspopup="menu" aria-controls="exportMenu">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 8H6.8A1.8 1.8 0 0 0 5 9.8v7.4A1.8 1.8 0 0 0 6.8 19h10.4a1.8 1.8 0 0 0 1.8-1.8V9.8A1.8 1.8 0 0 0 17.2 8H15"/><path d="M12 15V4"/><path d="M8.7 7.2 12 4l3.3 3.2"/></svg>
@@ -59,6 +71,35 @@ const HEADER_ACTIONS = `
             <svg class="icon-edit" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
             <svg class="icon-preview" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.8-7 9.5-7 9.5 7 9.5 7-3.8 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>`;
+
+const FEEDBACK_DIALOG = `
+  <div class="molan-feedback" id="molanFeedback" hidden aria-hidden="true">
+    <div class="molan-feedback__backdrop" data-feedback-close tabindex="-1"></div>
+    <div class="molan-feedback__panel" role="dialog" aria-modal="true" aria-labelledby="molanFeedbackHeading">
+      <h3 id="molanFeedbackHeading">反馈</h3>
+      <p class="molan-feedback__hint">填写后将打开 GitHub 新建 Issue，登录后即可提交。</p>
+      <label class="molan-feedback__field">
+        <span>类型</span>
+        <select id="molanFeedbackKind">
+          <option value="bug">问题 / Bug</option>
+          <option value="idea">想法 / Idea</option>
+        </select>
+      </label>
+      <label class="molan-feedback__field">
+        <span>标题</span>
+        <input id="molanFeedbackTitleInput" type="text" maxlength="200" placeholder="一句话说明" autocomplete="off" />
+      </label>
+      <label class="molan-feedback__field">
+        <span>描述</span>
+        <textarea id="molanFeedbackBody" rows="5" maxlength="4000" placeholder="复现步骤、期望与实际，或想法细节"></textarea>
+      </label>
+      <p class="molan-feedback__env" id="molanFeedbackEnv"></p>
+      <div class="molan-feedback__actions">
+        <button type="button" class="molan-feedback__btn" data-feedback-close>取消</button>
+        <button type="button" class="molan-feedback__btn is-primary" id="molanFeedbackSubmit">打开 GitHub</button>
+      </div>
+    </div>
+  </div>`;
 
 const TYPE_PREFS = `
           <div class="type-prefs" id="typePrefs">
@@ -148,6 +189,7 @@ export function renderHostHtml(options: RenderHostHtmlOptions): string {
     defaultTheme = variant === "iframe" ? "xuan" : "night",
     statusRight = variant === "iframe" ? "工作台 · 写回文档仓" : "VS Code · 写回原文件",
     title = "墨览",
+    feedback = { extensionVersion: "", editorVersion: "" },
   } = options;
 
   const themeChecked = defaultTheme;
@@ -170,7 +212,11 @@ export function renderHostHtml(options: RenderHostHtmlOptions): string {
         </div>`;
 
   const headerActions =
-    HEADER_ACTIONS + (variant === "vscode" ? TYPE_PREFS : "") + themeSwitchHtml;
+    HEADER_ACTIONS_LEAD +
+    (variant === "vscode" ? FEEDBACK_BTN : "") +
+    HEADER_ACTIONS_TRAIL +
+    (variant === "vscode" ? TYPE_PREFS : "") +
+    themeSwitchHtml;
 
   const cspMeta = cspContent
     ? `<meta http-equiv="Content-Security-Policy" content="${cspContent}" />`
@@ -193,7 +239,11 @@ export function renderHostHtml(options: RenderHostHtmlOptions): string {
       ? `window.__MOLAN_VDITOR_CDN__ = new URL(${JSON.stringify(assets.vditorCdn)}, document.baseURI).href.replace(/\\/$/, "");
     window.__MOLAN_LINK_BASE__ = ${JSON.stringify(assets.linkBase ?? "")};`
       : `window.__MOLAN_VDITOR_CDN__ = ${JSON.stringify(assets.vditorCdn)};
-    window.__MOLAN_LINK_BASE__ = ${JSON.stringify(assets.linkBase ?? "")};`,
+    window.__MOLAN_LINK_BASE__ = ${JSON.stringify(assets.linkBase ?? "")};
+    window.__MOLAN_FEEDBACK__ = ${JSON.stringify({
+      extensionVersion: feedback.extensionVersion || "",
+      editorVersion: feedback.editorVersion || "",
+    })};`,
     nonce,
   );
 
@@ -249,6 +299,7 @@ ${headerActions}
   </div>
   <div class="toast" id="toast" role="status"></div>
   ${LIGHTBOX}
+  ${variant === "vscode" ? FEEDBACK_DIALOG : ""}
   ${configScript}
   ${scriptTag(assets.vditorIconsJs, nonce, "vditorIconScript")}
   ${scriptTag(assets.vditorMethodJs, nonce)}

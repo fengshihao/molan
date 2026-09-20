@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { MOLAN_ISSUES_CHOOSE } from "@molan/host";
 import { MolanEditorProvider } from "./markdownEditorProvider";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -47,6 +48,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("molan.find", () => MolanEditorProvider.postToActive("find")),
     vscode.commands.registerCommand("molan.findNext", () => MolanEditorProvider.postToActive("findNext")),
     vscode.commands.registerCommand("molan.findPrev", () => MolanEditorProvider.postToActive("findPrev")),
+    vscode.commands.registerCommand("molan.reportFeedback", async () => {
+      if (MolanEditorProvider.postToActive("openFeedback")) return;
+      await vscode.env.openExternal(vscode.Uri.parse(MOLAN_ISSUES_CHOOSE));
+    }),
   );
 }
 
