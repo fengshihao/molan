@@ -2,7 +2,7 @@
   "name": "molan-markdown",
   "displayName": "墨览 Markdown",
   "description": "打开即阅读，要点再编辑。所见即所得：主题、表格、Mermaid、公式。Open to read, click to edit. WYSIWYG with themes, tables, Mermaid, math.",
-  "version": "0.1.29",
+  "version": "0.1.30",
   "publisher": "fengshihao",
   "license": "MIT",
   "icon": "icon.png",

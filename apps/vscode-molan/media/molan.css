@@ -4244,6 +4244,16 @@
     body.molan-host-vscode .reader-actions {
       position: relative;
       z-index: 1;
+      flex-shrink: 0;
+      overflow: visible;
+    }
+
+    body.molan-host-vscode .reader-header {
+      overflow: visible;
+    }
+
+    body.molan-host-vscode #feedbackBtn {
+      margin-left: 2px;
     }
 
     .molan-feedback {

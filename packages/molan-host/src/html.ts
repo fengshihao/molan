@@ -213,10 +213,10 @@ export function renderHostHtml(options: RenderHostHtmlOptions): string {
 
   const headerActions =
     HEADER_ACTIONS_LEAD +
-    (variant === "vscode" ? FEEDBACK_BTN : "") +
     HEADER_ACTIONS_TRAIL +
     (variant === "vscode" ? TYPE_PREFS : "") +
-    themeSwitchHtml;
+    themeSwitchHtml +
+    (variant === "vscode" ? FEEDBACK_BTN : "");
 
   const cspMeta = cspContent
     ? `<meta http-equiv="Content-Security-Policy" content="${cspContent}" />`
