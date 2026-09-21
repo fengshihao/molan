@@ -95,6 +95,7 @@
       insertUl: "无序列表",
       insertOl: "有序列表",
       insertTask: "任务列表",
+      toggleTask: "勾选待办",
       insertQuote: "引用",
       insertHr: "分割线",
       insertCode: "代码块",

@@ -23,6 +23,7 @@ export const EDITOR_MODULES = [
   "image.js",
   "mermaid-editor.js",
   "markdown.js",
+  "task.js",
   "ir.js",
   "insert.js",
   "selection.js",

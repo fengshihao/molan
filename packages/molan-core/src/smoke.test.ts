@@ -191,6 +191,37 @@ test("纸面色调微调有持久化与防抖", () => {
   assert.match(src, /slate.*mist.*cinnabar|cinnabar.*mist.*slate/);
 });
 
+test("预览勾选待办会改对应的 Markdown 行", () => {
+  const src = editorSrc();
+  assert.match(src, /function listTaskMarks/);
+  assert.match(src, /function toggleTaskMarkdown/);
+  assert.match(src, /function bindPreviewTasks/);
+  assert.match(src, /armPreviewTasks\(previewBody\)/);
+  const take = (name) => {
+    const start = src.indexOf(`function ${name}`);
+    assert.ok(start >= 0, name);
+    let depth = 0;
+    let i = src.indexOf("{", start);
+    for (; i < src.length; i += 1) {
+      if (src[i] === "{") depth += 1;
+      else if (src[i] === "}") {
+        depth -= 1;
+        if (depth === 0) return src.slice(start, i + 1);
+      }
+    }
+    throw new Error(name);
+  };
+  const api = new Function(`${take("lineIsFence")}\n${take("listTaskMarks")}\n${take("toggleTaskMarkdown")}\nreturn { listTaskMarks, toggleTaskMarkdown };`)();
+  const md = "- [ ] 买菜\n- [x] 写信\n";
+  assert.equal(api.toggleTaskMarkdown(md, 0), "- [x] 买菜\n- [x] 写信\n");
+  assert.equal(api.toggleTaskMarkdown(md, 1), "- [ ] 买菜\n- [ ] 写信\n");
+  const nested = "- [ ] 父\n  - [ ] 子\n> - [ ] 引用\n\n```\n- [ ] 代码里的\n```\n\n    - [ ] 缩进代码\n- [X] 大写\n";
+  assert.deepEqual(api.listTaskMarks(nested).length, 4);
+  assert.equal(api.toggleTaskMarkdown(nested, 2), nested.replace("> - [ ]", "> - [x]"));
+  assert.equal(api.toggleTaskMarkdown(nested, 3), nested.replace("- [X]", "- [ ]"));
+  assert.equal(api.toggleTaskMarkdown(md, 9), md);
+});
+
 test("编辑态能修好并删除空任务列表", () => {
   const src = editorSrc();
   assert.match(src, /function withMutedIrInput/);

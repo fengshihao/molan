@@ -123,6 +123,11 @@
         applyDocChange(next);
       },
     });
+    bindPreviewTasks(previewBody, {
+      isPreviewing: () => previewing,
+      getMarkdown: readLiveMarkdown,
+      applyMarkdown: applyDocChange,
+    });
     bindPreviewCodeCopy();
     watchMermaidPreviews(previewRoot);
     watchTables(previewRoot);
@@ -177,6 +182,7 @@
         if (findState.open) runFind({ keepIndex: true, reveal: false });
         blockInsert.sync();
         previewSelection.decorate();
+        armPreviewTasks(previewBody);
         scheduleOutlineRefresh();
       };
       if (spot && lastPreviewSource === sourceText && previewBody.childElementCount) {

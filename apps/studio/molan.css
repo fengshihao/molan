@@ -3760,6 +3760,7 @@
       width: 1em;
       height: 1em;
       vertical-align: -0.12em;
+      cursor: pointer;
     }
 
     /* IR 语法标记淡化；不要染到 mermaid/math 预览正文 */
