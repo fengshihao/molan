@@ -2,7 +2,7 @@
   "name": "molan-markdown",
   "displayName": "墨览 Markdown",
   "description": "打开即阅读，要点再编辑。所见即所得：主题、表格、Mermaid、公式。Open to read, click to edit. WYSIWYG with themes, tables, Mermaid, math.",
-  "version": "0.1.31",
+  "version": "0.1.32",
   "publisher": "fengshihao",
   "license": "MIT",
   "icon": "icon.png",
@@ -80,6 +80,21 @@
         "category": "墨览"
       },
       {
+        "command": "molan.formatBold",
+        "title": "加粗",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.formatItalic",
+        "title": "斜体",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.formatLink",
+        "title": "链接",
+        "category": "墨览"
+      },
+      {
         "command": "molan.reportFeedback",
         "title": "反馈问题",
         "category": "墨览"
@@ -115,6 +130,24 @@
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g",
         "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.formatBold",
+        "key": "ctrl+b",
+        "mac": "cmd+b",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.formatItalic",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.formatLink",
+        "key": "ctrl+k",
+        "mac": "cmd+k",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
       }
     ],
     "menus": {
@@ -139,6 +172,18 @@
         },
         {
           "command": "molan.find",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.formatBold",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.formatItalic",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.formatLink",
           "when": "activeCustomEditorId == 'molan.markdownEditor'"
         },
         {

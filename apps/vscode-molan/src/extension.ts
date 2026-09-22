@@ -48,6 +48,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("molan.find", () => MolanEditorProvider.postToActive("find")),
     vscode.commands.registerCommand("molan.findNext", () => MolanEditorProvider.postToActive("findNext")),
     vscode.commands.registerCommand("molan.findPrev", () => MolanEditorProvider.postToActive("findPrev")),
+    vscode.commands.registerCommand("molan.formatBold", () => MolanEditorProvider.postToActive("formatBold")),
+    vscode.commands.registerCommand("molan.formatItalic", () => MolanEditorProvider.postToActive("formatItalic")),
+    vscode.commands.registerCommand("molan.formatLink", () => MolanEditorProvider.postToActive("formatLink")),
     vscode.commands.registerCommand("molan.reportFeedback", async () => {
       if (MolanEditorProvider.postToActive("openFeedback")) return;
       await vscode.env.openExternal(vscode.Uri.parse(MOLAN_ISSUES_CHOOSE));

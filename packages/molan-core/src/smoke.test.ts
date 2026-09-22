@@ -60,6 +60,9 @@ test("墨览选区格式条预览也可改 Markdown，工作台默认不开", ()
   assert.match(src, /function pickCollapsedSpan/);
   assert.match(src, /function wrapInlineMarkdown/);
   assert.match(src, /const applyPreviewFormat = /);
+  assert.match(src, /const applyFormatAction = /);
+  assert.match(src, /formatHotkeys = \{/);
+  assert.match(src, /format: \{[\s\S]*bold\(\)/);
   assert.match(src, /previewFormat: options\.previewFormatBar === true/);
   assert.match(src, /sectionAsk: options\.sectionAsk === true/);
   assert.match(src, /opts\.sectionAsk !== true/);

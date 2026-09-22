@@ -2975,6 +2975,12 @@
   }
 
   /* --- format-bar: 选区格式条与插入表格拾取 --- */
+  let formatHotkeys = {
+    bold() { return false; },
+    italic() { return false; },
+    link() { return false; },
+  };
+
   function collapseWs(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
   }
@@ -3372,23 +3378,31 @@
       if (!bar.hidden && savedRange) positionBar(savedRange);
     });
 
-    bar.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("input")) return;
-      e.preventDefault();
-    });
-    bar.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-format]");
-      if (!btn) return;
-      const type = btn.getAttribute("data-format");
+    const captureForFormat = () => {
+      if (isPreviewing?.() && previewFormat) {
+        const focus = previewFocusFromSelection();
+        if (!focus) return false;
+        savedRange = focus.range;
+        savedText = focus.text;
+        return true;
+      }
+      return captureRange();
+    };
+
+    const applyFormatAction = (type) => {
       if (type === "link") {
+        if (!captureForFormat()) return false;
         openLink();
-        return;
+        return true;
       }
       if (isPreviewing?.() && previewFormat) {
-        applyPreviewFormat(type);
+        if (!captureForFormat()) return false;
+        const ok = applyPreviewFormat(type);
         hideFormatBar();
-        return;
+        return ok;
       }
+      if (isPreviewing?.()) return false;
+      if (!captureRange() && !(savedRange && savedText)) return false;
       restoreRange();
       if (!clickToolbar(type)) {
         const vditor = getVditor?.();
@@ -3406,6 +3420,23 @@
         }
       }
       requestAnimationFrame(syncButtons);
+      return true;
+    };
+
+    formatHotkeys = {
+      bold: () => applyFormatAction("bold"),
+      italic: () => applyFormatAction("italic"),
+      link: () => applyFormatAction("link"),
+    };
+
+    bar.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("input")) return;
+      e.preventDefault();
+    });
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-format]");
+      if (!btn) return;
+      applyFormatAction(btn.getAttribute("data-format"));
     });
     bar.querySelector(".molan-format-bar__link")?.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -3413,15 +3444,40 @@
       applyLink(input?.value || "");
     });
     document.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape" || bar.hidden) return;
-      if (linkOpen) {
-        e.preventDefault();
-        closeLink();
-        if (savedRange) positionBar(savedRange);
+      if (e.key === "Escape" && !bar.hidden) {
+        if (linkOpen) {
+          e.preventDefault();
+          closeLink();
+          if (savedRange) positionBar(savedRange);
+          return;
+        }
+        hideFormatBar();
         return;
       }
-      hideFormatBar();
-    });
+      if (e.shiftKey || e.altKey) return;
+      const key = String(e.key || "").toLowerCase();
+      if (key !== "b" && key !== "i" && key !== "k") return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      // VS Code / Cursor：快捷键由扩展命令注入，避免和 webview 监听叠成双次切换
+      if (document.documentElement.classList.contains("molan-host-vscode")
+        || document.body.classList.contains("molan-host-vscode")) {
+        return;
+      }
+      if (typeof isPrimaryModKey === "function" && !isPrimaryModKey(e, key)) return;
+      const blocked = e.target?.closest?.(
+        ".molan-find-bar, .molan-format-bar__link, .molan-image-url-mask, .molan-source-view, .molan-feedback, .molan-mermaid-editor, .lightbox",
+      );
+      if (blocked) return;
+      if (e.target?.closest?.("input, textarea, select")) return;
+      const ran = key === "b"
+        ? applyFormatAction("bold")
+        : key === "i"
+          ? applyFormatAction("italic")
+          : applyFormatAction("link");
+      if (!ran) return;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
   }
 
   function tableToolbarButtonFromEvent(e, root) {
@@ -8765,6 +8821,11 @@
       close: closeFind,
       next() { moveFind(1); },
       prev() { moveFind(-1); },
+    },
+    format: {
+      bold() { return formatHotkeys.bold(); },
+      italic() { return formatHotkeys.italic(); },
+      link() { return formatHotkeys.link(); },
     },
     type: {
       open: openType,

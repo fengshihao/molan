@@ -62,7 +62,9 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
     );
   }
 
-  static postToActive(type: "find" | "findNext" | "findPrev" | "openFeedback"): boolean {
+  static postToActive(
+    type: "find" | "findNext" | "findPrev" | "openFeedback" | "formatBold" | "formatItalic" | "formatLink",
+  ): boolean {
     const provider = MolanEditorProvider.instance;
     if (!provider) return false;
     for (const panel of provider.panels.values()) {

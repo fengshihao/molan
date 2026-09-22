@@ -61,6 +61,9 @@ test("FrameToHostMessageSchema 正例", () => {
 test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
   assert.equal(parseHostToFrameMessage(null), null);
   assert.equal(parseHostToFrameMessage({ type: "find" })?.type, "find");
+  assert.equal(parseHostToFrameMessage({ type: "formatBold" })?.type, "formatBold");
+  assert.equal(parseHostToFrameMessage({ type: "formatItalic" })?.type, "formatItalic");
+  assert.equal(parseHostToFrameMessage({ type: "formatLink" })?.type, "formatLink");
   assert.equal(parseHostToFrameMessage({ type: "openFeedback" })?.type, "openFeedback");
   assert.equal(parseFrameToHostMessage({ type: "theme", theme: "hack" })?.theme, "hack");
   assert.equal(parseFrameToHostMessage({ type: "theme", theme: "bad" }), null);

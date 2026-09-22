@@ -19,6 +19,7 @@ declare global {
       countWords(text: string): number;
       copyText?(text: string): Promise<void>;
       find?: { open(): void; next(): void; prev(): void };
+      format?: { bold(): boolean; italic(): boolean; link(): boolean };
     };
     __MOLAN_VDITOR_CDN__?: string;
     __MOLAN_LINK_BASE__?: string;
@@ -176,6 +177,18 @@ function bootVscodeBridge() {
     }
     if (msg.type === "findPrev") {
       window.MolanEditor.find?.prev();
+      return;
+    }
+    if (msg.type === "formatBold") {
+      window.MolanEditor.format?.bold();
+      return;
+    }
+    if (msg.type === "formatItalic") {
+      window.MolanEditor.format?.italic();
+      return;
+    }
+    if (msg.type === "formatLink") {
+      window.MolanEditor.format?.link();
       return;
     }
     if (msg.type === "openFeedback") {

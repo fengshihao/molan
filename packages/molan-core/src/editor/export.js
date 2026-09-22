@@ -558,6 +558,11 @@
       next() { moveFind(1); },
       prev() { moveFind(-1); },
     },
+    format: {
+      bold() { return formatHotkeys.bold(); },
+      italic() { return formatHotkeys.italic(); },
+      link() { return formatHotkeys.link(); },
+    },
     type: {
       open: openType,
       close: closeType,
