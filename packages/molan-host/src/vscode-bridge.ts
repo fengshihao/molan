@@ -20,6 +20,7 @@ declare global {
       copyText?(text: string): Promise<void>;
       find?: { open(): void; next(): void; prev(): void };
       format?: { bold(): boolean; italic(): boolean; link(): boolean };
+      toggleMode?(): boolean;
     };
     __MOLAN_VDITOR_CDN__?: string;
     __MOLAN_LINK_BASE__?: string;
@@ -189,6 +190,10 @@ function bootVscodeBridge() {
     }
     if (msg.type === "formatLink") {
       window.MolanEditor.format?.link();
+      return;
+    }
+    if (msg.type === "toggleMode") {
+      window.MolanEditor.toggleMode?.();
       return;
     }
     if (msg.type === "openFeedback") {

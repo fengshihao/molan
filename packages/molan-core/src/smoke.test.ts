@@ -112,6 +112,15 @@ test("预览选区会上报前后文，且点输入框折叠选区不会清焦�
   assert.match(src, /key !== "a"/);
 });
 
+test("Cmd/Ctrl+E 点顶栏切换阅读和编辑", () => {
+  const src = editorSrc();
+  assert.match(src, /对应顶栏阅读\/编辑按钮/);
+  assert.match(src, /modeBtn\.click\(\)/);
+  assert.match(src, /toggleMode\(\)/);
+  assert.match(src, /String\(e\.key \|\| ""\)\.toLowerCase\(\) !== "e"/);
+  assert.match(src, /molan-host-vscode/);
+});
+
 test("molan-editor.js 导出 MolanEditor.create", () => {
   const src = editorSrc();
   assert.match(src, /MolanEditor\.create|global\.MolanEditor\s*=/);

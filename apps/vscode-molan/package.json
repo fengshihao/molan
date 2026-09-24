@@ -2,7 +2,7 @@
   "name": "molan-markdown",
   "displayName": "墨览 Markdown",
   "description": "打开即阅读，要点再编辑。所见即所得：主题、表格、Mermaid、公式。Open to read, click to edit. WYSIWYG with themes, tables, Mermaid, math.",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "publisher": "fengshihao",
   "license": "MIT",
   "icon": "icon.png",
@@ -95,6 +95,11 @@
         "category": "墨览"
       },
       {
+        "command": "molan.toggleMode",
+        "title": "切换阅读/编辑",
+        "category": "墨览"
+      },
+      {
         "command": "molan.reportFeedback",
         "title": "反馈问题",
         "category": "墨览"
@@ -148,6 +153,12 @@
         "key": "ctrl+k",
         "mac": "cmd+k",
         "when": "activeCustomEditorId == 'molan.markdownEditor'"
+      },
+      {
+        "command": "molan.toggleMode",
+        "key": "ctrl+e",
+        "mac": "cmd+e",
+        "when": "activeCustomEditorId == 'molan.markdownEditor'"
       }
     ],
     "menus": {
@@ -184,6 +195,10 @@
         },
         {
           "command": "molan.formatLink",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.toggleMode",
           "when": "activeCustomEditorId == 'molan.markdownEditor'"
         },
         {

@@ -415,5 +415,26 @@
         e.preventDefault();
         runHistory(wantRedo ? "redo" : "undo");
       });
+      // Cmd/Ctrl+E：点顶栏阅读/编辑按钮；VS Code / Cursor 由扩展命令注入，避免双次切换
+      document.addEventListener("keydown", (e) => {
+        if (e.shiftKey || e.altKey) return;
+        if (String(e.key || "").toLowerCase() !== "e") return;
+        if (!(e.metaKey || e.ctrlKey)) return;
+        if (document.documentElement.classList.contains("molan-host-vscode")
+          || document.body.classList.contains("molan-host-vscode")) {
+          return;
+        }
+        if (typeof isPrimaryModKey === "function" && !isPrimaryModKey(e, "e")) return;
+        if (e.target?.closest?.("input, textarea, select")) return;
+        const blocked = e.target?.closest?.(
+          ".molan-find-bar, .molan-image-url-mask, .molan-feedback, .molan-mermaid-editor, .lightbox",
+        );
+        if (blocked) return;
+        const modeBtn = document.getElementById("modeBtn");
+        if (!modeBtn || modeBtn.hidden || modeBtn.disabled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        modeBtn.click();
+      }, true);
     }
   }

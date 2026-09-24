@@ -63,7 +63,15 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
   }
 
   static postToActive(
-    type: "find" | "findNext" | "findPrev" | "openFeedback" | "formatBold" | "formatItalic" | "formatLink",
+    type:
+      | "find"
+      | "findNext"
+      | "findPrev"
+      | "openFeedback"
+      | "formatBold"
+      | "formatItalic"
+      | "formatLink"
+      | "toggleMode",
   ): boolean {
     const provider = MolanEditorProvider.instance;
     if (!provider) return false;

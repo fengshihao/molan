@@ -542,6 +542,18 @@ async function main() {
     await page.click("#modeBtn");
     await page.waitForFunction(() => window.__molan.isPreview() === true, { timeout: 15000 });
     assert(true, "切回预览模式");
+
+    const mod = process.platform === "darwin" ? "Meta" : "Control";
+    await page.keyboard.down(mod);
+    await page.keyboard.press("KeyE");
+    await page.keyboard.up(mod);
+    await page.waitForFunction(() => window.__molan.isPreview() === false, { timeout: 20000 });
+    assert(true, "Cmd/Ctrl+E 进入编辑");
+    await page.keyboard.down(mod);
+    await page.keyboard.press("KeyE");
+    await page.keyboard.up(mod);
+    await page.waitForFunction(() => window.__molan.isPreview() === true, { timeout: 15000 });
+    assert(true, "Cmd/Ctrl+E 回到预览");
   } catch (err) {
     try {
       await page.screenshot({ path: "/tmp/molan-buttons-e2e.png", fullPage: true });

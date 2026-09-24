@@ -563,6 +563,13 @@
       italic() { return formatHotkeys.italic(); },
       link() { return formatHotkeys.link(); },
     },
+    /** 对应顶栏阅读/编辑按钮；扩展经 toggleMode 消息调用 */
+    toggleMode() {
+      const modeBtn = document.getElementById("modeBtn");
+      if (!modeBtn || modeBtn.hidden || modeBtn.disabled) return false;
+      modeBtn.click();
+      return true;
+    },
     type: {
       open: openType,
       close: closeType,
