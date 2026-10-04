@@ -8141,12 +8141,15 @@
           hideTablePicker();
           hideTableToolbar(document.getElementById("molanTableToolbar"));
           hideFormatBar();
+          let fromSource = false;
           if (sourceOpen) {
+            fromSource = true;
             commitSourceFromTextarea();
             spot = captureSourceReadingSpot() || spot;
             closeSourceView({ restorePreview: false });
           }
-          if (vditor) {
+          if (!fromSource && vditor) {
+            // 原文提交时 markdown 已是最新值；此时 IR DOM 可能滞后，不能回读覆盖
             try { markdown = api.getValue(); } catch (_) { /* ignore */ }
           }
           previewing = true;
@@ -8249,6 +8252,10 @@
         if (opts.live && previewing) {
           const spot = sourceOpen ? captureSourceReadingSpot() : captureReadingSpot(true);
           renderLitePreview(markdown, spot);
+        } else if (!opts.live && !previewing && vditor) {
+          // 原文面板提交（live: false）时把内容同步回 IR DOM；
+          // 否则编辑模式下关闭面板后，编辑器与 getValue 都会读回旧内容
+          try { vditor.setValue(markdown, false); } catch (_) { /* ignore */ }
         }
       },
       notifyInput: () => {
