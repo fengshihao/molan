@@ -250,6 +250,73 @@ async function main() {
       return !!(btn && (btn.disabled || btn.classList.contains("is-disabled")));
     });
     assert(headerDeleteDisabled, "表头行禁用删除");
+
+    // #1 回归：表格贴顶时工具栏应浮在表格上方，而不是盖住第一行
+    await page.evaluate(() => {
+      window.__molan.setValue(
+        "| 甲 | 乙 |\n| --- | --- |\n| 1 | 2 |\n\n" + "下方内容段落。\n\n".repeat(30),
+        true,
+      );
+    });
+    await sleep(300);
+    await page.evaluate(() => {
+      const scroller = document.querySelector(".vditor-ir");
+      if (scroller) scroller.scrollTop = 0;
+    });
+    await sleep(150);
+    await page.click(".vditor-ir table th");
+    await page.waitForSelector("#molanTableToolbar:not([hidden])", { timeout: 5000 });
+    await sleep(200);
+    await shot("05-pinned-toolbar");
+    const pinnedToolbar = await page.evaluate(() => {
+      const bar = document.getElementById("molanTableToolbar");
+      const table = document.querySelector(".vditor-ir table");
+      if (!bar || !table) return { ok: false };
+      const barRect = bar.getBoundingClientRect();
+      const tableRect = table.getBoundingClientRect();
+      return { ok: true, barBottom: barRect.bottom, tableTop: tableRect.top };
+    });
+    assert(pinnedToolbar.ok, "贴顶表格的工具栏与表格存在");
+    assert(
+      pinnedToolbar.barBottom <= pinnedToolbar.tableTop + 4,
+      `表格贴顶时工具栏不盖住第一行（重叠 ${Math.round(pinnedToolbar.barBottom - pinnedToolbar.tableTop)}px）`,
+    );
+
+    // #1 回归：表格顶出视口上方时，选中单元格应向上滚动露出空间，工具栏整体位于表格上方
+    await page.evaluate(() => {
+      window.__molan.setValue(
+        "# 标题在上\n\n| 甲 | 乙 |\n| --- | --- |\n| 1 | 2 |\n\n" + "下方内容段落。\n\n".repeat(30),
+        true,
+      );
+    });
+    await sleep(300);
+    await page.evaluate(() => {
+      const scroller = document.querySelector(".vditor-ir pre.vditor-reset")
+        || document.querySelector(".vditor-ir");
+      const table = document.querySelector(".vditor-ir table");
+      if (!scroller || !table) return;
+      scroller.scrollTop = 0;
+      const delta = table.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 10;
+      if (delta > 0) scroller.scrollTop += delta;
+    });
+    await sleep(150);
+    await page.click(".vditor-ir table th");
+    await page.waitForSelector("#molanTableToolbar:not([hidden])", { timeout: 5000 });
+    await sleep(200);
+    await shot("06-scrolled-toolbar");
+    const scrolledToolbar = await page.evaluate(() => {
+      const bar = document.getElementById("molanTableToolbar");
+      const table = document.querySelector(".vditor-ir table");
+      if (!bar || !table) return { ok: false };
+      const barRect = bar.getBoundingClientRect();
+      const tableRect = table.getBoundingClientRect();
+      return { ok: true, barBottom: barRect.bottom, tableTop: tableRect.top };
+    });
+    assert(scrolledToolbar.ok, "顶出视口的表格与工具栏存在");
+    assert(
+      scrolledToolbar.barBottom <= scrolledToolbar.tableTop,
+      `滚动后工具栏整体在表格上方（barBottom=${Math.round(scrolledToolbar.barBottom)} tableTop=${Math.round(scrolledToolbar.tableTop)}）`,
+    );
   } catch (err) {
     await shot("error").catch(() => {});
     failures.push(err.stack || String(err));
