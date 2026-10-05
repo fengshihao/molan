@@ -1882,15 +1882,31 @@
     if (bar) bar.hidden = true;
   }
 
-  function positionTableToolbar(bar, table, host) {
+  function scrollHostUpForToolbar(table, deficit) {
+    if (!table || !(deficit > 0)) return false;
+    const scroller = overflowParent(table);
+    if (!scroller || scroller === table) return false;
+    const next = Math.max(0, scroller.scrollTop - deficit);
+    if (next >= scroller.scrollTop) return false;
+    scroller.scrollTop = next;
+    return true;
+  }
+
+  function positionTableToolbar(bar, table) {
     if (!bar || !table) return;
-    const tableRect = table.getBoundingClientRect();
-    const hostRect = host?.getBoundingClientRect?.() || tableRect;
+    let tableRect = table.getBoundingClientRect();
     const gap = 8;
+    const minTop = 8;
     let top = tableRect.top - bar.offsetHeight - gap;
-    if (top < Math.max(8, hostRect.top + 4)) {
-      top = Math.min(tableRect.top + gap, hostRect.bottom - bar.offsetHeight - 4);
+    if (top < minTop) {
+      // 上方放不下：先向上滚动露出表格上方的空间（工具栏是临时浮层，
+      // 允许盖住上方工具栏区域，但不允许盖住表格内容行）
+      if (scrollHostUpForToolbar(table, minTop - top)) {
+        tableRect = table.getBoundingClientRect();
+        top = tableRect.top - bar.offsetHeight - gap;
+      }
     }
+    top = Math.max(minTop, top);
     let left = tableRect.left;
     const maxLeft = window.innerWidth - bar.offsetWidth - 8;
     left = Math.max(8, Math.min(left, maxLeft));
@@ -1954,7 +1970,6 @@
       }
       lastCell = cell;
       const table = cell.closest("table");
-      const host = irHostOf(root);
       const deleteRowBtn = bar.querySelector('[data-molan-table="deleteRow"]');
       if (deleteRowBtn) {
         const locked = cell.tagName === "TH";
@@ -1962,7 +1977,7 @@
         deleteRowBtn.classList.toggle("is-disabled", locked);
       }
       bar.hidden = false;
-      positionTableToolbar(bar, table, host);
+      positionTableToolbar(bar, table);
     };
 
     const scheduleSync = () => {
@@ -1976,14 +1991,16 @@
     document.addEventListener("selectionchange", scheduleSync);
     root.addEventListener("keyup", scheduleSync);
     root.addEventListener("mouseup", scheduleSync);
-    irHostOf(root)?.addEventListener("scroll", () => {
+    // 实际滚动容器是 vditor-reset（overflow-x: auto 使 overflow-y 计算为 auto），
+    // scroll 事件不冒泡，挂 document 捕获阶段才能跟随任何容器滚动
+    document.addEventListener("scroll", () => {
       if (!bar.hidden && lastCell?.isConnected) {
-        positionTableToolbar(bar, lastCell.closest("table"), irHostOf(root));
+        positionTableToolbar(bar, lastCell.closest("table"));
       }
-    }, { passive: true });
+    }, { passive: true, capture: true });
     window.addEventListener("resize", () => {
       if (!bar.hidden && lastCell?.isConnected) {
-        positionTableToolbar(bar, lastCell.closest("table"), irHostOf(root));
+        positionTableToolbar(bar, lastCell.closest("table"));
       }
     });
 
