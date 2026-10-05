@@ -11,6 +11,86 @@
     animToken: 0,
   };
 
+  let findDoc = {
+    getMarkdown() { return ""; },
+    applyMarkdown() { return false; },
+  };
+
+  function bindFindDoc(handlers) {
+    if (handlers) findDoc = handlers;
+  }
+
+  function markdownHits(source, query, caseSensitive) {
+    if (!query) return [];
+    const hay = caseSensitive ? source : source.toLowerCase();
+    const needle = caseSensitive ? query : query.toLowerCase();
+    const hits = [];
+    let from = 0;
+    while (from <= hay.length - needle.length) {
+      const at = hay.indexOf(needle, from);
+      if (at < 0) break;
+      hits.push(at);
+      from = at + needle.length;
+    }
+    return hits;
+  }
+
+  function replaceMarkdownNth(source, query, replacement, index, caseSensitive) {
+    const at = markdownHits(source, query, caseSensitive)[index];
+    if (at == null) return source;
+    return source.slice(0, at) + replacement + source.slice(at + query.length);
+  }
+
+  function replaceMarkdownAll(source, query, replacement, caseSensitive) {
+    const hits = markdownHits(source, query, caseSensitive);
+    if (!hits.length) return source;
+    let out = "";
+    let last = 0;
+    for (const at of hits) {
+      out += source.slice(last, at) + replacement;
+      last = at + query.length;
+    }
+    return out + source.slice(last);
+  }
+
+  function replacementContainsQuery(replacement, query, caseSensitive) {
+    if (!query) return false;
+    if (caseSensitive) return replacement.includes(query);
+    return replacement.toLowerCase().includes(query.toLowerCase());
+  }
+
+  function replaceFindCurrent() {
+    const query = findState.query;
+    if (!query || !findState.matches.length) return false;
+    const replacement = document.getElementById("molanFindReplace")?.value ?? "";
+    const src = findDoc.getMarkdown() || "";
+    const next = replaceMarkdownNth(src, query, replacement, findState.index, findState.caseSensitive);
+    if (next === src) return false;
+    const stay = replacementContainsQuery(replacement, query, findState.caseSensitive);
+    const idx = findState.index;
+    findDoc.applyMarkdown(next);
+    runFind({ keepIndex: true, reveal: true });
+    if (stay && findState.matches.length) {
+      findState.index = (idx + 1) % findState.matches.length;
+      paintFindMatches();
+      updateFindCount();
+      scrollMatchIntoView(findState.matches[findState.index]);
+    }
+    return true;
+  }
+
+  function replaceFindAll() {
+    const query = findState.query;
+    if (!query) return false;
+    const replacement = document.getElementById("molanFindReplace")?.value ?? "";
+    const src = findDoc.getMarkdown() || "";
+    const next = replaceMarkdownAll(src, query, replacement, findState.caseSensitive);
+    if (next === src) return false;
+    findDoc.applyMarkdown(next);
+    runFind({ keepIndex: false, reveal: true });
+    return true;
+  }
+
   function hasHighlightApi() {
     return typeof global.Highlight === "function" && global.CSS && CSS.highlights;
   }
@@ -170,8 +250,13 @@
   function updateFindCount() {
     const countEl = document.getElementById("molanFindCount");
     const input = document.getElementById("molanFindInput");
-    if (!countEl) return;
     const total = findState.matches.length;
+    const can = Boolean(findState.query && total);
+    const one = document.getElementById("molanFindReplaceOne");
+    const all = document.getElementById("molanFindReplaceAll");
+    if (one) one.disabled = !can;
+    if (all) all.disabled = !can;
+    if (!countEl) return;
     if (!findState.query) {
       countEl.textContent = "";
       input?.classList.remove("is-empty");
@@ -238,11 +323,18 @@
     const next = document.getElementById("molanFindNext");
     const close = document.getElementById("molanFindClose");
     const caseBtn = document.getElementById("molanFindCase");
+    const replace = document.getElementById("molanFindReplace");
+    const replaceOne = document.getElementById("molanFindReplaceOne");
+    const replaceAll = document.getElementById("molanFindReplaceAll");
     const bar = document.getElementById("molanFindBar");
     const btn = document.getElementById("molanFindBtn");
     if (input) {
       input.placeholder = t("findPlaceholder");
       input.setAttribute("aria-label", t("findAria"));
+    }
+    if (replace) {
+      replace.placeholder = t("findReplacePlaceholder");
+      replace.setAttribute("aria-label", t("findReplacePlaceholder"));
     }
     if (bar) bar.setAttribute("aria-label", t("findAria"));
     if (prev) {
@@ -260,6 +352,16 @@
     if (caseBtn) {
       caseBtn.title = t("findCase");
       caseBtn.setAttribute("aria-label", t("findCase"));
+    }
+    if (replaceOne) {
+      replaceOne.textContent = t("findReplace");
+      replaceOne.title = t("findReplaceAria");
+      replaceOne.setAttribute("aria-label", t("findReplaceAria"));
+    }
+    if (replaceAll) {
+      replaceAll.textContent = t("findReplaceAll");
+      replaceAll.title = t("findReplaceAllAria");
+      replaceAll.setAttribute("aria-label", t("findReplaceAllAria"));
     }
     if (btn) {
       btn.title = t("findAria");
@@ -392,7 +494,8 @@
   function handleFindKey(e) {
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     const mod = e.metaKey || e.ctrlKey;
-    const inFind = e.target && e.target.id === "molanFindInput";
+    const inBar = e.target && e.target.closest && e.target.closest("#molanFindBar");
+    const inReplace = e.target && e.target.id === "molanFindReplace";
 
     if (mod && key === "f" && !e.shiftKey && !e.altKey) {
       e.preventDefault();
@@ -412,7 +515,13 @@
       closeFind();
       return;
     }
-    if (!inFind) return;
+    if (!inBar) return;
+    if (e.key === "Enter" && inReplace) {
+      e.preventDefault();
+      if (mod) replaceFindAll();
+      else replaceFindCurrent();
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       moveFind(e.shiftKey ? -1 : 1);
@@ -435,18 +544,25 @@
       bar.hidden = true;
       bar.setAttribute("role", "search");
       bar.innerHTML = `
-        <input class="molan-find-input" id="molanFindInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" />
-        <span class="molan-find-count" id="molanFindCount" aria-live="polite"></span>
-        <button type="button" class="molan-find-case" id="molanFindCase" aria-pressed="false">Aa</button>
-        <button type="button" class="icon-btn" id="molanFindPrev">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="molanFindNext">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="molanFindClose">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
+        <div class="molan-find-row">
+          <input class="molan-find-input" id="molanFindInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+          <span class="molan-find-count" id="molanFindCount" aria-live="polite"></span>
+          <button type="button" class="molan-find-case" id="molanFindCase" aria-pressed="false">Aa</button>
+          <button type="button" class="icon-btn" id="molanFindPrev">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="molanFindNext">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="molanFindClose">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="molan-find-row molan-find-replace-row">
+          <input class="molan-find-input" id="molanFindReplace" type="search" autocomplete="off" spellcheck="false" enterkeyhint="enter" />
+          <button type="button" class="molan-find-action" id="molanFindReplaceOne" disabled></button>
+          <button type="button" class="molan-find-action" id="molanFindReplaceAll" disabled></button>
+        </div>
       `;
       host.appendChild(bar);
 
@@ -470,6 +586,8 @@
       bar.querySelector("#molanFindPrev").addEventListener("click", () => moveFind(-1));
       bar.querySelector("#molanFindNext").addEventListener("click", () => moveFind(1));
       bar.querySelector("#molanFindClose").addEventListener("click", () => closeFind());
+      bar.querySelector("#molanFindReplaceOne").addEventListener("click", () => replaceFindCurrent());
+      bar.querySelector("#molanFindReplaceAll").addEventListener("click", () => replaceFindAll());
     }
     applyFindI18n();
     document.addEventListener("keydown", handleFindKey, true);

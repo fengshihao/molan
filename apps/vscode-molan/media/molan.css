@@ -1774,16 +1774,16 @@
       top: 14px;
       right: 18px;
       z-index: 12;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 6px 4px 10px;
-      border-radius: 999px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 2px;
+      padding: 6px 8px;
+      border-radius: 18px;
       background: var(--paper-lift);
       border: 1px solid var(--hairline-strong);
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
       color: var(--ink-soft);
-      flex-wrap: nowrap;
       max-width: calc(100% - 28px);
       transform-origin: 88% 0%;
     }
@@ -1805,6 +1805,13 @@
       right: auto;
       left: 18px;
       transform-origin: 12% 0%;
+    }
+
+    .molan-find-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
     }
 
     .molan-find-input {
@@ -1865,6 +1872,32 @@
     .molan-find-bar .icon-btn {
       width: 26px;
       height: 26px;
+    }
+
+    .molan-find-action {
+      appearance: none;
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      font-family: var(--font-ui);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 5px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .molan-find-action:hover:not(:disabled) {
+      color: var(--accent);
+      background: var(--surface);
+    }
+
+    .molan-find-action:disabled {
+      opacity: 0.38;
+      cursor: default;
     }
 
     ::highlight(molan-find) {

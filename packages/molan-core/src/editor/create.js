@@ -132,6 +132,10 @@
     watchMermaidPreviews(previewRoot);
     watchTables(previewRoot);
     initFind();
+    bindFindDoc({
+      getMarkdown: readLiveMarkdown,
+      applyMarkdown: applyDocChange,
+    });
     initType();
     initTheme();
     initHeaderPrefs();
