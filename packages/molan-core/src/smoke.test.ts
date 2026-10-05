@@ -345,3 +345,22 @@ test("文本复制有 clipboard API 降级和流程图源码回退", () => {
   assert.match(src, /mermaidCopySource,/);
   assert.match(src, /e\.key === "Escape" && exportMenuIsOpen/);
 });
+
+test("查找栏可以替换当前匹配和全部匹配", () => {
+  const src = editorSrc();
+  assert.match(src, /function markdownHits/);
+  assert.match(src, /function replaceMarkdownNth/);
+  assert.match(src, /function replaceMarkdownAll/);
+  assert.match(src, /function replaceFindCurrent/);
+  assert.match(src, /function replaceFindAll/);
+  assert.match(src, /function bindFindDoc/);
+  assert.match(src, /id="molanFindReplace"/);
+  assert.match(src, /id="molanFindReplaceOne"/);
+  assert.match(src, /molan-find-replace-row/);
+  assert.match(src, /id="molanFindReplaceAll"/);
+  assert.match(src, /replaceCurrent: replaceFindCurrent/);
+  assert.match(src, /applyMarkdown: applyDocChange/);
+  const css = readFileSync(join(root, "src", "molan.css"), "utf8");
+  assert.match(css, /\.molan-find-row/);
+  assert.match(css, /\.molan-find-action/);
+});

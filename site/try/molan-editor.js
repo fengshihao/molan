@@ -116,6 +116,11 @@
       findNoMatch: "无匹配",
       findMatchCount: "{current}/{total}",
       findAria: "在文档中查找",
+      findReplacePlaceholder: "替换为",
+      findReplace: "替换",
+      findReplaceAll: "全部",
+      findReplaceAria: "替换当前匹配",
+      findReplaceAllAria: "替换全部匹配",
       typeAria: "排版",
       typeTitle: "调节字号、行距与字体",
       typeLabel: "排版",
@@ -1882,15 +1887,31 @@
     if (bar) bar.hidden = true;
   }
 
-  function positionTableToolbar(bar, table, host) {
+  function scrollHostUpForToolbar(table, deficit) {
+    if (!table || !(deficit > 0)) return false;
+    const scroller = overflowParent(table);
+    if (!scroller || scroller === table) return false;
+    const next = Math.max(0, scroller.scrollTop - deficit);
+    if (next >= scroller.scrollTop) return false;
+    scroller.scrollTop = next;
+    return true;
+  }
+
+  function positionTableToolbar(bar, table) {
     if (!bar || !table) return;
-    const tableRect = table.getBoundingClientRect();
-    const hostRect = host?.getBoundingClientRect?.() || tableRect;
+    let tableRect = table.getBoundingClientRect();
     const gap = 8;
+    const minTop = 8;
     let top = tableRect.top - bar.offsetHeight - gap;
-    if (top < Math.max(8, hostRect.top + 4)) {
-      top = Math.min(tableRect.top + gap, hostRect.bottom - bar.offsetHeight - 4);
+    if (top < minTop) {
+      // 上方放不下：先向上滚动露出表格上方的空间（工具栏是临时浮层，
+      // 允许盖住上方工具栏区域，但不允许盖住表格内容行）
+      if (scrollHostUpForToolbar(table, minTop - top)) {
+        tableRect = table.getBoundingClientRect();
+        top = tableRect.top - bar.offsetHeight - gap;
+      }
     }
+    top = Math.max(minTop, top);
     let left = tableRect.left;
     const maxLeft = window.innerWidth - bar.offsetWidth - 8;
     left = Math.max(8, Math.min(left, maxLeft));
@@ -1954,7 +1975,6 @@
       }
       lastCell = cell;
       const table = cell.closest("table");
-      const host = irHostOf(root);
       const deleteRowBtn = bar.querySelector('[data-molan-table="deleteRow"]');
       if (deleteRowBtn) {
         const locked = cell.tagName === "TH";
@@ -1962,7 +1982,7 @@
         deleteRowBtn.classList.toggle("is-disabled", locked);
       }
       bar.hidden = false;
-      positionTableToolbar(bar, table, host);
+      positionTableToolbar(bar, table);
     };
 
     const scheduleSync = () => {
@@ -1976,14 +1996,16 @@
     document.addEventListener("selectionchange", scheduleSync);
     root.addEventListener("keyup", scheduleSync);
     root.addEventListener("mouseup", scheduleSync);
-    irHostOf(root)?.addEventListener("scroll", () => {
+    // 实际滚动容器是 vditor-reset（overflow-x: auto 使 overflow-y 计算为 auto），
+    // scroll 事件不冒泡，挂 document 捕获阶段才能跟随任何容器滚动
+    document.addEventListener("scroll", () => {
       if (!bar.hidden && lastCell?.isConnected) {
-        positionTableToolbar(bar, lastCell.closest("table"), irHostOf(root));
+        positionTableToolbar(bar, lastCell.closest("table"));
       }
-    }, { passive: true });
+    }, { passive: true, capture: true });
     window.addEventListener("resize", () => {
       if (!bar.hidden && lastCell?.isConnected) {
-        positionTableToolbar(bar, lastCell.closest("table"), irHostOf(root));
+        positionTableToolbar(bar, lastCell.closest("table"));
       }
     });
 
@@ -3744,6 +3766,86 @@
     animToken: 0,
   };
 
+  let findDoc = {
+    getMarkdown() { return ""; },
+    applyMarkdown() { return false; },
+  };
+
+  function bindFindDoc(handlers) {
+    if (handlers) findDoc = handlers;
+  }
+
+  function markdownHits(source, query, caseSensitive) {
+    if (!query) return [];
+    const hay = caseSensitive ? source : source.toLowerCase();
+    const needle = caseSensitive ? query : query.toLowerCase();
+    const hits = [];
+    let from = 0;
+    while (from <= hay.length - needle.length) {
+      const at = hay.indexOf(needle, from);
+      if (at < 0) break;
+      hits.push(at);
+      from = at + needle.length;
+    }
+    return hits;
+  }
+
+  function replaceMarkdownNth(source, query, replacement, index, caseSensitive) {
+    const at = markdownHits(source, query, caseSensitive)[index];
+    if (at == null) return source;
+    return source.slice(0, at) + replacement + source.slice(at + query.length);
+  }
+
+  function replaceMarkdownAll(source, query, replacement, caseSensitive) {
+    const hits = markdownHits(source, query, caseSensitive);
+    if (!hits.length) return source;
+    let out = "";
+    let last = 0;
+    for (const at of hits) {
+      out += source.slice(last, at) + replacement;
+      last = at + query.length;
+    }
+    return out + source.slice(last);
+  }
+
+  function replacementContainsQuery(replacement, query, caseSensitive) {
+    if (!query) return false;
+    if (caseSensitive) return replacement.includes(query);
+    return replacement.toLowerCase().includes(query.toLowerCase());
+  }
+
+  function replaceFindCurrent() {
+    const query = findState.query;
+    if (!query || !findState.matches.length) return false;
+    const replacement = document.getElementById("molanFindReplace")?.value ?? "";
+    const src = findDoc.getMarkdown() || "";
+    const next = replaceMarkdownNth(src, query, replacement, findState.index, findState.caseSensitive);
+    if (next === src) return false;
+    const stay = replacementContainsQuery(replacement, query, findState.caseSensitive);
+    const idx = findState.index;
+    findDoc.applyMarkdown(next);
+    runFind({ keepIndex: true, reveal: true });
+    if (stay && findState.matches.length) {
+      findState.index = (idx + 1) % findState.matches.length;
+      paintFindMatches();
+      updateFindCount();
+      scrollMatchIntoView(findState.matches[findState.index]);
+    }
+    return true;
+  }
+
+  function replaceFindAll() {
+    const query = findState.query;
+    if (!query) return false;
+    const replacement = document.getElementById("molanFindReplace")?.value ?? "";
+    const src = findDoc.getMarkdown() || "";
+    const next = replaceMarkdownAll(src, query, replacement, findState.caseSensitive);
+    if (next === src) return false;
+    findDoc.applyMarkdown(next);
+    runFind({ keepIndex: false, reveal: true });
+    return true;
+  }
+
   function hasHighlightApi() {
     return typeof global.Highlight === "function" && global.CSS && CSS.highlights;
   }
@@ -3903,8 +4005,13 @@
   function updateFindCount() {
     const countEl = document.getElementById("molanFindCount");
     const input = document.getElementById("molanFindInput");
-    if (!countEl) return;
     const total = findState.matches.length;
+    const can = Boolean(findState.query && total);
+    const one = document.getElementById("molanFindReplaceOne");
+    const all = document.getElementById("molanFindReplaceAll");
+    if (one) one.disabled = !can;
+    if (all) all.disabled = !can;
+    if (!countEl) return;
     if (!findState.query) {
       countEl.textContent = "";
       input?.classList.remove("is-empty");
@@ -3971,11 +4078,18 @@
     const next = document.getElementById("molanFindNext");
     const close = document.getElementById("molanFindClose");
     const caseBtn = document.getElementById("molanFindCase");
+    const replace = document.getElementById("molanFindReplace");
+    const replaceOne = document.getElementById("molanFindReplaceOne");
+    const replaceAll = document.getElementById("molanFindReplaceAll");
     const bar = document.getElementById("molanFindBar");
     const btn = document.getElementById("molanFindBtn");
     if (input) {
       input.placeholder = t("findPlaceholder");
       input.setAttribute("aria-label", t("findAria"));
+    }
+    if (replace) {
+      replace.placeholder = t("findReplacePlaceholder");
+      replace.setAttribute("aria-label", t("findReplacePlaceholder"));
     }
     if (bar) bar.setAttribute("aria-label", t("findAria"));
     if (prev) {
@@ -3993,6 +4107,16 @@
     if (caseBtn) {
       caseBtn.title = t("findCase");
       caseBtn.setAttribute("aria-label", t("findCase"));
+    }
+    if (replaceOne) {
+      replaceOne.textContent = t("findReplace");
+      replaceOne.title = t("findReplaceAria");
+      replaceOne.setAttribute("aria-label", t("findReplaceAria"));
+    }
+    if (replaceAll) {
+      replaceAll.textContent = t("findReplaceAll");
+      replaceAll.title = t("findReplaceAllAria");
+      replaceAll.setAttribute("aria-label", t("findReplaceAllAria"));
     }
     if (btn) {
       btn.title = t("findAria");
@@ -4125,7 +4249,8 @@
   function handleFindKey(e) {
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     const mod = e.metaKey || e.ctrlKey;
-    const inFind = e.target && e.target.id === "molanFindInput";
+    const inBar = e.target && e.target.closest && e.target.closest("#molanFindBar");
+    const inReplace = e.target && e.target.id === "molanFindReplace";
 
     if (mod && key === "f" && !e.shiftKey && !e.altKey) {
       e.preventDefault();
@@ -4145,7 +4270,13 @@
       closeFind();
       return;
     }
-    if (!inFind) return;
+    if (!inBar) return;
+    if (e.key === "Enter" && inReplace) {
+      e.preventDefault();
+      if (mod) replaceFindAll();
+      else replaceFindCurrent();
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
       moveFind(e.shiftKey ? -1 : 1);
@@ -4168,18 +4299,25 @@
       bar.hidden = true;
       bar.setAttribute("role", "search");
       bar.innerHTML = `
-        <input class="molan-find-input" id="molanFindInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" />
-        <span class="molan-find-count" id="molanFindCount" aria-live="polite"></span>
-        <button type="button" class="molan-find-case" id="molanFindCase" aria-pressed="false">Aa</button>
-        <button type="button" class="icon-btn" id="molanFindPrev">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="molanFindNext">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg>
-        </button>
-        <button type="button" class="icon-btn" id="molanFindClose">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
+        <div class="molan-find-row">
+          <input class="molan-find-input" id="molanFindInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search" />
+          <span class="molan-find-count" id="molanFindCount" aria-live="polite"></span>
+          <button type="button" class="molan-find-case" id="molanFindCase" aria-pressed="false">Aa</button>
+          <button type="button" class="icon-btn" id="molanFindPrev">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="molanFindNext">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg>
+          </button>
+          <button type="button" class="icon-btn" id="molanFindClose">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="molan-find-row molan-find-replace-row">
+          <input class="molan-find-input" id="molanFindReplace" type="search" autocomplete="off" spellcheck="false" enterkeyhint="enter" />
+          <button type="button" class="molan-find-action" id="molanFindReplaceOne" disabled></button>
+          <button type="button" class="molan-find-action" id="molanFindReplaceAll" disabled></button>
+        </div>
       `;
       host.appendChild(bar);
 
@@ -4203,6 +4341,8 @@
       bar.querySelector("#molanFindPrev").addEventListener("click", () => moveFind(-1));
       bar.querySelector("#molanFindNext").addEventListener("click", () => moveFind(1));
       bar.querySelector("#molanFindClose").addEventListener("click", () => closeFind());
+      bar.querySelector("#molanFindReplaceOne").addEventListener("click", () => replaceFindCurrent());
+      bar.querySelector("#molanFindReplaceAll").addEventListener("click", () => replaceFindAll());
     }
     applyFindI18n();
     document.addEventListener("keydown", handleFindKey, true);
@@ -7790,6 +7930,10 @@
     watchMermaidPreviews(previewRoot);
     watchTables(previewRoot);
     initFind();
+    bindFindDoc({
+      getMarkdown: readLiveMarkdown,
+      applyMarkdown: applyDocChange,
+    });
     initType();
     initTheme();
     initHeaderPrefs();
@@ -8141,12 +8285,15 @@
           hideTablePicker();
           hideTableToolbar(document.getElementById("molanTableToolbar"));
           hideFormatBar();
+          let fromSource = false;
           if (sourceOpen) {
+            fromSource = true;
             commitSourceFromTextarea();
             spot = captureSourceReadingSpot() || spot;
             closeSourceView({ restorePreview: false });
           }
-          if (vditor) {
+          if (!fromSource && vditor) {
+            // 原文提交时 markdown 已是最新值；此时 IR DOM 可能滞后，不能回读覆盖
             try { markdown = api.getValue(); } catch (_) { /* ignore */ }
           }
           previewing = true;
@@ -8249,6 +8396,10 @@
         if (opts.live && previewing) {
           const spot = sourceOpen ? captureSourceReadingSpot() : captureReadingSpot(true);
           renderLitePreview(markdown, spot);
+        } else if (!opts.live && !previewing && vditor) {
+          // 原文面板提交（live: false）时把内容同步回 IR DOM；
+          // 否则编辑模式下关闭面板后，编辑器与 getValue 都会读回旧内容
+          try { vditor.setValue(markdown, false); } catch (_) { /* ignore */ }
         }
       },
       notifyInput: () => {
@@ -8842,6 +8993,8 @@
       close: closeFind,
       next() { moveFind(1); },
       prev() { moveFind(-1); },
+      replaceCurrent: replaceFindCurrent,
+      replaceAll: replaceFindAll,
     },
     format: {
       bold() { return formatHotkeys.bold(); },

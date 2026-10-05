@@ -557,6 +557,8 @@
       close: closeFind,
       next() { moveFind(1); },
       prev() { moveFind(-1); },
+      replaceCurrent: replaceFindCurrent,
+      replaceAll: replaceFindAll,
     },
     format: {
       bold() { return formatHotkeys.bold(); },

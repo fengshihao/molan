@@ -208,6 +208,32 @@ async function main() {
     const findCount = await page.evaluate(() => document.getElementById("molanFindCount")?.textContent || "");
     assert(/1\/1/.test(findCount), `查找 alpha 应命中 1 处，实际「${findCount}」`);
 
+    await page.evaluate(async () => {
+      await window.__molan.setValue("alpha one\nalpha two\nalpha three", true);
+    });
+    await sleep(250);
+    await page.click("#molanFindInput", { clickCount: 3 });
+    await page.keyboard.press("Backspace");
+    await page.type("#molanFindInput", "alpha");
+    await page.click("#molanFindReplace", { clickCount: 3 });
+    await page.type("#molanFindReplace", "beta");
+    await sleep(250);
+    const beforeReplace = await page.evaluate(() => document.getElementById("molanFindCount")?.textContent || "");
+    assert(/1\/3/.test(beforeReplace), `三处 alpha 应显示 1/3，实际「${beforeReplace}」`);
+    await page.click("#molanFindReplaceOne");
+    await sleep(400);
+    const afterOne = await page.evaluate(() => window.__molan.getValue() || "");
+    const alphaAfterOne = afterOne.split("alpha").length - 1;
+    const betaAfterOne = afterOne.split("beta").length - 1;
+    assert(alphaAfterOne === 2 && betaAfterOne === 1, `替换当前后应变 2 个 alpha / 1 个 beta，实际 ${alphaAfterOne}/${betaAfterOne}「${afterOne}」`);
+    await page.click("#molanFindReplaceAll");
+    await sleep(400);
+    const afterAll = await page.evaluate(() => window.__molan.getValue() || "");
+    assert(
+      !afterAll.includes("alpha") && (afterAll.split("beta").length - 1) === 3,
+      `全部替换后应无 alpha、3 个 beta，实际「${afterAll}」`,
+    );
+
     await page.click("#molanFindClose");
     await page.waitForFunction(() => {
       const bar = document.getElementById("molanFindBar");
