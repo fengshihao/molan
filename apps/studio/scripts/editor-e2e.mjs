@@ -301,6 +301,57 @@ async function main() {
       themeCopy.matchedLive > 8 || themeCopy.greenish > 8,
       `复制图应出现页面上的主题色，matchedLive=${themeCopy.matchedLive} greenish=${themeCopy.greenish} white=${themeCopy.white}`,
     );
+
+    // #3 回归：编辑模式 → 原文面板修改 → 关闭面板，IR 与 getValue 不得回退旧内容
+    await page.evaluate(async () => {
+      await window.__molan.setValue("# 原文回归\n\n修改前的内容。", true);
+      await window.__molan.setPreview(false);
+    });
+    await page.waitForFunction(() => window.__molan && !window.__molan.isPreview(), { timeout: 20000 });
+    await sleep(400);
+    await page.evaluate(() => window.MolanEditor.source.open());
+    await page.waitForSelector("#molanSourceView:not([hidden])", { timeout: 5000 });
+    await page.evaluate(() => {
+      const text = document.getElementById("molanSourceText");
+      text.value = "# 原文回归\n\n原文面板修改 A。";
+      text.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await sleep(500);
+    await page.click("#molanSourceClose");
+    await sleep(300);
+    const afterSourceClose = await page.evaluate(() => ({
+      value: window.__molan.getValue(),
+      irText: document.querySelector(".vditor-ir")?.textContent || "",
+    }));
+    assert(
+      afterSourceClose.value.includes("原文面板修改 A"),
+      "编辑模式关闭原文面板后 getValue 保留原文修改",
+    );
+    assert(
+      afterSourceClose.irText.includes("原文面板修改 A"),
+      "关闭原文面板后 IR 编辑器同步显示新内容",
+    );
+
+    // #3 回归：原文面板再修改 → 直接切预览，预览应显示新内容而非修改前结果
+    await page.evaluate(() => window.MolanEditor.source.open());
+    await page.waitForSelector("#molanSourceView:not([hidden])", { timeout: 5000 });
+    await page.evaluate(() => {
+      const text = document.getElementById("molanSourceText");
+      text.value = "# 原文回归\n\n原文面板修改 B。";
+      text.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await sleep(500);
+    await page.evaluate(async () => {
+      await window.__molan.setPreview(true);
+    });
+    await page.waitForFunction(() => window.__molan && window.__molan.isPreview(), { timeout: 15000 });
+    await page.waitForFunction(
+      () => (document.querySelector(".molan-preview")?.textContent || "").includes("原文面板修改 B"),
+      { timeout: 10000 },
+    );
+    const previewText = await page.evaluate(() => document.querySelector(".molan-preview")?.textContent || "");
+    assert(previewText.includes("原文面板修改 B"), "原文修改后切回预览应显示新内容");
+    assert(!previewText.includes("修改前的内容"), "预览不应再显示修改前的内容");
   } catch (err) {
     failures.push(err.stack || String(err));
   } finally {
