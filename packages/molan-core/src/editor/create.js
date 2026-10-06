@@ -548,7 +548,7 @@
               settleInsertedBlock(el, pendingInsert.viewportY);
               pendingInsert = null;
             } else if (!hold) {
-              restoreReadingSpot(false, spot);
+              restoreReadingSpot(false, spot, { caret: true });
             }
           });
         }, 400);
@@ -576,6 +576,11 @@
         return vditor;
       },
     };
+
+    bindPreviewDblclickEdit(previewBody, {
+      isPreviewing: () => previewing,
+      enterEdit: (spot) => api.setPreview(false, { spot }),
+    });
 
     ensureEditorChrome({
       getVditor: () => vditor,

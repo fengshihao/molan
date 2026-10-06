@@ -121,6 +121,13 @@ test("Cmd/Ctrl+E 点顶栏切换阅读和编辑", () => {
   assert.match(src, /molan-host-vscode/);
 });
 
+test("预览双击段落进入编辑", () => {
+  const src = editorSrc();
+  assert.match(src, /function bindPreviewDblclickEdit/);
+  assert.match(src, /function captureReadingSpotFromBlock/);
+  assert.match(src, /dblclick/);
+});
+
 test("molan-editor.js 导出 MolanEditor.create", () => {
   const src = editorSrc();
   assert.match(src, /MolanEditor\.create|global\.MolanEditor\s*=/);

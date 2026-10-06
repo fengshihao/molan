@@ -536,6 +536,37 @@ async function main() {
       await page.waitForFunction(() => window.__molan.isPreview() === true, { timeout: 15000 });
     }
 
+    await page.evaluate(() => {
+      const root = document.getElementById("molanPreviewBody");
+      const block = [...(root?.querySelectorAll("p") || [])].find((p) =>
+        (p.textContent || "").includes("第二段正文"),
+      );
+      if (!block) throw new Error("预览正文缺少第二段");
+      const rect = block.getBoundingClientRect();
+      block.dispatchEvent(new MouseEvent("dblclick", {
+        bubbles: true,
+        cancelable: true,
+        clientX: rect.left + 12,
+        clientY: rect.top + 8,
+      }));
+    });
+    await page.waitForFunction(() => {
+      if (window.__molan.isPreview()) return false;
+      const sel = window.getSelection();
+      if (!sel?.rangeCount) return false;
+      let el = sel.anchorNode;
+      if (!el) return false;
+      el = el.nodeType === 1 ? el : el.parentElement;
+      while (el) {
+        if ((el.textContent || "").includes("第二段正文")) return true;
+        el = el.parentElement;
+      }
+      return false;
+    }, { timeout: 20000 });
+    assert(true, "双击预览段落后光标应落在对应 IR 块");
+    await page.click("#modeBtn");
+    await page.waitForFunction(() => window.__molan.isPreview() === true, { timeout: 15000 });
+
     await page.click("#modeBtn");
     await page.waitForFunction(() => window.__molan.isPreview() === false, { timeout: 20000 });
     assert(true, "切换到编辑模式");

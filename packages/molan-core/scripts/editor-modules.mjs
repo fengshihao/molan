@@ -27,6 +27,7 @@ export const EDITOR_MODULES = [
   "ir.js",
   "insert.js",
   "selection.js",
+  "preview-dblclick.js",
   "create.js",
   "export.js",
 ];

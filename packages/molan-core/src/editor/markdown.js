@@ -248,6 +248,29 @@
     };
   }
 
+  /** 预览里双击某一段时，记下该段位置以便切到编辑后落点与滚动一致 */
+  function captureReadingSpotFromBlock(block, clientY) {
+    const root = readingContentRoot(true);
+    const scroller = readingScroller(true);
+    if (!root || !scroller || !block || !root.contains(block)) return null;
+    const blocks = topLevelBlocks(root);
+    const index = blocks.indexOf(block);
+    const box = scroller.getBoundingClientRect();
+    const rect = block.getBoundingClientRect();
+    const probeOffset = typeof clientY === "number" ? clientY - box.top : 16;
+    const offset = Math.max(0, rect.top - box.top);
+    return {
+      text: blockText(block),
+      index: index < 0 ? undefined : index,
+      probeOffset,
+      offset,
+      scrollerHeight: box.height,
+      ratio: readingScrollRatio(scroller),
+      scrollTop: scroller.scrollTop,
+      scrollHeight: scroller.scrollHeight,
+    };
+  }
+
   function restoreReadingSpot(previewing, spot, opts = {}) {
     if (!spot) return;
     const root = readingContentRoot(previewing);
