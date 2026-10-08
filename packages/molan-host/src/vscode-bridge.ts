@@ -10,6 +10,7 @@ import {
   type FeedbackKind,
 } from "./feedback.js";
 import { isExternalHttp, isMarkdownHref, relativeToLinkBase } from "./link-utils.js";
+import { scrollPreviewToFragment } from "./preview-anchor.js";
 
 declare global {
   interface Window {
@@ -294,7 +295,12 @@ function bootVscodeBridge() {
         return;
       }
       const rel = relativeToLinkBase(attr || a.href, linkBase);
-      if (rel.startsWith("#")) return;
+      if (rel.startsWith("#")) {
+        event.preventDefault();
+        event.stopPropagation();
+        scrollPreviewToFragment(rel);
+        return;
+      }
       if (!isMarkdownHref(rel) && !isMarkdownHref(attr) && !isMarkdownHref(a.href)) return;
       event.preventDefault();
       event.stopPropagation();

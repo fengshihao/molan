@@ -230,6 +230,7 @@ const bridge = readFileSync(join(root, "media/vscode-bridge.js"), "utf8");
 assert(bridge.includes("await setPreview(true, { skipRender: true })"), "defaults to preview on init");
 assert(bridge.includes("value !== baseline"), "ignores Vditor setValue round-trip");
 assert(bridge.includes("openRelative"), "webview opens relative markdown links");
+assert(bridge.includes("scrollPreviewToFragment"), "webview scrolls to in-doc heading anchors");
 assert(bridge.includes("quickOpen"), "webview forwards Cmd/Ctrl+P to Quick Open");
 assert(bridge.includes("isPrimaryModKey"), "bridge uses platform primary modifier");
 assert(bridge.includes("copyText"), "webview asks the extension host to write clipboard as fallback");
