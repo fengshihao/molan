@@ -18,6 +18,9 @@
 ## 发版
 
 - 公开脚本：`scripts/molan-publish.sh`、`.github/workflows/publish-extension.yml`
+- **GitHub Release（推荐）**：在 `main` 上把 `apps/vscode-molan/package.json` 版本号调好 → **`./molan release`**（自检、打标签、推送）。CI 打包 `.vsix`、用 **commit 汇总** 写 Release 说明、发 Open VSX（若有 `OVSX_PAT`）
+- 预览说明：`node scripts/release-notes-from-commits.mjs` 或 `./molan release --dry-run`
+- `CHANGELOG.md` 仍可供商店阅读，发版说明不再依赖手写 CHANGELOG 段落
 - Token：GitHub Secrets `OVSX_PAT`（及可选 `VSCE_PAT`），**不要**写进仓库
 - 网站运维脚本（SSH/rsync）仍在本机 gitignore 的 `apps/studio/deploy/`，与扩展发版无关
 

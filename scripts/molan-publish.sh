@@ -116,4 +116,6 @@ case "$(uname -s 2>/dev/null || echo unknown)" in
   *) xdg-open "${MARKET_URL}" >/dev/null 2>&1 || true ;;
 esac
 
+echo "==> 提醒：GitHub Release 用 ./molan release（打标签 + CI）；本脚本侧重 Open VSX / 商店。"
+
 echo "完成。"
