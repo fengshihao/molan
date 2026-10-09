@@ -116,9 +116,6 @@ case "$(uname -s 2>/dev/null || echo unknown)" in
   *) xdg-open "${MARKET_URL}" >/dev/null 2>&1 || true ;;
 esac
 
-echo "==> 提醒：GitHub Releases"
-echo "    推送标签会由 CI 创建 Release 并附上 .vsix："
-echo "      git tag v${VERSION} && git push origin v${VERSION}"
-echo "    说明脚本：node scripts/release-notes-from-changelog.mjs ${VERSION}"
+echo "==> 提醒：GitHub Release 用 ./molan release（打标签 + CI）；本脚本侧重 Open VSX / 商店。"
 
 echo "完成。"

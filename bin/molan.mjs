@@ -9,7 +9,8 @@
  *   ./molan e2e          studio browser e2e (auto Chrome/puppeteer)
  *   ./molan build        build @molan/* packages
  *   ./molan package      build .vsix
- *   ./molan publish      publish extension (needs OVSX_PAT)
+ *   ./molan release      tag + push → GitHub Release (CI)
+ *   ./molan publish      publish extension to Open VSX (needs OVSX_PAT)
  *   ./molan sync         sync apps/studio → site/try
  *   ./molan web|help
  */
@@ -42,7 +43,8 @@ Usage:
   molan e2e          Studio browser e2e (auto-installs Chrome/puppeteer)
   molan build        Build @molan/protocol, core, host
   molan package      Build extension .vsix
-  molan publish      Publish extension (Open VSX; needs OVSX_PAT)
+  molan release      Tag current extension version and push (CI → Release + vsix)
+  molan publish      Publish extension to Open VSX locally (needs OVSX_PAT)
   molan sync         Sync apps/studio → site/try
   molan web          Open online homepage
   molan help
@@ -99,6 +101,8 @@ function normalize(argv) {
     package: "package",
     pkg: "package",
     publish: "publish",
+    release: "release",
+    ship: "release",
     web: "web",
     online: "web",
     site: "web",
@@ -206,6 +210,9 @@ switch (action) {
     break;
   case "package":
     run("bash", [path.join(root, "scripts/vscode-molan.sh"), "package"]);
+    break;
+  case "release":
+    run("bash", [path.join(root, "scripts/molan-release.sh"), ...argv.slice(1)]);
     break;
   case "publish":
     run("bash", [path.join(root, "scripts/molan-publish.sh"), "--skip-site"]);

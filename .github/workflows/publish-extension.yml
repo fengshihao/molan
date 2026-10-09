@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v5
         with:
           version: 8.6.9
@@ -27,8 +29,7 @@ jobs:
         run: bash scripts/vscode-molan.sh package
       - name: Release notes
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          node scripts/release-notes-from-changelog.mjs "${VERSION}" > release-notes.md
+          node scripts/release-notes-from-commits.mjs "${GITHUB_REF_NAME}" > release-notes.md
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
