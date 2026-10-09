@@ -7,7 +7,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -25,6 +25,17 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Package
         run: bash scripts/vscode-molan.sh package
+      - name: Release notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          node scripts/release-notes-from-changelog.mjs "${VERSION}" > release-notes.md
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 墨览 ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: apps/vscode-molan/molan-markdown-*.vsix
+          make_latest: true
       - name: Upload vsix
         uses: actions/upload-artifact@v5
         with:

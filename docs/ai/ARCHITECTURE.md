@@ -18,6 +18,8 @@
 ## 发版
 
 - 公开脚本：`scripts/molan-publish.sh`、`.github/workflows/publish-extension.yml`
+- **GitHub Release**：推送标签 `v*`（如 `v0.1.37`）会触发 workflow：打包 `.vsix`、发 Open VSX（若有 `OVSX_PAT`）、并创建 [Releases](https://github.com/fengshihao/molan/releases)（说明来自 `apps/vscode-molan/CHANGELOG.md`）
+- 日常顺序：改版本与 CHANGELOG → `git tag vX.Y.Z && git push origin vX.Y.Z`（或先 merge 再打标签）
 - Token：GitHub Secrets `OVSX_PAT`（及可选 `VSCE_PAT`），**不要**写进仓库
 - 网站运维脚本（SSH/rsync）仍在本机 gitignore 的 `apps/studio/deploy/`，与扩展发版无关
 
