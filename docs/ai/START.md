@@ -28,4 +28,10 @@
 ./molan try
 ```
 
-细则：[CHECKLIST.md](./CHECKLIST.md) · [PR_PLAYBOOK.md](./PR_PLAYBOOK.md)
+## 发版（合并到 main 后，AI 可代劳）
+
+1. 把 `apps/vscode-molan/package.json` 的 `version` 调高（并提交到 `main`）。
+2. 在 `main`、工作区干净时执行 **`./molan release`**（先试 **`./molan release --dry-run`** 看 commit 汇总说明）。
+3. CI 会出 [GitHub Release](https://github.com/fengshihao/molan/releases) 与 `.vsix`；Open VSX 依赖仓库 Secret `OVSX_PAT`。本地只发商店仍可用 `./molan publish`（需 `OVSX_PAT`）。
+
+细则：[CHECKLIST.md](./CHECKLIST.md) · [PR_PLAYBOOK.md](./PR_PLAYBOOK.md) · 发版架构见 [ARCHITECTURE.md](./ARCHITECTURE.md)
