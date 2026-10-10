@@ -48,6 +48,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
   readonly onDidChangeCustomDocument = this._onDidChangeCustomDocument.event;
 
   private readonly panels = new Map<string, vscode.WebviewPanel>();
+  private readonly readPositionStore: ReadPositionStore;
 
   static register(context: vscode.ExtensionContext): vscode.Disposable {
     const provider = new MolanEditorProvider(context);
@@ -84,7 +85,9 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
     return false;
   }
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) {
+    this.readPositionStore = new ReadPositionStore(context.workspaceState);
+  }
 
   async openCustomDocument(
     uri: vscode.Uri,
@@ -121,6 +124,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         value: document.content,
         fileName,
         dirty: document.restoredFromBackup,
+        readPosition: this.readPositionStore.get(document.uri),
       };
       void webviewPanel.webview.postMessage(msg);
     };
@@ -158,6 +162,12 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
       }
       if (msg.type === "copyText") {
         await vscode.env.clipboard.writeText(msg.value);
+        return;
+      }
+      if (msg.type === "saveReadPosition") {
+        // 每份文档记一个阅读位置，关掉再打开时停在上次看到的地方
+        void this.readPositionStore.set(document.uri, msg.value);
+        return;
       }
     });
 
@@ -333,6 +343,24 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         linkBase,
       },
     });
+  }
+}
+
+/** 每份文档的阅读位置：存 workspaceState，关掉再打开时停在上次看到的地方 */
+class ReadPositionStore {
+  constructor(private readonly state: vscode.Memento) {}
+
+  private key(uri: vscode.Uri): string {
+    return `molan.readPosition:${uri.toString()}`;
+  }
+
+  get(uri: vscode.Uri): string | undefined {
+    const value = this.state.get<string>(this.key(uri));
+    return typeof value === "string" && value ? value : undefined;
+  }
+
+  set(uri: vscode.Uri, value: string): Thenable<void> {
+    return this.state.update(this.key(uri), value);
   }
 }
 

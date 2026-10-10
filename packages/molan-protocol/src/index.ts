@@ -56,7 +56,8 @@ const contentPayload = {
 
 /** 宿主 → 编辑器 iframe/webview */
 export const HostToFrameMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("init"), ...contentPayload }),
+  /** init 附带上次阅读位置（块序号 + 偏移），webview 渲染完成后滚回原处 */
+  z.object({ type: z.literal("init"), ...contentPayload, readPosition: z.string().optional() }),
   z.object({ type: z.literal("setContent"), ...contentPayload }),
   z.object({ type: z.literal("setReadOnly"), readOnly: z.boolean() }),
   z.object({ type: z.literal("saved") }),
@@ -99,6 +100,8 @@ export const FrameToHostMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("copyText"), value: z.string() }),
   /** webview 把 Cmd/Ctrl+P 交回工作区 Quick Open，避免抢系统/IDE 快捷键 */
   z.object({ type: z.literal("quickOpen") }),
+  /** webview 滚动后上报当前阅读位置，宿主按文档持久化 */
+  z.object({ type: z.literal("saveReadPosition"), value: z.string() }),
   z.object({
     type: z.literal("selection"),
     headingPath: z.array(z.string()),

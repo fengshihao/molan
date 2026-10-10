@@ -6,6 +6,15 @@ export {
   stripMarkdownExtension,
 } from "./link-utils.js";
 export { scrollPreviewToFragment, findPreviewHeadingTarget } from "./preview-anchor.js";
+export {
+  applyReadPosition,
+  captureReadPosition,
+  decodeReadPosition,
+  encodeReadPosition,
+  findReadScroller,
+  topLevelReadBlocks,
+  type ReadPosition,
+} from "./read-position.js";
 export { renderHostHtml, type HostHtmlAssets, type HostHtmlVariant, type RenderHostHtmlOptions } from "./html.js";
 export {
   MOLAN_ISSUES_CHOOSE,

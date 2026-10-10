@@ -69,6 +69,7 @@ assert(js.includes("headerPrefsBtn"), "vscode header has settings button");
 assert(js.includes("feedbackBtn"), "vscode header has feedback button");
 assert(js.includes("__MOLAN_FEEDBACK__"), "webview injects feedback env");
 assert(js.includes("molan.reportFeedback"), "feedback command registered");
+assert(js.includes("molan.readPosition"), "extension persists reading position per document");
 assert(!js.includes("pickImageBeside"), "extension no longer copies local images beside the markdown file");
 assert(!js.includes('id="themeBtn"'), "vscode has no standalone theme button");
 assert(js.includes("molan-theme"), "webview restores stored theme");
@@ -231,6 +232,8 @@ assert(bridge.includes("await setPreview(true, { skipRender: true })"), "default
 assert(bridge.includes("value !== baseline"), "ignores Vditor setValue round-trip");
 assert(bridge.includes("openRelative"), "webview opens relative markdown links");
 assert(bridge.includes("scrollPreviewToFragment"), "webview scrolls to in-doc heading anchors");
+assert(bridge.includes("saveReadPosition"), "webview reports reading position so the host can persist it");
+assert(bridge.includes("applyReadPosition"), "webview restores the last reading position when a document opens");
 assert(bridge.includes("quickOpen"), "webview forwards Cmd/Ctrl+P to Quick Open");
 assert(bridge.includes("isPrimaryModKey"), "bridge uses platform primary modifier");
 assert(bridge.includes("copyText"), "webview asks the extension host to write clipboard as fallback");

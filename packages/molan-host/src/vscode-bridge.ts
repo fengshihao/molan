@@ -11,6 +11,7 @@ import {
 } from "./feedback.js";
 import { isExternalHttp, isMarkdownHref, relativeToLinkBase } from "./link-utils.js";
 import { scrollPreviewToFragment } from "./preview-anchor.js";
+import { applyReadPosition, captureReadPosition } from "./read-position.js";
 
 declare global {
   interface Window {
@@ -162,12 +163,60 @@ function bootVscodeBridge() {
 
   const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
 
+  // 记住每份文档的阅读位置：滚动停顿后上报宿主持久化；init 带回时渲染完滚回原处
+  let restoring = false;
+  let pendingReadPosition = "";
+  let lastSavedPosition = "";
+  let savePositionTimer = 0;
+
+  const reportReadPosition = () => {
+    if (restoring) return;
+    const saved = captureReadPosition(document);
+    if (!saved || saved === lastSavedPosition) return;
+    lastSavedPosition = saved;
+    vscode.postMessage({ type: "saveReadPosition", value: saved });
+  };
+
+  document.getElementById("molanPreviewBody")?.addEventListener("scroll", () => {
+    window.clearTimeout(savePositionTimer);
+    savePositionTimer = window.setTimeout(reportReadPosition, 400);
+  });
+
+  const restoreReadPosition = () => {
+    if (!pendingReadPosition) return;
+    const deadline = Date.now() + 2500;
+    const tick = () => {
+      if (!pendingReadPosition) return;
+      if (applyReadPosition(pendingReadPosition, document)) {
+        pendingReadPosition = "";
+        restoring = false;
+        return;
+      }
+      if (Date.now() > deadline) {
+        pendingReadPosition = "";
+        restoring = false;
+        return;
+      }
+      window.setTimeout(tick, 120);
+    };
+    restoring = true;
+    tick();
+  };
+
   window.addEventListener("message", async (event) => {
     const msg = event.data;
     if (!msg || typeof msg !== "object") return;
 
+    // 打开文档时滚回上次阅读位置（预览渲染是异步的，渲染完成前先记下待恢复）
+    if (msg.type === "init" && typeof msg.readPosition === "string" && msg.readPosition) {
+      pendingReadPosition = msg.readPosition;
+    }
+
     const handled = await bridge.handleHostMessage(msg);
-    if (handled) return;
+    if (handled) {
+      if (pendingReadPosition) restoreReadPosition();
+      return;
+    }
 
     if (msg.type === "find") {
       window.MolanEditor.find?.open();
