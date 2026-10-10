@@ -29,8 +29,6 @@ const EXT_ID = "fengshihao.molan-markdown";
 const WEB_HOME = "https://fengshihao.github.io/molan/";
 const WEB_TRY = "https://fengshihao.github.io/molan/try/";
 const WEB_DOCS = "https://fengshihao.github.io/molan/docs/";
-const WEB_FORMAL = "https://molan.guoyoutech.cn/";
-
 function help() {
   console.log(`molan
 
@@ -223,7 +221,6 @@ switch (action) {
   case "web":
     openUrl(WEB_HOME);
     console.log(`Opened ${WEB_HOME}`);
-    console.log(`Formal: ${WEB_FORMAL}`);
     console.log(`Try:    ${WEB_TRY}`);
     console.log(`Docs:   ${WEB_DOCS}`);
     break;

@@ -219,8 +219,8 @@
     "watch": "node ./scripts/bundle.mjs --watch",
     "typecheck": "tsc -p ./ --noEmit",
     "check": "pnpm compile && node ./scripts/check.mjs && node ./scripts/zod-compile.test.mjs && node ./scripts/vscode-install-e2e.mjs",
-    "package": "pnpm compile && npx --yes @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://molan.guoyoutech.cn",
-    "publish": "pnpm compile && npx --yes @vscode/vsce publish --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://molan.guoyoutech.cn"
+    "package": "pnpm compile && npx --yes @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://fengshihao.github.io/molan/try",
+    "publish": "pnpm compile && npx --yes @vscode/vsce publish --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://fengshihao.github.io/molan/try"
   },
   "dependencies": {
     "@molan/host": "workspace:*",
@@ -236,6 +236,6 @@
   "vsce": {
     "dependencies": false,
     "baseContentUrl": "https://github.com/fengshihao/molan/blob/main/apps/vscode-molan",
-    "baseImagesUrl": "https://molan.guoyoutech.cn"
+    "baseImagesUrl": "https://fengshihao.github.io/molan/try"
   }
 }

@@ -59,8 +59,8 @@ if (exists("site/index.html")) {
   if (!html.includes("data-molan-hero")) {
     // soft: we use hero class instead
   }
-  if (!html.includes('class="hero"')) {
-    errors.push("site/index.html missing hero composition");
+  if (!html.includes('class="home-main"') && !html.includes('class="hero"')) {
+    errors.push("site/index.html missing home main layout");
   }
 }
 

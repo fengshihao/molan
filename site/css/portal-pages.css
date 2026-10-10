@@ -1,0 +1,292 @@
+/* 教程 / 扩展等门户子页 — 与 site.css 同套墨夜青绿 */
+
+.portal-main {
+  width: min(1180px, calc(100% - 2.5rem));
+  margin-inline: auto;
+  padding: 2.75rem 0 5rem;
+}
+
+.home-guide.portal-guide h1,
+.home-guide.portal-guide .portal-lede,
+.home-guide.portal-guide .portal-cta-row {
+  display: none;
+}
+
+.portal-guide h1,
+.portal-extension h1 {
+  margin: 0 0 0.65rem;
+  font-family: var(--serif);
+  font-size: clamp(2.15rem, 4.5vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  color: var(--paper);
+  line-height: 1.12;
+}
+
+.portal-guide h1 span,
+.portal-extension h1 span {
+  color: var(--accent-bright);
+}
+
+.portal-guide h1 em,
+.portal-extension h1 em {
+  display: block;
+  margin-top: 0.35rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.42em;
+  font-weight: 400;
+  color: var(--fog-dim);
+  letter-spacing: 0.12em;
+}
+
+.portal-lede {
+  margin: 0 0 1.75rem;
+  max-width: 42em;
+  font-size: 1.08rem;
+  color: var(--fog);
+  line-height: 1.6;
+}
+
+.portal-lede strong {
+  color: var(--paper);
+}
+
+.portal-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 0 2.5rem;
+}
+
+.portal-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1.05rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border: 1px solid var(--hairline-strong);
+  background: rgba(232, 239, 233, 0.06);
+  color: var(--paper);
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.portal-cta:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.portal-cta-primary {
+  background: linear-gradient(145deg, rgba(126, 184, 154, 0.35), rgba(126, 184, 154, 0.18));
+  border-color: rgba(126, 184, 154, 0.45);
+  color: var(--paper);
+}
+
+.portal-section {
+  margin-top: 3.25rem;
+  padding-top: 0.25rem;
+}
+
+.portal-section h2 {
+  margin: 0 0 0.85rem;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--paper);
+  line-height: 1.25;
+}
+
+.portal-section h2 .n {
+  display: inline-block;
+  margin-right: 0.55rem;
+  font-style: italic;
+  color: var(--accent);
+}
+
+.portal-section p {
+  margin: 0 0 0.75rem;
+  max-width: 46em;
+  color: var(--fog);
+  line-height: 1.62;
+}
+
+.portal-section p a {
+  color: var(--accent-bright);
+}
+
+.portal-theme-list {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1.1rem;
+  font-size: 0.92rem;
+  color: var(--fog-dim);
+}
+
+.portal-theme-list strong {
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.portal-media {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.35rem 0 0.45rem;
+  border-radius: 14px;
+  border: 1px solid var(--hairline-strong);
+  box-shadow: 0 28px 56px rgba(0, 0, 0, 0.35);
+  background: #0c100e;
+}
+
+.portal-cap {
+  margin: 0 0 0.25rem;
+  font-size: 0.84rem;
+  color: var(--fog-dim);
+  letter-spacing: 0.02em;
+  max-width: 46em;
+}
+
+.portal-note {
+  margin: 1.1rem 0 0;
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid var(--hairline-strong);
+  background: rgba(126, 184, 154, 0.08);
+  color: var(--fog);
+  max-width: 46em;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.portal-links {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+}
+
+.portal-links a {
+  display: block;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid var(--hairline);
+  background: rgba(232, 239, 233, 0.04);
+  transition: border-color 0.2s var(--ease);
+}
+
+.portal-links a:hover {
+  border-color: var(--accent);
+}
+
+.portal-links small {
+  display: block;
+  color: var(--fog-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  margin-bottom: 0.25rem;
+}
+
+.portal-links span {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  color: var(--accent-bright);
+}
+
+.portal-foot {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.92rem;
+  color: var(--fog-dim);
+}
+
+.portal-foot a {
+  color: var(--accent-bright);
+}
+
+.shell-nav a.is-active {
+  color: var(--paper);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+.portal-extension .portal-media {
+  margin-bottom: 2rem;
+}
+
+.portal-extension h2 {
+  margin: 2rem 0 0.75rem;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  color: var(--paper);
+}
+
+.portal-install {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.portal-install a {
+  display: block;
+  padding: 0.95rem 1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid var(--hairline);
+  background: rgba(232, 239, 233, 0.04);
+  color: var(--paper);
+  transition: border-color 0.2s var(--ease);
+}
+
+.portal-install a:hover {
+  border-color: var(--accent);
+}
+
+.portal-install .where {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fog-dim);
+  margin-bottom: 0.2rem;
+}
+
+.portal-install .name {
+  font-size: 0.95rem;
+  color: var(--accent-bright);
+}
+
+.portal-meta {
+  margin: 1.75rem 0;
+  color: var(--fog);
+  font-size: 0.95rem;
+}
+
+.portal-meta code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+}
+
+.portal-back {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--fog-dim);
+  text-decoration: none;
+}
+
+.portal-back:hover {
+  color: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .portal-main {
+    width: min(1180px, calc(100% - 1.35rem));
+    padding-top: 2rem;
+  }
+}

@@ -119,7 +119,7 @@ assert(readFileSync(join(viewer, "molan.css"), "utf8").includes("@media print"),
 assert(existsSync(join(viewer, "molan-editor.js")), "viewer molan-editor.js");
 assert(existsSync(join(viewer, "molan-app.js")), "viewer molan-app.js");
 assert(existsSync(join(viewer, "serve.mjs")), "viewer gzip static server");
-assert(existsSync(join(viewer, "intro.gif")), "viewer intro.gif for molan.guoyoutech.cn");
+assert(existsSync(join(viewer, "intro.gif")), "viewer intro.gif for GitHub Pages try/");
 assert(readFileSync(join(viewer, "serve.mjs"), "utf8").includes('".gif": "image/gif"'), "local server gif mime");
 assert(existsSync(join(viewer, "vendor/vditor/dist/method.min.js")), "viewer vendored method.min.js");
 assert(existsSync(join(viewer, "vendor/vditor/dist/js/lute/lute.min.js")), "viewer vendored lute");
@@ -241,8 +241,8 @@ assert(!bridge.includes("pickImage"), "webview does not ask host to pick a local
 
 const readme = readFileSync(join(root, "README.md"), "utf8");
 assert(
-  readme.includes("![墨览：打开即阅读，要点再编辑](https://molan.guoyoutech.cn/intro.gif)"),
-  "store intro gif hosted on molan.guoyoutech.cn",
+  readme.includes("![墨览：打开即阅读，要点再编辑](https://fengshihao.github.io/molan/try/intro.gif)"),
+  "store intro gif hosted on GitHub Pages",
 );
 assert(
   !/github\.com\/\S*intro\.gif|raw\.githubusercontent\.com\S*intro\.gif/.test(readme),
@@ -261,8 +261,8 @@ assert(!readme.includes("pnpm --filter"), "README must not contain packaging com
 assert(!readme.includes("viewType"), "README must not contain implementation jargon");
 assert(existsSync(join(root, "DEV.md")), "developer docs live in DEV.md");
 assert(
-  pkg.vsce?.baseImagesUrl === "https://molan.guoyoutech.cn",
-  "vsce baseImagesUrl must point at molan.guoyoutech.cn so Marketplace screenshots resolve",
+  pkg.vsce?.baseImagesUrl === "https://fengshihao.github.io/molan/try",
+  "vsce baseImagesUrl must point at GitHub Pages try/ so Marketplace screenshots resolve",
 );
 
 {

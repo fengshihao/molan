@@ -46,4 +46,4 @@ cursor --install-extension apps/vscode-molan/molan-markdown-0.1.26.vsix
 
 填表与发布见 `MARKETPLACE.md`。
 
-商店介绍动画用 `https://molan.guoyoutech.cn/intro.gif`。打包脚本 `--baseImagesUrl` 指向该站点。更新 GIF 后先 `bash apps/studio/deploy/upload.sh`，再发新版扩展。看访问量：`bash apps/studio/deploy/intro-stats.sh`。
+商店介绍动画用 `https://fengshihao.github.io/molan/try/intro.gif`。打包脚本 `--baseImagesUrl` 指向 GitHub Pages `try/`。更新 GIF 后同步 `site/try/intro.gif` 并推送，再发新版扩展。

@@ -26,14 +26,14 @@
 |------|------|------|
 | 扩展图标（必填） | `icon.png` | 128×128 PNG |
 | 高清原图（备用） | `media/icon-1024.png` | 1024×1024，市场网页若要更大图用这个 |
-| 商店介绍动画 | https://molan.guoyoutech.cn/intro.gif | 1280×800，约 2MB；源文件 `media/intro.gif`，Nginx 限流并记访问日志 |
+| 商店介绍动画 | https://fengshihao.github.io/molan/try/intro.gif | 1280×800；源文件 `media/intro.gif`，部署在 GitHub Pages `site/try/` |
 | 商店截图 | `media/screenshot.jpg` | 已压缩 JPEG，备用静帧 |
 | 许可证 | `LICENSE` | MIT |
 | 更新日志 | `CHANGELOG.md` | 0.1.30 |
 
 完整介绍就是 `README.md`（面向普通用户，市场详情页会自动用它）。开发调试见 `DEV.md`。
 
-商店 README 里的截图**不会**从 vsix 里读，而是去拉 README 里的公开 HTTPS 地址。介绍动画用 `https://molan.guoyoutech.cn/intro.gif`（已写进 README 和 `baseImagesUrl`）。服务器对这张 GIF 按 IP 限流，访问记在 `/var/log/nginx/molan.intro.log`；看统计：`bash apps/studio/deploy/intro-stats.sh`。
+商店 README 里的截图**不会**从 vsix 里读，而是去拉 README 里的公开 HTTPS 地址。介绍动画用 `https://fengshihao.github.io/molan/try/intro.gif`（已写进 README 和 `baseImagesUrl`）。
 
 ## 发布
 

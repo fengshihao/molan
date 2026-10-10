@@ -2,7 +2,7 @@
 
 所见即所得（Vditor IR，类 Typora）编辑本地 Markdown。打开文档默认**预览**（只阅读）；点顶栏「编辑」再改。公式、Mermaid 流程图、表格与任务列表均可编辑；Chrome / Edge 可写回原文件。预览时把鼠标移到段落左侧会出现「+」，点开即可插入标题、列表、代码、表格等，不必手写语法。
 
-打开本目录下的 `index.html`（或用本地静态服务器）。侧栏「打开文件夹」会打开本地目录：Chrome / Edge 可写回原文件；Cursor 内置浏览器自动改用兼容选择。未选文件夹时，侧栏会列出 `demo/` 里的一份样例。公开教程：<https://molan.guoyoutech.cn/guide.html>。
+打开本目录下的 `index.html`（或用本地静态服务器）。侧栏「打开文件夹」会打开本地目录：Chrome / Edge 可写回原文件；Cursor 内置浏览器自动改用兼容选择。未选文件夹时，侧栏会列出 `demo/` 里的一份样例。公开教程：<https://fengshihao.github.io/molan/try/guide.html>。
 
 侧栏设置可切换七种纸面：**宣纸**、**墨夜**（默认）、**终端**、**胭脂**、**青石**、**薄雾**、**朱砂**；并可用亮度 / 对比 / 强调色微调。设置里也可一键安装 VS Code / Cursor 插件。选择会记在本机。
 
@@ -43,4 +43,4 @@ vendor/vditor     裁剪后的 Vditor（`pnpm molan` / 编译扩展时同步，�
 
 编译扩展时把 `molan.css` 和 `molan-editor.js` 拷进 webview，点击 Markdown 即可打开。见 [`apps/vscode-molan/README.md`](../../apps/vscode-molan/README.md)。
 
-网站发布走仓库根目录 `pnpm molan:publish`（若本机有 `deploy/upload.sh` 会同步到 https://molan.guoyoutech.cn/；没有则自动跳过，见 [`deploy.example/README.md`](deploy.example/README.md)）。只发扩展商店：`pnpm molan:publish:extension`。只更新网站、不发商店时，运行本机 `deploy/upload.sh`。
+官网由 GitHub Pages 发布（`site/` 目录）。本地预览：`./molan` / `./molan try`。扩展商店发布见仓库 `pnpm molan:publish` 说明。

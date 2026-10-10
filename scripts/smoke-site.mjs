@@ -24,7 +24,20 @@ function mustContain(rel, needles) {
   }
 }
 
-mustContain("index.html", ["墨览", "./try/", "fengshihao.molan-markdown", "hero", "site-i18n.js", "siteLang", "mark-icon", "lang-switch"]);
+mustContain("index.html", [
+  "墨览",
+  "./try/?demo=1",
+  "open-vsx.org/extension/fengshihao/molan-markdown",
+  "demo-theme.gif",
+  "id=\"guide\"",
+  "home-actions",
+  "site-i18n.js",
+  "molan-pages-i18n-studio.js",
+  "siteLang",
+  "mark-icon",
+  "lang-switch",
+]);
+mustContain("try/guide.html", ["#guide", "../#guide"]);
 mustContain("docs/index.html", ["START.md", "AGENTS.md", "./molan check", "site-i18n.js", "siteLang", "mark-icon"]);
 mustContain("js/site-i18n.js", ["molan-lang", "English", "日本語", "storeOvsxHint"]);
 mustContain("css/site.css", ["--ink", "Instrument Serif", ".hero", ".lang-switch", ".shell-top", ".mark-icon"]);

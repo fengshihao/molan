@@ -36,7 +36,7 @@ function packageVsix() {
       "--baseContentUrl",
       "https://github.com/fengshihao/molan/blob/main/apps/vscode-molan",
       "--baseImagesUrl",
-      "https://molan.guoyoutech.cn",
+      "https://fengshihao.github.io/molan",
     ],
     { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );

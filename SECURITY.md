@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The VS Code / Cursor extension published as `fengshihao.molan-markdown` and the static studio at `molan.guoyoutech.cn` / GitHub Pages.
+The VS Code / Cursor extension published as `fengshihao.molan-markdown` and the static studio on GitHub Pages (`fengshihao.github.io/molan`).
 
 ## Reporting a vulnerability
 

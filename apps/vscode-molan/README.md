@@ -6,7 +6,7 @@ Open to read. Click to edit. Save back to the file.
 
 Abre para leer. Pulsa para editar. Guarda en el archivo original.
 
-![墨览：打开即阅读，要点再编辑](https://molan.guoyoutech.cn/intro.gif)
+![墨览：打开即阅读，要点再编辑](https://fengshihao.github.io/molan/try/intro.gif)
 
 ## 中文
 
@@ -41,6 +41,6 @@ WYSIWYG al estilo Typora. Un `.md` se abre en vista previa; pulsa **Editar** par
 - **Exportar**: PDF o imagen
 - **Buscar**: `Cmd/Ctrl+F`
 
-https://molan.guoyoutech.cn/extension.html
+https://fengshihao.github.io/molan/try/extension.html
 
 `.md` · `.markdown` · `.mdown` · `.mdx`

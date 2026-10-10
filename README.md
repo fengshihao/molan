@@ -25,7 +25,7 @@
 <p align="center">
   <a href="https://fengshihao.github.io/molan/">官网（多语言）</a> ·
   <a href="https://fengshihao.github.io/molan/try/">在线试读</a> ·
-  <a href="https://molan.guoyoutech.cn/">正式站</a> ·
+  <a href="https://fengshihao.github.io/molan/try/guide.html">使用教程</a> ·
   <a href="https://marketplace.visualstudio.com/items?itemName=fengshihao.molan-markdown">VS Marketplace</a> ·
   <a href="https://github.com/fengshihao/molan/issues/new/choose">反馈 / Issues</a>
 </p>

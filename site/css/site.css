@@ -212,7 +212,83 @@ img {
   outline: none;
 }
 
-/* —— hero —— */
+/* —— home (actions + inline guide) —— */
+.home-frame {
+  width: min(1180px, calc(100% - 2.5rem));
+}
+
+.home-main {
+  padding: 1.35rem 0 0;
+  animation: rise 0.75s var(--ease) both;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.55rem;
+  margin-bottom: 2rem;
+}
+
+.home-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.52rem 0.95rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border: 1px solid var(--hairline-strong);
+  background: rgba(232, 239, 233, 0.05);
+  color: var(--fog);
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.home-action:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--paper);
+}
+
+.home-action-primary {
+  background: var(--paper);
+  color: var(--ink-deep);
+  border-color: transparent;
+}
+
+.home-action-primary:hover {
+  background: #fff;
+  color: var(--ink-deep);
+}
+
+.home-action-quiet {
+  font-weight: 500;
+  color: var(--fog-dim);
+  background: transparent;
+  border-color: var(--hairline);
+}
+
+.home-action-quiet:hover {
+  color: var(--paper);
+}
+
+.home-guide {
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.home-guide .portal-section:first-child {
+  margin-top: 1.5rem;
+}
+
+.home-contribute {
+  margin-top: 3rem;
+}
+
+/* —— hero (legacy / unused on homepage) —— */
 .hero {
   min-height: calc(100vh - var(--top-h) - 1rem);
   display: grid;
@@ -682,7 +758,8 @@ img {
 }
 
 @media (max-width: 720px) {
-  .frame {
+  .frame,
+  .home-frame {
     width: min(1120px, calc(100% - 1.5rem));
   }
   .mark-en {
