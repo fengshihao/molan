@@ -11191,7 +11191,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     dirty: external_exports.boolean().optional()
   };
   var HostToFrameMessageSchema = external_exports.discriminatedUnion("type", [
-    external_exports.object({ type: external_exports.literal("init"), ...contentPayload }),
+    /** init 附带上次阅读位置（块序号 + 偏移），webview 渲染完成后滚回原处 */
+    external_exports.object({ type: external_exports.literal("init"), ...contentPayload, readPosition: external_exports.string().optional() }),
     external_exports.object({ type: external_exports.literal("setContent"), ...contentPayload }),
     external_exports.object({ type: external_exports.literal("setReadOnly"), readOnly: external_exports.boolean() }),
     external_exports.object({ type: external_exports.literal("saved") }),
@@ -11231,6 +11232,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     external_exports.object({ type: external_exports.literal("copyText"), value: external_exports.string() }),
     /** webview 把 Cmd/Ctrl+P 交回工作区 Quick Open，避免抢系统/IDE 快捷键 */
     external_exports.object({ type: external_exports.literal("quickOpen") }),
+    /** webview 滚动后上报当前阅读位置，宿主按文档持久化 */
+    external_exports.object({ type: external_exports.literal("saveReadPosition"), value: external_exports.string() }),
     external_exports.object({
       type: external_exports.literal("selection"),
       headingPath: external_exports.array(external_exports.string()),
@@ -11611,6 +11614,69 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return true;
   }
 
+  // src/read-position.ts
+  function encodeReadPosition(pos) {
+    if (!Number.isInteger(pos.index) || pos.index < 0) return "";
+    if (!Number.isFinite(pos.offset)) return "";
+    return `b${pos.index}o${Math.round(pos.offset)}`;
+  }
+  function decodeReadPosition(raw) {
+    if (typeof raw !== "string") return null;
+    const match = /^b(\d+)o(-?\d+)$/.exec(raw.trim());
+    if (!match) return null;
+    const index = Number(match[1]);
+    const offset = Number(match[2]);
+    if (!Number.isInteger(index) || index < 0) return null;
+    return { index, offset };
+  }
+  function findReadScroller(doc) {
+    const scroller = doc.getElementById("molanPreviewBody") || doc.querySelector(".molan-preview > .vditor-reset");
+    return scroller instanceof HTMLElement ? scroller : null;
+  }
+  function topLevelReadBlocks(scroller) {
+    const blocks = [];
+    const children = scroller.children;
+    for (let i = 0; i < children.length; i += 1) {
+      const child = children[i];
+      if (child instanceof HTMLElement && child.tagName !== "SCRIPT" && child.tagName !== "STYLE") {
+        blocks.push(child);
+      }
+    }
+    return blocks;
+  }
+  function captureReadPosition(doc) {
+    const scroller = findReadScroller(doc);
+    if (!scroller) return null;
+    const blocks = topLevelReadBlocks(scroller);
+    if (!blocks.length) return null;
+    const boxTop = scroller.getBoundingClientRect().top;
+    let index = -1;
+    for (let i = 0; i < blocks.length; i += 1) {
+      const rect2 = blocks[i].getBoundingClientRect();
+      if (rect2.bottom > boxTop + 1) {
+        index = i;
+        break;
+      }
+    }
+    if (index < 0) index = blocks.length - 1;
+    const rect = blocks[index].getBoundingClientRect();
+    return encodeReadPosition({ index, offset: rect.top - boxTop });
+  }
+  function applyReadPosition(saved, doc) {
+    const pos = decodeReadPosition(saved);
+    if (!pos) return false;
+    const scroller = findReadScroller(doc);
+    if (!scroller) return false;
+    const blocks = topLevelReadBlocks(scroller);
+    if (!blocks.length) return false;
+    const el = blocks[Math.min(pos.index, blocks.length - 1)];
+    const boxTop = scroller.getBoundingClientRect().top;
+    const rect = el.getBoundingClientRect();
+    const next = scroller.scrollTop + (rect.top - boxTop) - pos.offset;
+    scroller.scrollTop = Math.max(0, next);
+    return true;
+  }
+
   // src/vscode-bridge.ts
   function readFeedbackEnv() {
     const raw = window.__MOLAN_FEEDBACK__;
@@ -11727,11 +11793,52 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
     });
     const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
+    let restoring = false;
+    let pendingReadPosition = "";
+    let lastSavedPosition = "";
+    let savePositionTimer = 0;
+    const reportReadPosition = () => {
+      if (restoring) return;
+      const saved = captureReadPosition(document);
+      if (!saved || saved === lastSavedPosition) return;
+      lastSavedPosition = saved;
+      vscode.postMessage({ type: "saveReadPosition", value: saved });
+    };
+    document.getElementById("molanPreviewBody")?.addEventListener("scroll", () => {
+      window.clearTimeout(savePositionTimer);
+      savePositionTimer = window.setTimeout(reportReadPosition, 400);
+    });
+    const restoreReadPosition = () => {
+      if (!pendingReadPosition) return;
+      const deadline = Date.now() + 2500;
+      const tick = () => {
+        if (!pendingReadPosition) return;
+        if (applyReadPosition(pendingReadPosition, document)) {
+          pendingReadPosition = "";
+          restoring = false;
+          return;
+        }
+        if (Date.now() > deadline) {
+          pendingReadPosition = "";
+          restoring = false;
+          return;
+        }
+        window.setTimeout(tick, 120);
+      };
+      restoring = true;
+      tick();
+    };
     window.addEventListener("message", async (event) => {
       const msg = event.data;
       if (!msg || typeof msg !== "object") return;
+      if (msg.type === "init" && typeof msg.readPosition === "string" && msg.readPosition) {
+        pendingReadPosition = msg.readPosition;
+      }
       const handled = await bridge.handleHostMessage(msg);
-      if (handled) return;
+      if (handled) {
+        if (pendingReadPosition) restoreReadPosition();
+        return;
+      }
       if (msg.type === "find") {
         window.MolanEditor.find?.open();
         return;

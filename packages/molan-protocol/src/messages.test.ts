@@ -32,6 +32,15 @@ test("HostToFrameMessageSchema init/setContent 正例", () => {
   });
   assert.equal(setContent.dirty, true);
   assert.equal(setContent.readOnly, undefined);
+
+  const initWithPosition = HostToFrameMessageSchema.parse({
+    type: "init",
+    value: "# hello",
+    fileName: "demo.md",
+    readPosition: "b3o96",
+  });
+  assert.equal(initWithPosition.readPosition, "b3o96");
+  assert.equal(HostToFrameMessageSchema.safeParse({ type: "init", value: "x", readPosition: 3 }).success, false);
 });
 
 test("HostToFrameMessageSchema 拒绝缺字段", () => {
@@ -70,6 +79,8 @@ test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
   assert.equal(parseFrameToHostMessage({ type: "theme", theme: "bad" }), null);
   assert.equal(parseFrameToHostMessage({ type: "copyText", value: "abc" })?.type, "copyText");
   assert.equal(parseFrameToHostMessage({ type: "quickOpen" })?.type, "quickOpen");
+  assert.equal(parseFrameToHostMessage({ type: "saveReadPosition", value: "b2o48" })?.value, "b2o48");
+  assert.equal(parseFrameToHostMessage({ type: "saveReadPosition" }), null);
   const selection = parseFrameToHostMessage({
     type: "selection",
     headingPath: ["用户故事"],
