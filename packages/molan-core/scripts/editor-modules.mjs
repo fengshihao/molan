@@ -28,6 +28,7 @@ export const EDITOR_MODULES = [
   "insert.js",
   "selection.js",
   "preview-dblclick.js",
+  "paste-image.js",
   "create.js",
   "export.js",
 ];

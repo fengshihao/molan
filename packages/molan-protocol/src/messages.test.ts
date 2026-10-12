@@ -81,6 +81,15 @@ test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
   assert.equal(parseFrameToHostMessage({ type: "quickOpen" })?.type, "quickOpen");
   assert.equal(parseFrameToHostMessage({ type: "saveReadPosition", value: "b2o48" })?.value, "b2o48");
   assert.equal(parseFrameToHostMessage({ type: "saveReadPosition" }), null);
+  assert.equal(
+    parseFrameToHostMessage({ type: "savePastedImage", requestId: 2, mime: "image/png", data: "abc" })
+      ?.type,
+    "savePastedImage",
+  );
+  assert.equal(
+    parseHostToFrameMessage({ type: "pastedImage", requestId: 3, markdown: "![x](a.png)" })?.type,
+    "pastedImage",
+  );
   const selection = parseFrameToHostMessage({
     type: "selection",
     headingPath: ["用户故事"],

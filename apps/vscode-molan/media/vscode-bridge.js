@@ -11207,7 +11207,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     external_exports.object({ type: external_exports.literal("toggleMode") }),
     external_exports.object({ type: external_exports.literal("clearSelection") }),
     external_exports.object({ type: external_exports.literal("expandSection") }),
-    external_exports.object({ type: external_exports.literal("openFeedback") })
+    external_exports.object({ type: external_exports.literal("openFeedback") }),
+    external_exports.object({
+      type: external_exports.literal("pastedImage"),
+      requestId: external_exports.number(),
+      markdown: external_exports.string()
+    })
   ]);
   var FrameToHostMessageSchema = external_exports.discriminatedUnion("type", [
     external_exports.object({ type: external_exports.literal("ready") }),
@@ -11234,6 +11239,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     external_exports.object({ type: external_exports.literal("quickOpen") }),
     /** webview 滚动后上报当前阅读位置，宿主按文档持久化 */
     external_exports.object({ type: external_exports.literal("saveReadPosition"), value: external_exports.string() }),
+    external_exports.object({
+      type: external_exports.literal("savePastedImage"),
+      requestId: external_exports.number(),
+      mime: external_exports.string(),
+      data: external_exports.string()
+    }),
     external_exports.object({
       type: external_exports.literal("selection"),
       headingPath: external_exports.array(external_exports.string()),
@@ -11782,6 +11793,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
           linkBase: window.__MOLAN_LINK_BASE__ || "",
           previewActions: [],
           previewFormatBar: true,
+          saveClipboardImage,
           onInput: () => bridge.onEditorInput(),
           onCounter: () => bridge.onEditorCounter(),
           onSave: () => vscode.postMessage({ type: "save" })
@@ -11793,6 +11805,41 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
     });
     const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
+    let pastedImageNextId = 1;
+    const pastedImageWaiters = /* @__PURE__ */ new Map();
+    function fileToBase64(file2) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || "");
+          const comma = result.indexOf(",");
+          resolve(comma >= 0 ? result.slice(comma + 1) : result);
+        };
+        reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+        reader.readAsDataURL(file2);
+      });
+    }
+    async function saveClipboardImage(file2) {
+      const requestId = pastedImageNextId++;
+      const data = await fileToBase64(file2);
+      const mime = file2.type || "image/png";
+      return new Promise((resolve, reject) => {
+        const timer = window.setTimeout(() => {
+          pastedImageWaiters.delete(requestId);
+          reject(new Error("timeout"));
+        }, 2e4);
+        pastedImageWaiters.set(requestId, (markdown) => {
+          window.clearTimeout(timer);
+          pastedImageWaiters.delete(requestId);
+          if (!markdown) {
+            reject(new Error("empty"));
+            return;
+          }
+          resolve(markdown);
+        });
+        vscode.postMessage({ type: "savePastedImage", requestId, mime, data });
+      });
+    }
     let restoring = false;
     let pendingReadPosition = "";
     let lastSavedPosition = "";
@@ -11833,6 +11880,12 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (!msg || typeof msg !== "object") return;
       if (msg.type === "init" && typeof msg.readPosition === "string" && msg.readPosition) {
         pendingReadPosition = msg.readPosition;
+      }
+      if (msg.type === "pastedImage" && typeof msg.requestId === "number") {
+        pastedImageWaiters.get(msg.requestId)?.(
+          typeof msg.markdown === "string" ? msg.markdown : ""
+        );
+        return;
       }
       const handled = await bridge.handleHostMessage(msg);
       if (handled) {

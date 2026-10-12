@@ -150,6 +150,7 @@ function bootVscodeBridge() {
         linkBase: window.__MOLAN_LINK_BASE__ || "",
         previewActions: [],
         previewFormatBar: true,
+        saveClipboardImage,
         onInput: () => bridge.onEditorInput(),
         onCounter: () => bridge.onEditorCounter(),
         onSave: () => vscode.postMessage({ type: "save" }),
@@ -162,6 +163,44 @@ function bootVscodeBridge() {
   });
 
   const feedback = bindFeedbackPanel((msg) => vscode.postMessage(msg), toast);
+
+  let pastedImageNextId = 1;
+  const pastedImageWaiters = new Map<number, (markdown: string) => void>();
+
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        const comma = result.indexOf(",");
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error ?? new Error("read failed"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function saveClipboardImage(file: File): Promise<string> {
+    const requestId = pastedImageNextId++;
+    const data = await fileToBase64(file);
+    const mime = file.type || "image/png";
+    return new Promise((resolve, reject) => {
+      const timer = window.setTimeout(() => {
+        pastedImageWaiters.delete(requestId);
+        reject(new Error("timeout"));
+      }, 20000);
+      pastedImageWaiters.set(requestId, (markdown) => {
+        window.clearTimeout(timer);
+        pastedImageWaiters.delete(requestId);
+        if (!markdown) {
+          reject(new Error("empty"));
+          return;
+        }
+        resolve(markdown);
+      });
+      vscode.postMessage({ type: "savePastedImage", requestId, mime, data });
+    });
+  }
 
   // 记住每份文档的阅读位置：滚动停顿后上报宿主持久化；init 带回时渲染完滚回原处
   let restoring = false;
@@ -210,6 +249,13 @@ function bootVscodeBridge() {
     // 打开文档时滚回上次阅读位置（预览渲染是异步的，渲染完成前先记下待恢复）
     if (msg.type === "init" && typeof msg.readPosition === "string" && msg.readPosition) {
       pendingReadPosition = msg.readPosition;
+    }
+
+    if (msg.type === "pastedImage" && typeof msg.requestId === "number") {
+      pastedImageWaiters.get(msg.requestId)?.(
+        typeof msg.markdown === "string" ? msg.markdown : "",
+      );
+      return;
     }
 
     const handled = await bridge.handleHostMessage(msg);

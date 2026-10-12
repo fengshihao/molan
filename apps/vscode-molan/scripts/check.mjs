@@ -70,7 +70,7 @@ assert(js.includes("feedbackBtn"), "vscode header has feedback button");
 assert(js.includes("__MOLAN_FEEDBACK__"), "webview injects feedback env");
 assert(js.includes("molan.reportFeedback"), "feedback command registered");
 assert(js.includes("molan.readPosition"), "extension persists reading position per document");
-assert(!js.includes("pickImageBeside"), "extension no longer copies local images beside the markdown file");
+assert(js.includes("savePastedImageBeside"), "extension saves pasted screenshots beside the markdown file");
 assert(!js.includes('id="themeBtn"'), "vscode has no standalone theme button");
 assert(js.includes("molan-theme"), "webview restores stored theme");
 
@@ -237,7 +237,10 @@ assert(bridge.includes("applyReadPosition"), "webview restores the last reading 
 assert(bridge.includes("quickOpen"), "webview forwards Cmd/Ctrl+P to Quick Open");
 assert(bridge.includes("isPrimaryModKey"), "bridge uses platform primary modifier");
 assert(bridge.includes("copyText"), "webview asks the extension host to write clipboard as fallback");
-assert(!bridge.includes("pickImage"), "webview does not ask host to pick a local image");
+assert(bridge.includes("savePastedImage"), "webview asks host to save pasted clipboard images");
+assert(bridge.includes("saveClipboardImage"), "webview wires clipboard image paste into the editor");
+assert(editorSource.includes("bindClipboardImagePaste"), "editor intercepts image paste");
+assert(editorSource.includes("imageFileFromClipboard"), "paste reads image files from the clipboard");
 
 const readme = readFileSync(join(root, "README.md"), "utf8");
 assert(

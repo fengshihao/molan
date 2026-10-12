@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { renderHostHtml } from "@molan/host";
 import type { FrameToHostMessage, HostToFrameMessage } from "@molan/protocol";
+import { savePastedImageBeside } from "./savePastedImage.js";
 
 function asFrameMessage(raw: unknown): FrameToHostMessage | null {
   if (!raw || typeof raw !== "object" || !("type" in raw)) return null;
@@ -167,6 +168,30 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
       if (msg.type === "saveReadPosition") {
         // 每份文档记一个阅读位置，关掉再打开时停在上次看到的地方
         void this.readPositionStore.set(document.uri, msg.value);
+        return;
+      }
+      if (msg.type === "savePastedImage") {
+        const reply = async () => {
+          const out: HostToFrameMessage = {
+            type: "pastedImage",
+            requestId: msg.requestId,
+            markdown: "",
+          };
+          try {
+            const bytes = Uint8Array.from(Buffer.from(msg.data, "base64"));
+            out.markdown = await savePastedImageBeside(document.uri, msg.mime, bytes);
+          } catch (err) {
+            if (String(err).includes("need-saved-file")) {
+              void vscode.window.showWarningMessage(
+                "请先保存文档，才能把截图存到文件旁边。",
+              );
+            } else {
+              void vscode.window.showWarningMessage("无法保存粘贴的截图。");
+            }
+          }
+          void webviewPanel.webview.postMessage(out);
+        };
+        void reply();
         return;
       }
     });

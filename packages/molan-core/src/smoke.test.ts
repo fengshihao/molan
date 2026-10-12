@@ -339,6 +339,13 @@ test("流程图插入后立刻刷预览，并清掉节点末尾残留源码", ()
   assert.doesNotMatch(src, /host\.insertBefore\(next, host\.firstChild\)/);
 });
 
+test("粘贴截图会交给宿主落盘并插入 Markdown", () => {
+  const src = editorSrc();
+  assert.match(src, /function bindClipboardImagePaste/);
+  assert.match(src, /function imageFileFromClipboard/);
+  assert.match(src, /saveClipboardImage: options\.saveClipboardImage/);
+});
+
 test("文本复制有 clipboard API 降级和流程图源码回退", () => {
   const src = editorSrc();
   assert.match(src, /function copyTextToClipboard/);

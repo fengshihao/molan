@@ -31,6 +31,8 @@ export type EditorOptions = {
   onSave?: () => void;
   onReady?: (api: EditorApi) => void;
   onSelection?: (focus: DocFocus) => void;
+  /** VS Code：粘贴剪贴板图片时由宿主落盘，返回要插入的 Markdown 片段 */
+  saveClipboardImage?: (file: File) => Promise<string>;
 };
 
 /** 编辑器实例 API（浏览器侧运行时契约） */
@@ -73,6 +75,11 @@ export const HostToFrameMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("clearSelection") }),
   z.object({ type: z.literal("expandSection") }),
   z.object({ type: z.literal("openFeedback") }),
+  z.object({
+    type: z.literal("pastedImage"),
+    requestId: z.number(),
+    markdown: z.string(),
+  }),
 ]);
 export type HostToFrameMessage = z.infer<typeof HostToFrameMessageSchema>;
 
@@ -102,6 +109,12 @@ export const FrameToHostMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("quickOpen") }),
   /** webview 滚动后上报当前阅读位置，宿主按文档持久化 */
   z.object({ type: z.literal("saveReadPosition"), value: z.string() }),
+  z.object({
+    type: z.literal("savePastedImage"),
+    requestId: z.number(),
+    mime: z.string(),
+    data: z.string(),
+  }),
   z.object({
     type: z.literal("selection"),
     headingPath: z.array(z.string()),
