@@ -126,6 +126,8 @@
       outlineCloseAria: "收起大纲",
       outlineEmpty: "没有标题",
       pickImageFail: "无法插入图片",
+      pasteImageFail: "无法插入截图",
+      pasteImageNeedSave: "请先保存文档，才能把截图存到旁边",
       imageUrlTitle: "插入图片",
       imageUrlHint: "请填写可公开访问的图片地址",
       imageUrlPlaceholder: "https://",

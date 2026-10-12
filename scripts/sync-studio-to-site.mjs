@@ -97,4 +97,25 @@ fs.writeFileSync(
   "utf8"
 );
 
+// 门户 try/ 的教程页只做跳转回首页 #guide；完整教程留在 apps/studio/guide.html
+fs.writeFileSync(
+  path.join(tryDir, "guide.html"),
+  `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨览教程</title>
+  <link rel="canonical" href="https://fengshihao.github.io/molan/#guide" />
+  <meta http-equiv="refresh" content="0; url=../#guide" />
+  <script>location.replace("../#guide");</script>
+</head>
+<body>
+  <p><a href="../#guide">教程已并入官网首页 →</a></p>
+</body>
+</html>
+`,
+  "utf8",
+);
+
 console.log("Synced site/try and site/assets.");

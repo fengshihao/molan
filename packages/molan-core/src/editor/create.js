@@ -431,6 +431,8 @@
     });
     activeBlockInsert = blockInsert;
 
+    let unbindClipboardPaste = () => {};
+
     const api = {
       async setValue(text, clearStack = true) {
         markdown = text ?? "";
@@ -626,6 +628,22 @@
         try { vditor.setValue(markdown, true); } catch (_) { /* ignore */ }
         await new Promise((resolve) => setTimeout(resolve, 220));
         muteInput = false;
+      },
+    });
+
+    unbindClipboardPaste();
+    unbindClipboardPaste = bindClipboardImagePaste(wrap || vditorRoot, {
+      getPreviewing: () => previewing,
+      enterEdit: () => api.setPreview(false),
+      getVditor: () => vditor,
+      saveClipboardImage: options.saveClipboardImage,
+      insertMarkdown: (piece) => applySnippet(piece, null),
+      onInserted: () => {
+        try {
+          options.onInput?.();
+        } catch (_) {
+          /* ignore */
+        }
       },
     });
 
