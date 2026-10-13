@@ -73,7 +73,8 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
       | "formatBold"
       | "formatItalic"
       | "formatLink"
-      | "toggleMode",
+      | "toggleMode"
+      | "outlineToggle",
   ): boolean {
     const provider = MolanEditorProvider.instance;
     if (!provider) return false;
