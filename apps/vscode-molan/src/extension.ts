@@ -52,6 +52,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("molan.formatItalic", () => MolanEditorProvider.postToActive("formatItalic")),
     vscode.commands.registerCommand("molan.formatLink", () => MolanEditorProvider.postToActive("formatLink")),
     vscode.commands.registerCommand("molan.toggleMode", () => MolanEditorProvider.postToActive("toggleMode")),
+    vscode.commands.registerCommand("molan.outlineToggle", () => MolanEditorProvider.postToActive("outlineToggle")),
     vscode.commands.registerCommand("molan.reportFeedback", async () => {
       if (MolanEditorProvider.postToActive("openFeedback")) return;
       await vscode.env.openExternal(vscode.Uri.parse(MOLAN_ISSUES_CHOOSE));

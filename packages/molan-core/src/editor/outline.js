@@ -156,6 +156,46 @@
   }
 
   let outlineRefreshTimer = 0;
+  let outlinePickIndex = -1;
+
+  function outlineItemSpans() {
+    const panel = vditorOutlineEl();
+    if (!panel || panel.style.display === "none") return [];
+    return [...panel.querySelectorAll("[data-target-id]")];
+  }
+
+  function clearOutlinePick() {
+    outlinePickIndex = -1;
+    vditorOutlineEl()?.querySelectorAll("li.is-pick").forEach((li) => {
+      li.classList.remove("is-pick");
+    });
+  }
+
+  function paintOutlinePick() {
+    const items = outlineItemSpans();
+    const panel = vditorOutlineEl();
+    panel?.querySelectorAll("li.is-pick").forEach((li) => li.classList.remove("is-pick"));
+    if (outlinePickIndex < 0 || outlinePickIndex >= items.length) return;
+    const li = items[outlinePickIndex]?.closest("li");
+    li?.classList.add("is-pick");
+    li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function activateOutlineItem(span) {
+    if (!span) return;
+    const items = outlineItemSpans();
+    const index = items.indexOf(span);
+    if (index < 0) return;
+    if (sourceOpen) {
+      scrollSourceToHeading(index, span.textContent);
+      return;
+    }
+    if (outlineCtx?.getPreviewing?.()) {
+      scrollToHeading(index);
+      return;
+    }
+    span.click();
+  }
 
   function scheduleOutlineRefresh() {
     if (!outlineIsOpen()) return;
@@ -227,6 +267,7 @@
       return;
     }
     const finish = () => {
+      clearOutlinePick();
       setVditorOutline(false);
     };
     if (instant || prefersReducedMotion() || !panel) {
@@ -246,6 +287,18 @@
       if (e.target === panel) done();
     }, { once: true });
     window.setTimeout(done, 400);
+  }
+
+  async function toggleOutlineHotkey() {
+    const panel = vditorOutlineEl();
+    if (panel?.classList.contains("is-out")) closeOutline(true);
+    if (outlineIsOpen()) {
+      closeOutline();
+      return;
+    }
+    await openOutline();
+    outlinePickIndex = outlineItemSpans().length ? 0 : -1;
+    paintOutlinePick();
   }
 
   async function openOutline() {
@@ -379,8 +432,10 @@
       editorWrap.addEventListener("click", (e) => {
         const span = e.target.closest(".vditor-outline [data-target-id]");
         if (!span) return;
-        const items = [...(span.closest(".vditor-outline")?.querySelectorAll("[data-target-id]") || [])];
+        const items = outlineItemSpans();
         const index = items.indexOf(span);
+        if (index >= 0) outlinePickIndex = index;
+        paintOutlinePick();
         if (sourceOpen) {
           e.preventDefault();
           e.stopPropagation();
@@ -435,6 +490,50 @@
         e.preventDefault();
         e.stopPropagation();
         modeBtn.click();
+      }, true);
+      document.addEventListener("keydown", (e) => {
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        const mod = e.metaKey || e.ctrlKey;
+        const isVscode = document.documentElement.classList.contains("molan-host-vscode")
+          || document.body.classList.contains("molan-host-vscode");
+        if (mod && e.shiftKey && !e.altKey && key === "o") {
+          if (isVscode) return;
+          if (e.target?.closest?.("input, textarea, select")) return;
+          const blocked = e.target?.closest?.(
+            ".molan-find-bar, .molan-image-url-mask, .molan-feedback, .molan-mermaid-editor, .lightbox",
+          );
+          if (blocked) return;
+          e.preventDefault();
+          e.stopPropagation();
+          void toggleOutlineHotkey();
+          return;
+        }
+        if (!outlineIsOpen()) return;
+        if (e.target?.closest?.("input, textarea, select")
+          && !e.target?.closest?.(".vditor-outline")) {
+          return;
+        }
+        if (key === "ArrowDown" || key === "ArrowUp") {
+          const items = outlineItemSpans();
+          if (!items.length) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (outlinePickIndex < 0) outlinePickIndex = 0;
+          else if (key === "ArrowDown") {
+            outlinePickIndex = Math.min(outlinePickIndex + 1, items.length - 1);
+          } else {
+            outlinePickIndex = Math.max(outlinePickIndex - 1, 0);
+          }
+          paintOutlinePick();
+          return;
+        }
+        if (e.key === "Enter" && !mod && !e.altKey) {
+          const items = outlineItemSpans();
+          if (!items.length || outlinePickIndex < 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          activateOutlineItem(items[outlinePickIndex]);
+        }
       }, true);
     }
   }

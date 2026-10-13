@@ -54,6 +54,16 @@ test("大纲按钮在顶栏标题左侧，不浮在纸面上", () => {
   assert.doesNotMatch(src, /dock\.style\.position = "absolute"/);
 });
 
+test("大纲可用快捷键打开并用方向键跳转", () => {
+  const src = editorSrc();
+  assert.match(src, /function toggleOutlineHotkey/);
+  assert.match(src, /function paintOutlinePick/);
+  assert.match(src, /key === "o"/);
+  assert.match(src, /ArrowDown" \|\| key === "ArrowUp"/);
+  assert.match(src, /outline:\s*\{[\s\S]*toggle:\s*toggleOutlineHotkey/);
+  assert.match(readFileSync(join(root, "src", "molan.css"), "utf8"), /li\.is-pick > span/);
+});
+
 test("墨览选区格式条预览也可改 Markdown，工作台默认不开", () => {
   const src = editorSrc();
   assert.match(src, /function findCollapsedHits/);

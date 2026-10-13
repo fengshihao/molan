@@ -23,6 +23,7 @@ declare global {
       find?: { open(): void; next(): void; prev(): void };
       format?: { bold(): boolean; italic(): boolean; link(): boolean };
       toggleMode?(): boolean;
+      outline?: { toggle?(): void | Promise<void>; close?(): void };
     };
     __MOLAN_VDITOR_CDN__?: string;
     __MOLAN_LINK_BASE__?: string;
@@ -290,6 +291,10 @@ function bootVscodeBridge() {
     }
     if (msg.type === "toggleMode") {
       window.MolanEditor.toggleMode?.();
+      return;
+    }
+    if (msg.type === "outlineToggle") {
+      void window.MolanEditor.outline?.toggle?.();
       return;
     }
     if (msg.type === "openFeedback") {

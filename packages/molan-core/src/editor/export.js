@@ -582,6 +582,7 @@
     },
     outline: {
       close: closeOutline,
+      toggle: toggleOutlineHotkey,
     },
     source: {
       open: openSourceView,
