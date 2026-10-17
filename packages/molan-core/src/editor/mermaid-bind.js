@@ -44,7 +44,7 @@
     watchMermaidIrExpand(vditorRoot, ctx, lightbox, getVditor);
 
     const blockMermaidIrExpand = (e) => {
-      if (e.target.closest("[data-molan-action]")) return;
+      if (e.target.closest("[data-molan-action], [data-flow-curve]")) return;
       if (document.getElementById("molanMermaidEditor")) return;
       const node = e.target.closest('.vditor-ir__node[data-type="code-block"]');
       if (!node?.querySelector(".language-mermaid")) return;
@@ -57,7 +57,7 @@
     vditorRoot.addEventListener("pointerdown", blockMermaidIrExpand, true);
 
     const blockMermaidPreviewExpand = (e) => {
-      if (e.target.closest("[data-molan-action]")) return;
+      if (e.target.closest("[data-molan-action], [data-flow-curve]")) return;
       if (document.getElementById("molanMermaidEditor")) return;
       const shell = findMermaidPreviewShell(e.target);
       if (!shell) return;

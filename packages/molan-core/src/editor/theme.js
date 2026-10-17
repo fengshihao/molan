@@ -316,6 +316,7 @@
       el.setAttribute("aria-label", t(THEME_I18N[id]));
     });
     applyThemeTweakI18n();
+    ensureFlowCurveDom();
   }
 
   function headerPrefsIsOpen() {

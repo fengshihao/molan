@@ -198,6 +198,7 @@
           const liveSvg = preview.querySelector("svg");
           uniquifySvgIds(liveSvg);
           vectorizeSvgForeignObjects(liveSvg);
+          orthogonalizeFlowEdges(liveSvg);
           resetPreviewView();
         } catch (err) {
           if (seq !== previewSeq) return;

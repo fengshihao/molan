@@ -143,6 +143,9 @@
       typeFontMono: "等宽",
       typeReset: "恢复默认",
       prefsTheme: "纸面",
+      flowCurve: "连线",
+      flowCurveBasis: "曲线",
+      flowCurveStep: "折线",
       themeAria: "界面样式",
       themeXuan: "宣纸",
       themeXuanTitle: "宣纸 · 暖色纸面",
@@ -265,6 +268,54 @@
     return diagramPaperColors().diagramCard;
   }
 
+  const FLOW_CURVE_KEY = "molan-flow-curve";
+
+  function flowCurve() {
+    try { return localStorage.getItem(FLOW_CURVE_KEY) === "step" ? "step" : "basis"; }
+    catch (_) { return "basis"; }
+  }
+
+  function paintFlowCurve() {
+    const curve = flowCurve();
+    document.querySelectorAll(".flow-curve__label").forEach((el) => {
+      el.textContent = t("flowCurve");
+    });
+    document.querySelectorAll(".flow-curve__switch").forEach((el) => {
+      el.setAttribute("aria-label", t("flowCurve"));
+    });
+    document.querySelectorAll("[data-flow-curve]").forEach((btn) => {
+      const id = btn.getAttribute("data-flow-curve");
+      const on = id === curve;
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.textContent = t(id === "step" ? "flowCurveStep" : "flowCurveBasis");
+    });
+  }
+
+  function setFlowCurve(curve) {
+    const next = curve === "step" ? "step" : "basis";
+    if (next === flowCurve()) return;
+    try {
+      if (next === "step") localStorage.setItem(FLOW_CURVE_KEY, "step");
+      else localStorage.removeItem(FLOW_CURVE_KEY);
+    } catch (_) { /* ignore */ }
+    paintFlowCurve();
+    scheduleMermaidThemeRefresh();
+  }
+
+  function ensureFlowCurveDom() {
+    if (!ensureFlowCurveDom.bound) {
+      ensureFlowCurveDom.bound = true;
+      document.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("[data-flow-curve]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setFlowCurve(btn.getAttribute("data-flow-curve"));
+      }, true);
+    }
+    paintFlowCurve();
+  }
+
   function getMermaidOpts() {
     const inlineReader = document.documentElement.style.getPropertyValue("--reader-font").trim();
     const font = (inlineReader || cssVar("--font-ui", '"DM Sans", sans-serif')).replace(/"/g, "");
@@ -281,7 +332,7 @@
       startOnLoad: false,
       theme: dark ? "dark" : "base",
       securityLevel: "loose",
-      flowchart: { htmlLabels: true, useMaxWidth: true },
+      flowchart: { htmlLabels: true, useMaxWidth: true, curve: flowCurve() },
       themeVariables: {
         darkMode: dark,
         primaryColor: c.paper,
@@ -324,6 +375,14 @@
         .cluster rect {
           rx: 8px;
           ry: 8px;
+        }
+        .edgeLabel,
+        .labelBkg {
+          background-color: ${c.paperLift} !important;
+        }
+        .edgeLabel rect {
+          opacity: 1 !important;
+          fill: ${c.paperLift} !important;
         }
       `,
     };
@@ -988,7 +1047,21 @@
         textEl.appendChild(tspan);
       });
     }
+    const plate = edgeLabelPlate(liveFo, x, y, width, height);
+    if (plate && cloneFo.parentNode) cloneFo.parentNode.insertBefore(plate, cloneFo);
     cloneFo.replaceWith(textEl);
+  }
+
+  function edgeLabelPlate(liveFo, x, y, width, height) {
+    if (!liveFo.querySelector?.(".edgeLabel")) return null;
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", String(x));
+    rect.setAttribute("y", String(y));
+    rect.setAttribute("width", String(Math.max(width, 1)));
+    rect.setAttribute("height", String(Math.max(height, 1)));
+    rect.setAttribute("rx", "3");
+    rect.setAttribute("fill", diagramPaperColors().paperLift);
+    return rect;
   }
 
   function stripTaintingCss(svg) {
@@ -1479,6 +1552,183 @@
     });
   }
 
+  function flowPathPoints(d) {
+    const nums = String(d || "").match(/-?\d*\.?\d+/g);
+    if (!nums) return [];
+    const pts = [];
+    for (let i = 0; i + 1 < nums.length; i += 2) pts.push({ x: +nums[i], y: +nums[i + 1] });
+    return pts;
+  }
+
+  function flowNum(v) {
+    return Math.round(v * 10) / 10;
+  }
+
+  function flowBoxIn(path, el) {
+    const svg = path.ownerSVGElement;
+    const from = el.getCTM();
+    const to = path.getCTM();
+    if (!svg || !from || !to) return null;
+    const b = el.getBBox();
+    const m = to.inverse().multiply(from);
+    const corners = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]];
+    const pts = corners.map(([x, y]) => {
+      const p = svg.createSVGPoint();
+      p.x = x;
+      p.y = y;
+      return p.matrixTransform(m);
+    });
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const left = Math.min(...xs);
+    const right = Math.max(...xs);
+    const top = Math.min(...ys);
+    const bottom = Math.max(...ys);
+    return { left, right, top, bottom, cx: (left + right) / 2, cy: (top + bottom) / 2 };
+  }
+
+  function flowDistToBox(p, box) {
+    const dx = Math.max(box.left - p.x, 0, p.x - box.right);
+    const dy = Math.max(box.top - p.y, 0, p.y - box.bottom);
+    return Math.hypot(dx, dy);
+  }
+
+  function flowNearestNode(nodes, p) {
+    let best = null;
+    for (const node of nodes) {
+      const dist = flowDistToBox(p, node.box);
+      if (!best || dist < best.dist) best = { ...node, dist };
+    }
+    return best;
+  }
+
+  function flowRoute(source, target) {
+    if (target.cy >= source.bottom - 4) {
+      const s = { x: source.cx, y: source.bottom };
+      const t = { x: target.cx, y: target.top };
+      const room = t.y - s.y;
+      if (room < 4) return null;
+      return { dir: "v", sign: 1, s, t, room };
+    }
+    if (target.cy <= source.top + 4) {
+      const s = { x: source.cx, y: source.top };
+      const t = { x: target.cx, y: target.bottom };
+      const room = s.y - t.y;
+      if (room < 4) return null;
+      return { dir: "v", sign: -1, s, t, room };
+    }
+    const sign = target.cx >= source.cx ? 1 : -1;
+    const s = { x: sign > 0 ? source.right : source.left, y: source.cy };
+    const t = { x: sign > 0 ? target.left : target.right, y: target.cy };
+    const room = (t.x - s.x) * sign;
+    if (room < 4) return null;
+    return { dir: "h", sign, s, t, room };
+  }
+
+  function flowOrthoD(route, bend) {
+    const { s, t } = route;
+    if (route.dir === "v") {
+      if (Math.abs(s.x - t.x) < 1) return `M${flowNum(s.x)},${flowNum(s.y)}L${flowNum(t.x)},${flowNum(t.y)}`;
+      const lo = Math.min(s.y, t.y);
+      const hi = Math.max(s.y, t.y);
+      const y = Math.min(hi - 2, Math.max(lo + 2, bend));
+      return `M${flowNum(s.x)},${flowNum(s.y)}L${flowNum(s.x)},${flowNum(y)}L${flowNum(t.x)},${flowNum(y)}L${flowNum(t.x)},${flowNum(t.y)}`;
+    }
+    if (Math.abs(s.y - t.y) < 1) return `M${flowNum(s.x)},${flowNum(s.y)}L${flowNum(t.x)},${flowNum(t.y)}`;
+    const lo = Math.min(s.x, t.x);
+    const hi = Math.max(s.x, t.x);
+    const x = Math.min(hi - 2, Math.max(lo + 2, bend));
+    return `M${flowNum(s.x)},${flowNum(s.y)}L${flowNum(x)},${flowNum(s.y)}L${flowNum(x)},${flowNum(t.y)}L${flowNum(t.x)},${flowNum(t.y)}`;
+  }
+
+  function flowLongestMid(pts) {
+    let best = -1;
+    let mid = pts[0];
+    for (let i = 1; i < pts.length; i += 1) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      if (len < best) continue;
+      best = len;
+      mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
+    return mid;
+  }
+
+  function flowPointSegDist(p, a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 0.01) return Math.hypot(p.x - a.x, p.y - a.y);
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+
+  function orthogonalizeFlowEdges(svg, retry) {
+    if (!svg || flowCurve() !== "step") return;
+    const paths = [...svg.querySelectorAll("path.flowchart-link")];
+    const nodeEls = [...svg.querySelectorAll("g.node")];
+    if (!paths.length || !nodeEls.length) return;
+    try {
+      const b = nodeEls[0].getBBox();
+      if ((b.width < 2 || b.height < 2) && !retry) {
+        requestAnimationFrame(() => orthogonalizeFlowEdges(svg, true));
+        return;
+      }
+    } catch (_) { return; }
+    const jobs = [];
+    for (const path of paths) {
+      const oldPts = flowPathPoints(path.getAttribute("d"));
+      if (oldPts.length < 2) continue;
+      let nodes;
+      try {
+        nodes = nodeEls.map((el) => ({ el, box: flowBoxIn(path, el) })).filter((n) => n.box);
+      } catch (_) { continue; }
+      const source = flowNearestNode(nodes, oldPts[0]);
+      const target = flowNearestNode(nodes, oldPts[oldPts.length - 1]);
+      if (!source || !target || source.el === target.el) continue;
+      if (source.dist > 48 || target.dist > 48) continue;
+      const route = flowRoute(source.box, target.box);
+      if (!route) continue;
+      jobs.push({ path, oldPts, route, source: source.el });
+    }
+    const groups = new Map();
+    for (const job of jobs) {
+      const key = `${job.source.id}|${job.route.dir}|${job.route.sign}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(job);
+    }
+    for (const group of groups.values()) {
+      const room = Math.min(...group.map((job) => job.route.room));
+      const pad = Math.max(8, Math.min(22, room * 0.28));
+      for (const job of group) {
+        const along = job.route.dir === "v" ? job.route.s.y : job.route.s.x;
+        const bend = job.route.sign > 0 ? along + pad : along - pad;
+        const d = flowOrthoD(job.route, bend);
+        job.path.setAttribute("d", d);
+        job.mid = flowLongestMid(flowPathPoints(d));
+      }
+    }
+    const labels = [...svg.querySelectorAll("g.edgeLabels > g.edgeLabel")];
+    for (const label of labels) {
+      const text = (label.textContent || "").trim();
+      const m = /translate\(\s*([-\d.]+)(?:[,\s]+|\s+)([-\d.]+)/.exec(label.getAttribute("transform") || "");
+      if (!text || !m) continue;
+      const at = { x: +m[1], y: +m[2] };
+      let best = null;
+      for (const job of jobs) {
+        if (!job.mid) continue;
+        let dist = Infinity;
+        for (let i = 1; i < job.oldPts.length; i += 1) {
+          dist = Math.min(dist, flowPointSegDist(at, job.oldPts[i - 1], job.oldPts[i]));
+        }
+        if (!best || dist < best.dist) best = { job, dist };
+      }
+      if (!best || best.dist > 80) continue;
+      label.setAttribute("transform", `translate(${flowNum(best.job.mid.x)}, ${flowNum(best.job.mid.y)})`);
+    }
+  }
+
   async function refreshMermaidDiagrams(root = document) {
     if (!global.mermaid || typeof mermaid.render !== "function") {
       mermaidRefreshQueued = root;
@@ -1516,6 +1766,7 @@
           // Windows 上 foreignObject HTML 标签与 SVG 框缩放不一致；灯箱/编辑器已 vectorize，内联预览对齐同一路径。
           void host.offsetHeight;
           vectorizeSvgForeignObjects(next);
+          orthogonalizeFlowEdges(next);
         } catch (err) {
           console.warn(err);
         }
@@ -1584,6 +1835,42 @@
     });
   }
 
+  function placeDiagramToolbar(shell) {
+    const bar = shell.querySelector(":scope > .molan-diagram-toolbar");
+    const svg = shell.querySelector("svg");
+    if (!bar || !svg) return;
+    const shellRect = shell.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    if (svgRect.width < 2 || shellRect.width < 2) return;
+    const top = svgRect.top - shellRect.top + 8;
+    const right = shellRect.right - svgRect.right + 8;
+    bar.style.top = `${Math.max(4, Math.round(top))}px`;
+    bar.style.right = `${Math.max(4, Math.round(right))}px`;
+  }
+
+  function watchDiagramToolbar(shell) {
+    placeDiagramToolbar(shell);
+    if (typeof ResizeObserver === "undefined") return;
+    const svg = shell.querySelector("svg");
+    if (!shell._molanToolbarRO) {
+      shell._molanToolbarRO = new ResizeObserver(() => placeDiagramToolbar(shell));
+      shell._molanToolbarRO.observe(shell);
+    }
+    if (svg && svg !== shell._molanToolbarSvg) {
+      if (shell._molanToolbarSvg) shell._molanToolbarRO.unobserve(shell._molanToolbarSvg);
+      shell._molanToolbarRO.observe(svg);
+      shell._molanToolbarSvg = svg;
+    }
+  }
+
+  function mermaidSourceIsFlow(source) {
+    const text = String(source || "")
+      .replace(/^\uFEFF/, "")
+      .replace(/^(?:%%[\s\S]*?%%\s*|---[\s\S]*?---\s*)+/, "")
+      .trim();
+    return !text || /^(?:flowchart|graph)\b/i.test(text);
+  }
+
   function enhanceMermaidPreviews(root = document) {
     captureMermaidSources(root);
     const codes = root.querySelectorAll(".language-mermaid");
@@ -1592,13 +1879,21 @@
       const shell = code.closest(".vditor-ir__preview") || code.closest("pre") || code;
       const source = getMermaidSourceNear(shell);
       if (source) code.setAttribute("data-molan-source", source);
-      if (!shell || shell.querySelector(":scope > .molan-diagram-toolbar")) return;
+      if (!shell) return;
+      if (shell.querySelector(":scope > .molan-diagram-toolbar")) {
+        watchDiagramToolbar(shell);
+        return;
+      }
       if (!shell.querySelector("svg")) return;
       if (getComputedStyle(shell).position === "static") shell.style.position = "relative";
       shell.classList.add("molan-mermaid-shell");
       const bar = document.createElement("div");
       bar.className = "molan-diagram-toolbar";
+      const curve = mermaidSourceIsFlow(source || code.getAttribute("data-molan-source"))
+        ? `<div class="flow-curve"><div class="flow-curve__switch" role="radiogroup" aria-label="${t("flowCurve")}"><button type="button" role="radio" data-flow-curve="basis">${t("flowCurveBasis")}</button><button type="button" role="radio" data-flow-curve="step">${t("flowCurveStep")}</button></div></div>`
+        : "";
       bar.innerHTML = `
+        <div class="molan-diagram-toolbar__icons">
         <button type="button" class="icon-btn" data-molan-action="edit" title="${t("editSource")}" aria-label="${t("editSource")}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
         </button>
@@ -1611,9 +1906,14 @@
         <button type="button" class="icon-btn" data-molan-action="copy-image" title="${t("copyImage")}" aria-label="${t("copyImage")}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>
         </button>
+        </div>
+        ${curve}
       `;
       shell.appendChild(bar);
+      watchDiagramToolbar(shell);
     });
+    root.querySelectorAll?.(".language-mermaid svg").forEach((svg) => orthogonalizeFlowEdges(svg));
+    ensureFlowCurveDom();
   }
 
   /* --- table: 表格自适应、工具条与尺寸选择器 --- */
@@ -3746,7 +4046,7 @@
     watchMermaidIrExpand(vditorRoot, ctx, lightbox, getVditor);
 
     const blockMermaidIrExpand = (e) => {
-      if (e.target.closest("[data-molan-action]")) return;
+      if (e.target.closest("[data-molan-action], [data-flow-curve]")) return;
       if (document.getElementById("molanMermaidEditor")) return;
       const node = e.target.closest('.vditor-ir__node[data-type="code-block"]');
       if (!node?.querySelector(".language-mermaid")) return;
@@ -3759,7 +4059,7 @@
     vditorRoot.addEventListener("pointerdown", blockMermaidIrExpand, true);
 
     const blockMermaidPreviewExpand = (e) => {
-      if (e.target.closest("[data-molan-action]")) return;
+      if (e.target.closest("[data-molan-action], [data-flow-curve]")) return;
       if (document.getElementById("molanMermaidEditor")) return;
       const shell = findMermaidPreviewShell(e.target);
       if (!shell) return;
@@ -5573,6 +5873,7 @@
       el.setAttribute("aria-label", t(THEME_I18N[id]));
     });
     applyThemeTweakI18n();
+    ensureFlowCurveDom();
   }
 
   function headerPrefsIsOpen() {
@@ -6043,6 +6344,7 @@
           const liveSvg = preview.querySelector("svg");
           uniquifySvgIds(liveSvg);
           vectorizeSvgForeignObjects(liveSvg);
+          orthogonalizeFlowEdges(liveSvg);
           resetPreviewView();
         } catch (err) {
           if (seq !== previewSeq) return;

@@ -28,6 +28,54 @@
     return diagramPaperColors().diagramCard;
   }
 
+  const FLOW_CURVE_KEY = "molan-flow-curve";
+
+  function flowCurve() {
+    try { return localStorage.getItem(FLOW_CURVE_KEY) === "step" ? "step" : "basis"; }
+    catch (_) { return "basis"; }
+  }
+
+  function paintFlowCurve() {
+    const curve = flowCurve();
+    document.querySelectorAll(".flow-curve__label").forEach((el) => {
+      el.textContent = t("flowCurve");
+    });
+    document.querySelectorAll(".flow-curve__switch").forEach((el) => {
+      el.setAttribute("aria-label", t("flowCurve"));
+    });
+    document.querySelectorAll("[data-flow-curve]").forEach((btn) => {
+      const id = btn.getAttribute("data-flow-curve");
+      const on = id === curve;
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+      btn.textContent = t(id === "step" ? "flowCurveStep" : "flowCurveBasis");
+    });
+  }
+
+  function setFlowCurve(curve) {
+    const next = curve === "step" ? "step" : "basis";
+    if (next === flowCurve()) return;
+    try {
+      if (next === "step") localStorage.setItem(FLOW_CURVE_KEY, "step");
+      else localStorage.removeItem(FLOW_CURVE_KEY);
+    } catch (_) { /* ignore */ }
+    paintFlowCurve();
+    scheduleMermaidThemeRefresh();
+  }
+
+  function ensureFlowCurveDom() {
+    if (!ensureFlowCurveDom.bound) {
+      ensureFlowCurveDom.bound = true;
+      document.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("[data-flow-curve]");
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setFlowCurve(btn.getAttribute("data-flow-curve"));
+      }, true);
+    }
+    paintFlowCurve();
+  }
+
   function getMermaidOpts() {
     const inlineReader = document.documentElement.style.getPropertyValue("--reader-font").trim();
     const font = (inlineReader || cssVar("--font-ui", '"DM Sans", sans-serif')).replace(/"/g, "");
@@ -44,7 +92,7 @@
       startOnLoad: false,
       theme: dark ? "dark" : "base",
       securityLevel: "loose",
-      flowchart: { htmlLabels: true, useMaxWidth: true },
+      flowchart: { htmlLabels: true, useMaxWidth: true, curve: flowCurve() },
       themeVariables: {
         darkMode: dark,
         primaryColor: c.paper,
@@ -87,6 +135,14 @@
         .cluster rect {
           rx: 8px;
           ry: 8px;
+        }
+        .edgeLabel,
+        .labelBkg {
+          background-color: ${c.paperLift} !important;
+        }
+        .edgeLabel rect {
+          opacity: 1 !important;
+          fill: ${c.paperLift} !important;
         }
       `,
     };

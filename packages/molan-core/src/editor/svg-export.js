@@ -86,7 +86,21 @@
         textEl.appendChild(tspan);
       });
     }
+    const plate = edgeLabelPlate(liveFo, x, y, width, height);
+    if (plate && cloneFo.parentNode) cloneFo.parentNode.insertBefore(plate, cloneFo);
     cloneFo.replaceWith(textEl);
+  }
+
+  function edgeLabelPlate(liveFo, x, y, width, height) {
+    if (!liveFo.querySelector?.(".edgeLabel")) return null;
+    const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    rect.setAttribute("x", String(x));
+    rect.setAttribute("y", String(y));
+    rect.setAttribute("width", String(Math.max(width, 1)));
+    rect.setAttribute("height", String(Math.max(height, 1)));
+    rect.setAttribute("rx", "3");
+    rect.setAttribute("fill", diagramPaperColors().paperLift);
+    return rect;
   }
 
   function stripTaintingCss(svg) {

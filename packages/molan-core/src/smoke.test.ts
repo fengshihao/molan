@@ -184,6 +184,7 @@ test("molan.css 含七主题变量", () => {
   assert.match(css, /@media print/);
   assert.match(css, /html\.is-print-white/);
   assert.match(css, /\.export-paper/);
+  assert.match(css, /\.flow-curve__switch/);
   assert.match(css, /break-inside:\s*auto/);
   assert.match(css, /max-height:\s*220mm/);
   assert.match(css, /\.export-menu/);
@@ -312,6 +313,8 @@ test("灯箱大图按 SVG 尺寸缩放，不用 CSS scale，并去掉 foreignObj
 test("内联流程图预览渲染后也会去掉 foreignObject", () => {
   const src = editorSrc();
   assert.match(src, /applyMermaidSvg\(host, next\)[\s\S]*vectorizeSvgForeignObjects\(next\)/);
+  assert.match(src, /function orthogonalizeFlowEdges/);
+  assert.match(src, /orthogonalizeFlowEdges\(next\)/);
 });
 
 test("复制流程图前会去掉会污染 canvas 的 foreignObject", () => {
@@ -326,6 +329,12 @@ test("复制流程图前会去掉会污染 canvas 的 foreignObject", () => {
   assert.match(src, /function inlineComputedSvgStyles/);
   assert.match(src, /function insertDiagramBackground/);
   assert.match(src, /actorLineColor/);
+  assert.match(src, /\.labelBkg/);
+  assert.match(src, /\.edgeLabel rect \{[\s\S]*opacity: 1 !important/);
+  assert.match(src, /function edgeLabelPlate/);
+  assert.match(src, /molan-flow-curve/);
+  assert.match(src, /curve: flowCurve\(\)/);
+  assert.match(src, /data-flow-curve="step"/);
   assert.match(src, /ctx\.fillStyle = diagramBackgroundColor\(\)/);
 });
 
