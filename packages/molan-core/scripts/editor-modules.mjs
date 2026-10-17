@@ -30,6 +30,7 @@ export const EDITOR_MODULES = [
   "preview-dblclick.js",
   "paste-image.js",
   "create.js",
+  "export-paper.js",
   "export.js",
 ];
 

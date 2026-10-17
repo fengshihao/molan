@@ -157,7 +157,9 @@ test("molan-editor.js 导出 MolanEditor.create", () => {
   assert.match(src, /exportPdfUseBrowser/);
   assert.match(src, /molan-print-paper/);
   assert.match(src, /is-print-white/);
+  assert.match(src, /is-print-clear/);
   assert.match(src, /exportWhitePaper/);
+  assert.match(src, /exportPaperNone/);
   assert.match(src, /if \(unsafePrint\) \{[\s\S]*?downloadPrintableHtml[\s\S]*?return;[\s\S]*?window\.print\(\)/);
   assert.match(src, /sourceViewBtn/);
   assert.match(src, /function openSourceView/);
@@ -183,8 +185,11 @@ test("molan.css 含七主题变量", () => {
   assert.match(css, /\.theme-tweak/);
   assert.match(css, /@media print/);
   assert.match(css, /html\.is-print-white/);
+  assert.match(css, /html\.is-print-clear/);
   assert.match(css, /\.export-paper/);
+  assert.match(css, /\.export-paper__choices/);
   assert.match(css, /\.flow-curve__switch/);
+  assert.match(css, /\.molan-diagram-toolbar \.flow-curve__switch button \{[\s\S]*white-space:\s*nowrap/);
   assert.match(css, /break-inside:\s*auto/);
   assert.match(css, /max-height:\s*220mm/);
   assert.match(css, /\.export-menu/);

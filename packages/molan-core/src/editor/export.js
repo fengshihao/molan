@@ -1,46 +1,4 @@
   /* --- export: 导出 PDF/PNG 与 window.MolanEditor --- */
-  const PRINT_PAPER_KEY = "molan-print-paper";
-  const WHITE_PAPER_VARS = [["--paper", "#ffffff"], ["--paper-deep", "#f4f4f4"], ["--paper-lift", "#ffffff"], ["--diagram-card", "#ffffff"]];
-
-  function whitePrintPaper() {
-    try { return localStorage.getItem(PRINT_PAPER_KEY) === "white"; } catch (_) { return false; }
-  }
-
-  function printPaperColor() {
-    return whitePrintPaper() ? "#ffffff" : "#f4efe6";
-  }
-
-  function applyWhitePrintSurface() {
-    if (!whitePrintPaper()) return;
-    const root = document.documentElement;
-    root.classList.add("is-print-white");
-    WHITE_PAPER_VARS.forEach(([name, value]) => root.style.setProperty(name, value));
-  }
-
-  function clearWhitePrintSurface() {
-    const root = document.documentElement;
-    root.classList.remove("is-print-white");
-    WHITE_PAPER_VARS.forEach(([name]) => root.style.removeProperty(name));
-  }
-
-  function ensurePrintPaperOption() {
-    const menu = document.getElementById("exportMenu");
-    if (!menu || document.getElementById("printWhitePaper")) return;
-    const label = document.createElement("label");
-    label.className = "export-paper";
-    label.innerHTML = '<input type="checkbox" id="printWhitePaper"><span data-i18n="exportWhitePaper"></span>';
-    const input = label.querySelector("input");
-    input.checked = whitePrintPaper();
-    input.addEventListener("click", (e) => e.stopPropagation());
-    input.addEventListener("change", () => {
-      try {
-        if (input.checked) localStorage.setItem(PRINT_PAPER_KEY, "white");
-        else localStorage.removeItem(PRINT_PAPER_KEY);
-      } catch (_) { /* ignore */ }
-    });
-    menu.appendChild(label);
-  }
-
   function applyExportI18n() {
     const btn = document.getElementById("pdfBtn");
     const menu = document.getElementById("exportMenu");
@@ -55,14 +13,7 @@
       el.textContent = t(key);
     });
     ensurePrintPaperOption();
-    const paper = document.querySelector(".export-paper");
-    const paperTitle = t("exportWhitePaperTitle");
-    const paperInput = paper?.querySelector("input");
-    const paperText = paper?.querySelector("span");
-    if (paper) paper.title = paperTitle;
-    if (paperText) paperText.textContent = t("exportWhitePaper");
-    if (paperInput) paperInput.checked = whitePrintPaper();
-    if (paperInput) paperInput.title = paperTitle;
+    paintPrintPaperPicker();
   }
 
   function exportMenuIsOpen() {
@@ -219,7 +170,7 @@
     if (!body.trim()) return false;
     const css = collectSameOriginCss();
     const html = `<!DOCTYPE html>
-<html class="molan-print-doc${whitePrintPaper() ? " is-print-white" : ""}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
+<html class="${printDocClass()}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -272,6 +223,10 @@
         max-height: 220mm !important;
         height: auto !important;
         break-inside: avoid !important;
+      }
+      html.molan-print-doc.is-print-clear,
+      html.molan-print-doc.is-print-clear body {
+        background: transparent !important;
       }
     }
   </style>
@@ -439,8 +394,10 @@
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      ctx.fillStyle = printPaperColor();
-      ctx.fillRect(0, 0, w, h);
+      if (!clearPrintPaper()) {
+        ctx.fillStyle = printPaperColor();
+        ctx.fillRect(0, 0, w, h);
+      }
       ctx.drawImage(image, 0, 0, w, h);
       return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
     } finally {
@@ -461,7 +418,7 @@
     const prevTheme = document.documentElement.getAttribute("data-theme") || readStoredTheme();
     let restoreEdit = false;
     const cleanup = async () => {
-      clearWhitePrintSurface();
+      clearPrintSurface();
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
       if (restoreEdit && lastEditorApi?.setPreview) {
@@ -482,7 +439,7 @@
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
       }
-      applyWhitePrintSurface();
+      applyPrintSurface();
       if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();
@@ -530,7 +487,7 @@
       try { restorePreview(); } catch (_) { /* ignore */ }
       document.documentElement.classList.remove("is-printing");
       document.body.classList.remove("is-printing");
-      clearWhitePrintSurface();
+      clearPrintSurface();
       document.title = prevTitle;
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
@@ -555,7 +512,7 @@
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
       }
-      applyWhitePrintSurface();
+      applyPrintSurface();
       if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();

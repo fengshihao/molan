@@ -490,30 +490,14 @@
 
   function placeDiagramToolbar(shell) {
     const bar = shell.querySelector(":scope > .molan-diagram-toolbar");
-    const svg = shell.querySelector("svg");
-    if (!bar || !svg) return;
-    const shellRect = shell.getBoundingClientRect();
-    const svgRect = svg.getBoundingClientRect();
-    if (svgRect.width < 2 || shellRect.width < 2) return;
-    const top = svgRect.top - shellRect.top + 8;
-    const right = shellRect.right - svgRect.right + 8;
-    bar.style.top = `${Math.max(4, Math.round(top))}px`;
-    bar.style.right = `${Math.max(4, Math.round(right))}px`;
+    if (!bar) return;
+    // 贴卡片右上角。跟 SVG 内容框走时，居中的图会把工具条拽到节点上。
+    bar.style.top = "";
+    bar.style.right = "";
   }
 
   function watchDiagramToolbar(shell) {
     placeDiagramToolbar(shell);
-    if (typeof ResizeObserver === "undefined") return;
-    const svg = shell.querySelector("svg");
-    if (!shell._molanToolbarRO) {
-      shell._molanToolbarRO = new ResizeObserver(() => placeDiagramToolbar(shell));
-      shell._molanToolbarRO.observe(shell);
-    }
-    if (svg && svg !== shell._molanToolbarSvg) {
-      if (shell._molanToolbarSvg) shell._molanToolbarRO.unobserve(shell._molanToolbarSvg);
-      shell._molanToolbarRO.observe(svg);
-      shell._molanToolbarSvg = svg;
-    }
   }
 
   function mermaidSourceIsFlow(source) {
@@ -522,6 +506,25 @@
       .replace(/^(?:%%[\s\S]*?%%\s*|---[\s\S]*?---\s*)+/, "")
       .trim();
     return !text || /^(?:flowchart|graph)\b/i.test(text);
+  }
+
+  function flowCurveMarkup() {
+    return `<div class="flow-curve"><div class="flow-curve__switch" role="radiogroup" aria-label="${t("flowCurve")}"><button type="button" role="radio" data-flow-curve="basis">${t("flowCurveBasis")}</button><button type="button" role="radio" data-flow-curve="step">${t("flowCurveStep")}</button></div></div>`;
+  }
+
+  function settleFlowCurve(bar, source) {
+    const icons = bar.querySelector(":scope > .molan-diagram-toolbar__icons");
+    if (!icons) return;
+    let curve = bar.querySelector(".flow-curve");
+    if (!mermaidSourceIsFlow(source)) {
+      curve?.remove();
+      return;
+    }
+    if (!curve) {
+      icons.insertAdjacentHTML("afterbegin", flowCurveMarkup());
+      return;
+    }
+    if (curve.parentElement !== icons) icons.prepend(curve);
   }
 
   function enhanceMermaidPreviews(root = document) {
@@ -533,7 +536,10 @@
       const source = getMermaidSourceNear(shell);
       if (source) code.setAttribute("data-molan-source", source);
       if (!shell) return;
-      if (shell.querySelector(":scope > .molan-diagram-toolbar")) {
+      const diagramSource = source || code.getAttribute("data-molan-source");
+      const existing = shell.querySelector(":scope > .molan-diagram-toolbar");
+      if (existing) {
+        settleFlowCurve(existing, diagramSource);
         watchDiagramToolbar(shell);
         return;
       }
@@ -542,9 +548,6 @@
       shell.classList.add("molan-mermaid-shell");
       const bar = document.createElement("div");
       bar.className = "molan-diagram-toolbar";
-      const curve = mermaidSourceIsFlow(source || code.getAttribute("data-molan-source"))
-        ? `<div class="flow-curve"><div class="flow-curve__switch" role="radiogroup" aria-label="${t("flowCurve")}"><button type="button" role="radio" data-flow-curve="basis">${t("flowCurveBasis")}</button><button type="button" role="radio" data-flow-curve="step">${t("flowCurveStep")}</button></div></div>`
-        : "";
       bar.innerHTML = `
         <div class="molan-diagram-toolbar__icons">
         <button type="button" class="icon-btn" data-molan-action="edit" title="${t("editSource")}" aria-label="${t("editSource")}">
@@ -560,8 +563,8 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>
         </button>
         </div>
-        ${curve}
       `;
+      settleFlowCurve(bar, diagramSource);
       shell.appendChild(bar);
       watchDiagramToolbar(shell);
     });

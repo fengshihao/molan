@@ -2004,7 +2004,7 @@
       top: calc(100% + 8px);
       inset-inline-end: 0;
       z-index: 14;
-      min-width: 148px;
+      min-width: 188px;
       padding: 6px;
       border-radius: 12px;
       background: var(--paper-lift);
@@ -2037,19 +2037,41 @@
 
     .export-menu .export-paper {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
       margin-top: 4px;
       padding: 8px 10px 6px;
       border-top: 1px solid var(--hairline);
       color: inherit;
       font: 0.88rem/1.3 var(--font-ui);
-      cursor: pointer;
     }
 
-    .export-menu .export-paper input {
-      margin: 0;
-      accent-color: var(--accent);
+    .export-menu .export-paper__label {
+      color: var(--ink-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+    }
+
+    .export-menu .export-paper__choices {
+      display: flex;
+      gap: 4px;
+    }
+
+    .export-menu .export-paper__choices button {
+      flex: 1;
+      width: auto;
+      text-align: center;
+      padding: 4px 6px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      font-size: 0.8rem;
+    }
+
+    .export-menu .export-paper__choices button[aria-checked="true"] {
+      background: var(--surface-hover);
+      border-color: var(--hairline-strong);
+      color: var(--ink);
     }
 
     .type-menu {
@@ -3560,6 +3582,7 @@
     #molanPreviewBody .molan-mermaid-shell,
     .molan-preview .molan-mermaid-shell {
       margin: 1.3em 0 !important;
+      margin-top: 48px !important;
     }
 
     .molan-mermaid-shell .language-mermaid,
@@ -3863,10 +3886,10 @@
       opacity: 0.45;
     }
 
-    /* 流程图右上角：连线风格常显，其余图标悬停出现 */
+    /* 流程图右上角工具条：连线样式和图标一起，悬停后出现 */
     .molan-diagram-toolbar {
       position: absolute;
-      top: 8px;
+      top: 0;
       right: 8px;
       z-index: 3;
       display: flex;
@@ -3878,10 +3901,12 @@
       box-shadow: none;
       opacity: 1;
       pointer-events: none;
+      transform: translateY(-100%);
     }
 
     .molan-diagram-toolbar__icons {
       display: flex;
+      align-items: center;
       gap: 4px;
       padding: 3px;
       border-radius: 999px;
@@ -3905,25 +3930,31 @@
     }
 
     .molan-diagram-toolbar .flow-curve {
-      margin-top: 0;
-      min-width: 0;
-      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      flex: 0 0 auto;
+      margin: 0 2px 0 0;
+      min-width: max-content;
+      padding-inline-end: 6px;
+      border-inline-end: 1px solid var(--hairline);
     }
 
     .molan-diagram-toolbar .flow-curve__switch {
-      padding: 2px;
-      border-radius: 999px;
-      background: var(--toolbar-bg);
-      border: 1px solid var(--hairline);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(6px);
+      padding: 0;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
     }
 
     .molan-diagram-toolbar .flow-curve__switch button {
-      border: 0;
+      flex: 0 0 auto;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid transparent;
       border-radius: 999px;
-      padding: 4px 8px;
       background: transparent;
+      white-space: nowrap;
+      line-height: 1;
     }
 
     .molan-diagram-toolbar .flow-curve__switch button[aria-checked="true"] {
@@ -5020,6 +5051,11 @@
         --paper-deep: #f4f4f4;
         --paper-lift: #ffffff;
         --diagram-card: #ffffff;
+      }
+
+      html.is-print-clear,
+      html.is-print-clear body {
+        background: transparent !important;
       }
 
       html.is-printing body > *:not(#molanPreview) {

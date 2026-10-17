@@ -225,6 +225,11 @@
       exportPngPreparing: "正在生成图片…",
       exportWhitePaper: "白纸底",
       exportWhitePaperTitle: "打印和导出图片时铺白纸，流程图保留",
+      exportPaper: "纸面",
+      exportPaperXuan: "宣纸",
+      exportPaperWhite: "白纸",
+      exportPaperNone: "无底",
+      exportPaperTitle: "导出时的页面底色。无底不铺色，代码、表格和流程图仍保留",
       tableSize: "{cols} 列 × {rows} 行",
       insertRowAbove: "上方插入行",
       insertRowBelow: "下方插入行",
@@ -1837,30 +1842,14 @@
 
   function placeDiagramToolbar(shell) {
     const bar = shell.querySelector(":scope > .molan-diagram-toolbar");
-    const svg = shell.querySelector("svg");
-    if (!bar || !svg) return;
-    const shellRect = shell.getBoundingClientRect();
-    const svgRect = svg.getBoundingClientRect();
-    if (svgRect.width < 2 || shellRect.width < 2) return;
-    const top = svgRect.top - shellRect.top + 8;
-    const right = shellRect.right - svgRect.right + 8;
-    bar.style.top = `${Math.max(4, Math.round(top))}px`;
-    bar.style.right = `${Math.max(4, Math.round(right))}px`;
+    if (!bar) return;
+    // 贴卡片右上角。跟 SVG 内容框走时，居中的图会把工具条拽到节点上。
+    bar.style.top = "";
+    bar.style.right = "";
   }
 
   function watchDiagramToolbar(shell) {
     placeDiagramToolbar(shell);
-    if (typeof ResizeObserver === "undefined") return;
-    const svg = shell.querySelector("svg");
-    if (!shell._molanToolbarRO) {
-      shell._molanToolbarRO = new ResizeObserver(() => placeDiagramToolbar(shell));
-      shell._molanToolbarRO.observe(shell);
-    }
-    if (svg && svg !== shell._molanToolbarSvg) {
-      if (shell._molanToolbarSvg) shell._molanToolbarRO.unobserve(shell._molanToolbarSvg);
-      shell._molanToolbarRO.observe(svg);
-      shell._molanToolbarSvg = svg;
-    }
   }
 
   function mermaidSourceIsFlow(source) {
@@ -1869,6 +1858,25 @@
       .replace(/^(?:%%[\s\S]*?%%\s*|---[\s\S]*?---\s*)+/, "")
       .trim();
     return !text || /^(?:flowchart|graph)\b/i.test(text);
+  }
+
+  function flowCurveMarkup() {
+    return `<div class="flow-curve"><div class="flow-curve__switch" role="radiogroup" aria-label="${t("flowCurve")}"><button type="button" role="radio" data-flow-curve="basis">${t("flowCurveBasis")}</button><button type="button" role="radio" data-flow-curve="step">${t("flowCurveStep")}</button></div></div>`;
+  }
+
+  function settleFlowCurve(bar, source) {
+    const icons = bar.querySelector(":scope > .molan-diagram-toolbar__icons");
+    if (!icons) return;
+    let curve = bar.querySelector(".flow-curve");
+    if (!mermaidSourceIsFlow(source)) {
+      curve?.remove();
+      return;
+    }
+    if (!curve) {
+      icons.insertAdjacentHTML("afterbegin", flowCurveMarkup());
+      return;
+    }
+    if (curve.parentElement !== icons) icons.prepend(curve);
   }
 
   function enhanceMermaidPreviews(root = document) {
@@ -1880,7 +1888,10 @@
       const source = getMermaidSourceNear(shell);
       if (source) code.setAttribute("data-molan-source", source);
       if (!shell) return;
-      if (shell.querySelector(":scope > .molan-diagram-toolbar")) {
+      const diagramSource = source || code.getAttribute("data-molan-source");
+      const existing = shell.querySelector(":scope > .molan-diagram-toolbar");
+      if (existing) {
+        settleFlowCurve(existing, diagramSource);
         watchDiagramToolbar(shell);
         return;
       }
@@ -1889,9 +1900,6 @@
       shell.classList.add("molan-mermaid-shell");
       const bar = document.createElement("div");
       bar.className = "molan-diagram-toolbar";
-      const curve = mermaidSourceIsFlow(source || code.getAttribute("data-molan-source"))
-        ? `<div class="flow-curve"><div class="flow-curve__switch" role="radiogroup" aria-label="${t("flowCurve")}"><button type="button" role="radio" data-flow-curve="basis">${t("flowCurveBasis")}</button><button type="button" role="radio" data-flow-curve="step">${t("flowCurveStep")}</button></div></div>`
-        : "";
       bar.innerHTML = `
         <div class="molan-diagram-toolbar__icons">
         <button type="button" class="icon-btn" data-molan-action="edit" title="${t("editSource")}" aria-label="${t("editSource")}">
@@ -1907,8 +1915,8 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg>
         </button>
         </div>
-        ${curve}
       `;
+      settleFlowCurve(bar, diagramSource);
       shell.appendChild(bar);
       watchDiagramToolbar(shell);
     });
@@ -8973,49 +8981,103 @@
     return Promise.resolve(api);
   }
 
-  /* --- export: 导出 PDF/PNG 与 window.MolanEditor --- */
+  /* --- export-paper: 导出时的宣纸 / 白纸 / 无底 --- */
   const PRINT_PAPER_KEY = "molan-print-paper";
   const WHITE_PAPER_VARS = [["--paper", "#ffffff"], ["--paper-deep", "#f4f4f4"], ["--paper-lift", "#ffffff"], ["--diagram-card", "#ffffff"]];
 
+  function printPaperMode() {
+    try {
+      const value = localStorage.getItem(PRINT_PAPER_KEY);
+      if (value === "white" || value === "none") return value;
+    } catch (_) { /* ignore */ }
+    return "xuan";
+  }
+
   function whitePrintPaper() {
-    try { return localStorage.getItem(PRINT_PAPER_KEY) === "white"; } catch (_) { return false; }
+    return printPaperMode() === "white";
+  }
+
+  function clearPrintPaper() {
+    return printPaperMode() === "none";
   }
 
   function printPaperColor() {
+    if (clearPrintPaper()) return "transparent";
     return whitePrintPaper() ? "#ffffff" : "#f4efe6";
   }
 
-  function applyWhitePrintSurface() {
-    if (!whitePrintPaper()) return;
-    const root = document.documentElement;
-    root.classList.add("is-print-white");
-    WHITE_PAPER_VARS.forEach(([name, value]) => root.style.setProperty(name, value));
+  function printDocClass() {
+    const extra = whitePrintPaper() ? " is-print-white" : clearPrintPaper() ? " is-print-clear" : "";
+    return `molan-print-doc${extra}`;
   }
 
-  function clearWhitePrintSurface() {
+  function applyPrintSurface() {
     const root = document.documentElement;
-    root.classList.remove("is-print-white");
+    root.classList.remove("is-print-white", "is-print-clear");
     WHITE_PAPER_VARS.forEach(([name]) => root.style.removeProperty(name));
+    if (whitePrintPaper()) {
+      root.classList.add("is-print-white");
+      WHITE_PAPER_VARS.forEach(([name, value]) => root.style.setProperty(name, value));
+    } else if (clearPrintPaper()) {
+      root.classList.add("is-print-clear");
+    }
+  }
+
+  function clearPrintSurface() {
+    const root = document.documentElement;
+    root.classList.remove("is-print-white", "is-print-clear");
+    WHITE_PAPER_VARS.forEach(([name]) => root.style.removeProperty(name));
+  }
+
+  function setPrintPaperMode(mode) {
+    const next = mode === "white" || mode === "none" ? mode : "xuan";
+    try {
+      if (next === "xuan") localStorage.removeItem(PRINT_PAPER_KEY);
+      else localStorage.setItem(PRINT_PAPER_KEY, next);
+    } catch (_) { /* ignore */ }
+    paintPrintPaperPicker();
+  }
+
+  function paintPrintPaperPicker() {
+    const picker = document.getElementById("printPaperPicker");
+    if (!picker) return;
+    const mode = printPaperMode();
+    const title = t("exportPaperTitle");
+    picker.title = title;
+    picker.setAttribute("aria-label", t("exportPaper"));
+    const label = picker.querySelector(".export-paper__label");
+    if (label) label.textContent = t("exportPaper");
+    picker.querySelectorAll("[data-print-paper]").forEach((btn) => {
+      const id = btn.getAttribute("data-print-paper");
+      btn.setAttribute("aria-checked", id === mode ? "true" : "false");
+      const key = id === "white" ? "exportPaperWhite" : id === "none" ? "exportPaperNone" : "exportPaperXuan";
+      btn.textContent = t(key);
+      btn.title = title;
+    });
   }
 
   function ensurePrintPaperOption() {
     const menu = document.getElementById("exportMenu");
-    if (!menu || document.getElementById("printWhitePaper")) return;
-    const label = document.createElement("label");
-    label.className = "export-paper";
-    label.innerHTML = '<input type="checkbox" id="printWhitePaper"><span data-i18n="exportWhitePaper"></span>';
-    const input = label.querySelector("input");
-    input.checked = whitePrintPaper();
-    input.addEventListener("click", (e) => e.stopPropagation());
-    input.addEventListener("change", () => {
-      try {
-        if (input.checked) localStorage.setItem(PRINT_PAPER_KEY, "white");
-        else localStorage.removeItem(PRINT_PAPER_KEY);
-      } catch (_) { /* ignore */ }
+    if (!menu || document.getElementById("printPaperPicker")) return;
+    const picker = document.createElement("div");
+    picker.className = "export-paper";
+    picker.id = "printPaperPicker";
+    picker.setAttribute("role", "radiogroup");
+    picker.innerHTML = `<span class="export-paper__label"></span><div class="export-paper__choices">${
+      ["xuan", "white", "none"].map((id) => `<button type="button" role="radio" data-print-paper="${id}"></button>`).join("")
+    }</div>`;
+    picker.addEventListener("click", (e) => {
+      const btn = e.target?.closest?.("[data-print-paper]");
+      if (!btn || !picker.contains(btn)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPrintPaperMode(btn.getAttribute("data-print-paper"));
     });
-    menu.appendChild(label);
+    menu.appendChild(picker);
+    paintPrintPaperPicker();
   }
 
+  /* --- export: 导出 PDF/PNG 与 window.MolanEditor --- */
   function applyExportI18n() {
     const btn = document.getElementById("pdfBtn");
     const menu = document.getElementById("exportMenu");
@@ -9030,14 +9092,7 @@
       el.textContent = t(key);
     });
     ensurePrintPaperOption();
-    const paper = document.querySelector(".export-paper");
-    const paperTitle = t("exportWhitePaperTitle");
-    const paperInput = paper?.querySelector("input");
-    const paperText = paper?.querySelector("span");
-    if (paper) paper.title = paperTitle;
-    if (paperText) paperText.textContent = t("exportWhitePaper");
-    if (paperInput) paperInput.checked = whitePrintPaper();
-    if (paperInput) paperInput.title = paperTitle;
+    paintPrintPaperPicker();
   }
 
   function exportMenuIsOpen() {
@@ -9194,7 +9249,7 @@
     if (!body.trim()) return false;
     const css = collectSameOriginCss();
     const html = `<!DOCTYPE html>
-<html class="molan-print-doc${whitePrintPaper() ? " is-print-white" : ""}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
+<html class="${printDocClass()}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9247,6 +9302,10 @@
         max-height: 220mm !important;
         height: auto !important;
         break-inside: avoid !important;
+      }
+      html.molan-print-doc.is-print-clear,
+      html.molan-print-doc.is-print-clear body {
+        background: transparent !important;
       }
     }
   </style>
@@ -9414,8 +9473,10 @@
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      ctx.fillStyle = printPaperColor();
-      ctx.fillRect(0, 0, w, h);
+      if (!clearPrintPaper()) {
+        ctx.fillStyle = printPaperColor();
+        ctx.fillRect(0, 0, w, h);
+      }
       ctx.drawImage(image, 0, 0, w, h);
       return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
     } finally {
@@ -9436,7 +9497,7 @@
     const prevTheme = document.documentElement.getAttribute("data-theme") || readStoredTheme();
     let restoreEdit = false;
     const cleanup = async () => {
-      clearWhitePrintSurface();
+      clearPrintSurface();
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
       if (restoreEdit && lastEditorApi?.setPreview) {
@@ -9457,7 +9518,7 @@
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
       }
-      applyWhitePrintSurface();
+      applyPrintSurface();
       if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();
@@ -9505,7 +9566,7 @@
       try { restorePreview(); } catch (_) { /* ignore */ }
       document.documentElement.classList.remove("is-printing");
       document.body.classList.remove("is-printing");
-      clearWhitePrintSurface();
+      clearPrintSurface();
       document.title = prevTitle;
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
@@ -9530,7 +9591,7 @@
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
       }
-      applyWhitePrintSurface();
+      applyPrintSurface();
       if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();
