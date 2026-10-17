@@ -203,6 +203,8 @@
       outlineCloseAria: "收起大纲",
       outlineEmpty: "没有标题",
       pickImageFail: "无法插入图片",
+      pasteImageFail: "无法插入截图",
+      pasteImageNeedSave: "请先保存文档，才能把截图存到旁边",
       imageUrlTitle: "插入图片",
       imageUrlHint: "请填写可公开访问的图片地址",
       imageUrlPlaceholder: "https://",
@@ -218,6 +220,8 @@
       exportPng: "导出图片",
       exportPngFail: "导出图片失败",
       exportPngPreparing: "正在生成图片…",
+      exportWhitePaper: "白纸底",
+      exportWhitePaperTitle: "打印和导出图片时铺白纸，流程图保留",
       tableSize: "{cols} 列 × {rows} 行",
       insertRowAbove: "上方插入行",
       insertRowBelow: "下方插入行",
@@ -2734,6 +2738,46 @@
   }
 
   let outlineRefreshTimer = 0;
+  let outlinePickIndex = -1;
+
+  function outlineItemSpans() {
+    const panel = vditorOutlineEl();
+    if (!panel || panel.style.display === "none") return [];
+    return [...panel.querySelectorAll("[data-target-id]")];
+  }
+
+  function clearOutlinePick() {
+    outlinePickIndex = -1;
+    vditorOutlineEl()?.querySelectorAll("li.is-pick").forEach((li) => {
+      li.classList.remove("is-pick");
+    });
+  }
+
+  function paintOutlinePick() {
+    const items = outlineItemSpans();
+    const panel = vditorOutlineEl();
+    panel?.querySelectorAll("li.is-pick").forEach((li) => li.classList.remove("is-pick"));
+    if (outlinePickIndex < 0 || outlinePickIndex >= items.length) return;
+    const li = items[outlinePickIndex]?.closest("li");
+    li?.classList.add("is-pick");
+    li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function activateOutlineItem(span) {
+    if (!span) return;
+    const items = outlineItemSpans();
+    const index = items.indexOf(span);
+    if (index < 0) return;
+    if (sourceOpen) {
+      scrollSourceToHeading(index, span.textContent);
+      return;
+    }
+    if (outlineCtx?.getPreviewing?.()) {
+      scrollToHeading(index);
+      return;
+    }
+    span.click();
+  }
 
   function scheduleOutlineRefresh() {
     if (!outlineIsOpen()) return;
@@ -2805,6 +2849,7 @@
       return;
     }
     const finish = () => {
+      clearOutlinePick();
       setVditorOutline(false);
     };
     if (instant || prefersReducedMotion() || !panel) {
@@ -2824,6 +2869,18 @@
       if (e.target === panel) done();
     }, { once: true });
     window.setTimeout(done, 400);
+  }
+
+  async function toggleOutlineHotkey() {
+    const panel = vditorOutlineEl();
+    if (panel?.classList.contains("is-out")) closeOutline(true);
+    if (outlineIsOpen()) {
+      closeOutline();
+      return;
+    }
+    await openOutline();
+    outlinePickIndex = outlineItemSpans().length ? 0 : -1;
+    paintOutlinePick();
   }
 
   async function openOutline() {
@@ -2957,8 +3014,10 @@
       editorWrap.addEventListener("click", (e) => {
         const span = e.target.closest(".vditor-outline [data-target-id]");
         if (!span) return;
-        const items = [...(span.closest(".vditor-outline")?.querySelectorAll("[data-target-id]") || [])];
+        const items = outlineItemSpans();
         const index = items.indexOf(span);
+        if (index >= 0) outlinePickIndex = index;
+        paintOutlinePick();
         if (sourceOpen) {
           e.preventDefault();
           e.stopPropagation();
@@ -3013,6 +3072,50 @@
         e.preventDefault();
         e.stopPropagation();
         modeBtn.click();
+      }, true);
+      document.addEventListener("keydown", (e) => {
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        const mod = e.metaKey || e.ctrlKey;
+        const isVscode = document.documentElement.classList.contains("molan-host-vscode")
+          || document.body.classList.contains("molan-host-vscode");
+        if (mod && e.shiftKey && !e.altKey && key === "o") {
+          if (isVscode) return;
+          if (e.target?.closest?.("input, textarea, select")) return;
+          const blocked = e.target?.closest?.(
+            ".molan-find-bar, .molan-image-url-mask, .molan-feedback, .molan-mermaid-editor, .lightbox",
+          );
+          if (blocked) return;
+          e.preventDefault();
+          e.stopPropagation();
+          void toggleOutlineHotkey();
+          return;
+        }
+        if (!outlineIsOpen()) return;
+        if (e.target?.closest?.("input, textarea, select")
+          && !e.target?.closest?.(".vditor-outline")) {
+          return;
+        }
+        if (key === "ArrowDown" || key === "ArrowUp") {
+          const items = outlineItemSpans();
+          if (!items.length) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (outlinePickIndex < 0) outlinePickIndex = 0;
+          else if (key === "ArrowDown") {
+            outlinePickIndex = Math.min(outlinePickIndex + 1, items.length - 1);
+          } else {
+            outlinePickIndex = Math.max(outlinePickIndex - 1, 0);
+          }
+          paintOutlinePick();
+          return;
+        }
+        if (e.key === "Enter" && !mod && !e.altKey) {
+          const items = outlineItemSpans();
+          if (!items.length || outlinePickIndex < 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          activateOutlineItem(items[outlinePickIndex]);
+        }
       }, true);
     }
   }
@@ -6287,6 +6390,29 @@
     };
   }
 
+  /** 预览里双击某一段时，记下该段位置以便切到编辑后落点与滚动一致 */
+  function captureReadingSpotFromBlock(block, clientY) {
+    const root = readingContentRoot(true);
+    const scroller = readingScroller(true);
+    if (!root || !scroller || !block || !root.contains(block)) return null;
+    const blocks = topLevelBlocks(root);
+    const index = blocks.indexOf(block);
+    const box = scroller.getBoundingClientRect();
+    const rect = block.getBoundingClientRect();
+    const probeOffset = typeof clientY === "number" ? clientY - box.top : 16;
+    const offset = Math.max(0, rect.top - box.top);
+    return {
+      text: blockText(block),
+      index: index < 0 ? undefined : index,
+      probeOffset,
+      offset,
+      scrollerHeight: box.height,
+      ratio: readingScrollRatio(scroller),
+      scrollTop: scroller.scrollTop,
+      scrollHeight: scroller.scrollHeight,
+    };
+  }
+
   function restoreReadingSpot(previewing, spot, opts = {}) {
     if (!spot) return;
     const root = readingContentRoot(previewing);
@@ -7796,6 +7922,94 @@
     };
   }
 
+  /* --- preview-dblclick: 预览里双击段落进入编辑 --- */
+  function bindPreviewDblclickEdit(root, handlers) {
+    if (!root || root.dataset.molanPreviewDblclick === "1") return;
+    root.dataset.molanPreviewDblclick = "1";
+
+    const blocked = [
+      "input, textarea, select, button",
+      ".molan-block-insert, .molan-insert-menu",
+      ".molan-diagram-toolbar",
+      ".vditor-copy",
+      ".lightbox",
+      ".molan-mermaid-editor",
+      ".molan-find-bar",
+      ".molan-image-url-mask",
+      ".molan-feedback",
+    ].join(", ");
+
+    root.addEventListener("dblclick", (e) => {
+      if (!handlers.isPreviewing?.()) return;
+      if (document.body.classList.contains("is-readonly")) return;
+      if (e.target?.closest?.(blocked)) return;
+      const modeBtn = document.getElementById("modeBtn");
+      if (modeBtn && (modeBtn.hidden || modeBtn.disabled)) return;
+      const block = closestTopBlock(e.target, root);
+      if (!block) return;
+      const spot = captureReadingSpotFromBlock(block, e.clientY);
+      if (!spot) return;
+      e.preventDefault();
+      e.stopPropagation();
+      void handlers.enterEdit?.(spot);
+    });
+  }
+
+  /* --- paste-image: 粘贴剪贴板截图，交给宿主落盘并插入相对路径 --- */
+  const PASTE_IMAGE_SKIP =
+    ".molan-find-bar input, .molan-find-bar textarea, .molan-image-url-input, .molan-source-view textarea, .molan-mermaid-editor textarea, #molanFeedback input, #molanFeedback textarea";
+
+  function imageFileFromClipboard(dataTransfer) {
+    const items = dataTransfer?.items;
+    if (!items) return null;
+    for (const item of items) {
+      if (item.kind !== "file") continue;
+      const type = String(item.type || "");
+      if (!/^image\//i.test(type)) continue;
+      const file = item.getAsFile();
+      if (file) return file;
+    }
+    return null;
+  }
+
+  function pasteTargetSkipsImageInsert(target) {
+    if (!target || typeof target.closest !== "function") return false;
+    return !!target.closest(PASTE_IMAGE_SKIP);
+  }
+
+  function bindClipboardImagePaste(root, ctx) {
+    if (!root || typeof ctx?.saveClipboardImage !== "function") return () => {};
+    const onPaste = async (e) => {
+      if (pasteTargetSkipsImageInsert(e.target)) return;
+      const file = imageFileFromClipboard(e.clipboardData);
+      if (!file) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        if (ctx.getPreviewing?.()) await ctx.enterEdit?.();
+        const md = await ctx.saveClipboardImage(file);
+        if (!md) return;
+        const vd = ctx.getVditor?.();
+        const piece = String(md).trim();
+        if (!piece) return;
+        if (vd && typeof vd.insertValue === "function") {
+          vd.insertValue(`\n${piece}\n`, true);
+        } else if (typeof ctx.insertMarkdown === "function") {
+          await ctx.insertMarkdown(piece);
+        }
+        try {
+          ctx.onInserted?.();
+        } catch (_) {
+          /* ignore */
+        }
+      } catch (_) {
+        toast(t("pasteImageFail"));
+      }
+    };
+    root.addEventListener("paste", onPaste, true);
+    return () => root.removeEventListener("paste", onPaste, true);
+  }
+
   /* --- create: MolanEditor.create --- */
   function create(options = {}) {
     const elementId = options.elementId || "vditor";
@@ -8229,6 +8443,8 @@
     });
     activeBlockInsert = blockInsert;
 
+    let unbindClipboardPaste = () => {};
+
     const api = {
       async setValue(text, clearStack = true) {
         markdown = text ?? "";
@@ -8346,7 +8562,7 @@
               settleInsertedBlock(el, pendingInsert.viewportY);
               pendingInsert = null;
             } else if (!hold) {
-              restoreReadingSpot(false, spot);
+              restoreReadingSpot(false, spot, { caret: true });
             }
           });
         }, 400);
@@ -8374,6 +8590,11 @@
         return vditor;
       },
     };
+
+    bindPreviewDblclickEdit(previewBody, {
+      isPreviewing: () => previewing,
+      enterEdit: (spot) => api.setPreview(false, { spot }),
+    });
 
     ensureEditorChrome({
       getVditor: () => vditor,
@@ -8422,6 +8643,22 @@
       },
     });
 
+    unbindClipboardPaste();
+    unbindClipboardPaste = bindClipboardImagePaste(wrap || vditorRoot, {
+      getPreviewing: () => previewing,
+      enterEdit: () => api.setPreview(false),
+      getVditor: () => vditor,
+      saveClipboardImage: options.saveClipboardImage,
+      insertMarkdown: (piece) => applySnippet(piece, null),
+      onInserted: () => {
+        try {
+          options.onInput?.();
+        } catch (_) {
+          /* ignore */
+        }
+      },
+    });
+
     syncLiteClass();
     lastEditorApi = api;
     if (options.defaultPreview === false) {
@@ -8435,6 +8672,48 @@
   }
 
   /* --- export: 导出 PDF/PNG 与 window.MolanEditor --- */
+  const PRINT_PAPER_KEY = "molan-print-paper";
+  const WHITE_PAPER_VARS = [["--paper", "#ffffff"], ["--paper-deep", "#f4f4f4"], ["--paper-lift", "#ffffff"], ["--diagram-card", "#ffffff"]];
+
+  function whitePrintPaper() {
+    try { return localStorage.getItem(PRINT_PAPER_KEY) === "white"; } catch (_) { return false; }
+  }
+
+  function printPaperColor() {
+    return whitePrintPaper() ? "#ffffff" : "#f4efe6";
+  }
+
+  function applyWhitePrintSurface() {
+    if (!whitePrintPaper()) return;
+    const root = document.documentElement;
+    root.classList.add("is-print-white");
+    WHITE_PAPER_VARS.forEach(([name, value]) => root.style.setProperty(name, value));
+  }
+
+  function clearWhitePrintSurface() {
+    const root = document.documentElement;
+    root.classList.remove("is-print-white");
+    WHITE_PAPER_VARS.forEach(([name]) => root.style.removeProperty(name));
+  }
+
+  function ensurePrintPaperOption() {
+    const menu = document.getElementById("exportMenu");
+    if (!menu || document.getElementById("printWhitePaper")) return;
+    const label = document.createElement("label");
+    label.className = "export-paper";
+    label.innerHTML = '<input type="checkbox" id="printWhitePaper"><span data-i18n="exportWhitePaper"></span>';
+    const input = label.querySelector("input");
+    input.checked = whitePrintPaper();
+    input.addEventListener("click", (e) => e.stopPropagation());
+    input.addEventListener("change", () => {
+      try {
+        if (input.checked) localStorage.setItem(PRINT_PAPER_KEY, "white");
+        else localStorage.removeItem(PRINT_PAPER_KEY);
+      } catch (_) { /* ignore */ }
+    });
+    menu.appendChild(label);
+  }
+
   function applyExportI18n() {
     const btn = document.getElementById("pdfBtn");
     const menu = document.getElementById("exportMenu");
@@ -8448,6 +8727,15 @@
       const key = el.getAttribute("data-export") === "png" ? "exportPng" : "exportPdf";
       el.textContent = t(key);
     });
+    ensurePrintPaperOption();
+    const paper = document.querySelector(".export-paper");
+    const paperTitle = t("exportWhitePaperTitle");
+    const paperInput = paper?.querySelector("input");
+    const paperText = paper?.querySelector("span");
+    if (paper) paper.title = paperTitle;
+    if (paperText) paperText.textContent = t("exportWhitePaper");
+    if (paperInput) paperInput.checked = whitePrintPaper();
+    if (paperInput) paperInput.title = paperTitle;
   }
 
   function exportMenuIsOpen() {
@@ -8604,14 +8892,14 @@
     if (!body.trim()) return false;
     const css = collectSameOriginCss();
     const html = `<!DOCTYPE html>
-<html class="molan-print-doc" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
+<html class="molan-print-doc${whitePrintPaper() ? " is-print-white" : ""}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(title)}</title>
   <style>
     html { ${readerCssVars()} }
-    html, body { background: #f4efe6; color: #1c1914; margin: 0; }
+    html, body { background: ${printPaperColor()}; color: #1c1914; margin: 0; }
     body { max-width: 42rem; margin: 24px auto; padding: 0 20px 48px; }
     .molan-diagram-toolbar, .molan-block-insert, .molan-insert-menu { display: none !important; }
     ${css}
@@ -8798,7 +9086,7 @@
 
     const root = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
     root.setAttribute("data-theme", "xuan");
-    root.setAttribute("style", `width:${width}px;background:#f4efe6;color:#1c1914;${readerCssVars()}`);
+    root.setAttribute("style", `width:${width}px;background:${printPaperColor()};color:#1c1914;${readerCssVars()}`);
     const style = document.createElementNS("http://www.w3.org/1999/xhtml", "style");
     style.textContent = `${collectSameOriginCss()}
       .molan-diagram-toolbar,.molan-block-insert,.molan-insert-menu{display:none!important}
@@ -8824,7 +9112,7 @@
       canvas.height = h;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      ctx.fillStyle = "#f4efe6";
+      ctx.fillStyle = printPaperColor();
       ctx.fillRect(0, 0, w, h);
       ctx.drawImage(image, 0, 0, w, h);
       return await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
@@ -8846,6 +9134,7 @@
     const prevTheme = document.documentElement.getAttribute("data-theme") || readStoredTheme();
     let restoreEdit = false;
     const cleanup = async () => {
+      clearWhitePrintSurface();
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
       if (restoreEdit && lastEditorApi?.setPreview) {
@@ -8861,14 +9150,13 @@
         await lastEditorApi.setPreview(true);
       }
       toast(t("exportPngPreparing"));
+      clearThemeTweakStyles();
       if (prevTheme !== "xuan") {
-        clearThemeTweakStyles();
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
-        applyMermaidTheme();
-      } else {
-        clearThemeTweakStyles();
       }
+      applyWhitePrintSurface();
+      if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();
       await waitFrame();
@@ -8915,6 +9203,7 @@
       try { restorePreview(); } catch (_) { /* ignore */ }
       document.documentElement.classList.remove("is-printing");
       document.body.classList.remove("is-printing");
+      clearWhitePrintSurface();
       document.title = prevTitle;
       applyTheme(prevTheme, false);
       try { await refreshMermaidDiagrams(mermaidRoot()); } catch (_) { /* ignore */ }
@@ -8938,8 +9227,9 @@
       if (prevTheme !== "xuan") {
         document.documentElement.setAttribute("data-theme", "xuan");
         loadThemeFonts("xuan");
-        applyMermaidTheme();
       }
+      applyWhitePrintSurface();
+      if (prevTheme !== "xuan" || whitePrintPaper()) applyMermaidTheme();
       await waitForMermaidReady();
       await waitFonts();
       await waitFrame();
@@ -9018,6 +9308,7 @@
     },
     outline: {
       close: closeOutline,
+      toggle: toggleOutlineHotkey,
     },
     source: {
       open: openSourceView,

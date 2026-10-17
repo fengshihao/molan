@@ -143,6 +143,8 @@
       exportPng: "导出图片",
       exportPngFail: "导出图片失败",
       exportPngPreparing: "正在生成图片…",
+      exportWhitePaper: "白纸底",
+      exportWhitePaperTitle: "打印和导出图片时铺白纸，流程图保留",
       tableSize: "{cols} 列 × {rows} 行",
       insertRowAbove: "上方插入行",
       insertRowBelow: "下方插入行",

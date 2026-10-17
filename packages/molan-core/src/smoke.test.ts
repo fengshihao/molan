@@ -155,6 +155,9 @@ test("molan-editor.js 导出 MolanEditor.create", () => {
   assert.match(src, /M9 7\.5 4\.5 12 9 16\.5/);
   assert.doesNotMatch(src, /rect x="5\.5" y="3\.5" width="13" height="17"/);
   assert.match(src, /exportPdfUseBrowser/);
+  assert.match(src, /molan-print-paper/);
+  assert.match(src, /is-print-white/);
+  assert.match(src, /exportWhitePaper/);
   assert.match(src, /if \(unsafePrint\) \{[\s\S]*?downloadPrintableHtml[\s\S]*?return;[\s\S]*?window\.print\(\)/);
   assert.match(src, /sourceViewBtn/);
   assert.match(src, /function openSourceView/);
@@ -179,6 +182,8 @@ test("molan.css 含七主题变量", () => {
   }
   assert.match(css, /\.theme-tweak/);
   assert.match(css, /@media print/);
+  assert.match(css, /html\.is-print-white/);
+  assert.match(css, /\.export-paper/);
   assert.match(css, /break-inside:\s*auto/);
   assert.match(css, /max-height:\s*220mm/);
   assert.match(css, /\.export-menu/);
