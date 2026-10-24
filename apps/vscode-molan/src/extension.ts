@@ -49,6 +49,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("molan.findNext", () => MolanEditorProvider.postToActive("findNext")),
     vscode.commands.registerCommand("molan.findPrev", () => MolanEditorProvider.postToActive("findPrev")),
     vscode.commands.registerCommand("molan.formatBold", () => MolanEditorProvider.postToActive("formatBold")),
+    vscode.commands.registerCommand("molan.cut", () => MolanEditorProvider.postToActive("cut")),
     vscode.commands.registerCommand("molan.formatItalic", () => MolanEditorProvider.postToActive("formatItalic")),
     vscode.commands.registerCommand("molan.formatLink", () => MolanEditorProvider.postToActive("formatLink")),
     vscode.commands.registerCommand("molan.toggleMode", () => MolanEditorProvider.postToActive("toggleMode")),

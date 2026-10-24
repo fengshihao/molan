@@ -140,6 +140,33 @@ async function main() {
     assert(previewFirst === true, "默认处于预览模式");
 
     await page.evaluate(async () => {
+      await window.__molan.setValue([
+        "[项目](https://github.com/example/pdf-to-mp3)",
+        "",
+        "[旁白](./voice.mp3)",
+        "",
+        "[短片](./clip-to-webm)",
+      ].join("\n"), true);
+    });
+    await page.waitForSelector("#molanPreviewBody a[href*='pdf-to-mp3']", { timeout: 15000 });
+    await page.waitForSelector("#molanPreviewBody audio[src='./voice.mp3']", { timeout: 15000 });
+    const media = await page.evaluate(() => {
+      const root = document.getElementById("molanPreviewBody");
+      const project = root?.querySelector("a[href*='pdf-to-mp3']");
+      const clip = root?.querySelector("a[href*='clip-to-webm']");
+      return {
+        projectText: project?.textContent || "",
+        audioFalse: !!root?.querySelector("audio[src*='pdf-to-mp3']"),
+        videoFalse: !!root?.querySelector("video[src*='clip-to-webm']"),
+        clipText: clip?.textContent || "",
+      };
+    });
+    assert(media.projectText.includes("项目"), "pdf-to-mp3 仍是链接文字");
+    assert(media.clipText.includes("短片"), "clip-to-webm 仍是链接文字");
+    assert(!media.audioFalse, "pdf-to-mp3 不会变成音频播放器");
+    assert(!media.videoFalse, "clip-to-webm 不会变成视频播放器");
+
+    await page.evaluate(async () => {
       await window.__molan.setValue(
         "# 流程图\n\n```mermaid\nflowchart TD\n  A[开始] --> B{是否继续?}\n  B -->|是| C[完成]\n  B -->|否| D[结束]\n```\n",
         true,
@@ -183,6 +210,39 @@ async function main() {
     await page.waitForFunction(() => window.__molan && !window.__molan.isPreview(), { timeout: 20000 });
     await sleep(500);
     assert(await page.evaluate(() => !window.__molan.isPreview()), "setPreview(false) 进入编辑模式");
+
+    const cut = await page.evaluate(() => {
+      window.__cutText = "";
+      window.__molanHostCopyText = async (text) => { window.__cutText = text; };
+      const root = document.querySelector(".vditor-ir");
+      if (!root) return { ok: false, reason: "no-ir" };
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const text = node.textContent || "";
+        const at = text.indexOf("beta");
+        if (at >= 0) {
+          const range = document.createRange();
+          range.setStart(node, at);
+          range.setEnd(node, at + 4);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          const did = window.MolanEditor.cut() === true;
+          return {
+            ok: did,
+            clip: window.__cutText,
+            value: window.__molan.getValue() || "",
+          };
+        }
+        node = walker.nextNode();
+      }
+      return { ok: false, reason: "no-beta" };
+    });
+    assert(cut.ok === true, "编辑模式剪切选区");
+    assert(cut.clip === "beta", `剪切应写入 beta，实际「${cut.clip}」`);
+    assert(typeof cut.value === "string" && !cut.value.includes("beta"), `剪切后正文不应再含 beta，实际「${cut.value}」`);
+    assert(cut.value.includes("alpha"), "剪切不应带走未选中的文字");
 
     await page.evaluate(() => {
       const api = window.__molan;

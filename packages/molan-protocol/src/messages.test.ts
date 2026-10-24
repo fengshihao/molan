@@ -71,6 +71,7 @@ test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
   assert.equal(parseHostToFrameMessage(null), null);
   assert.equal(parseHostToFrameMessage({ type: "find" })?.type, "find");
   assert.equal(parseHostToFrameMessage({ type: "formatBold" })?.type, "formatBold");
+  assert.equal(parseHostToFrameMessage({ type: "cut" })?.type, "cut");
   assert.equal(parseHostToFrameMessage({ type: "formatItalic" })?.type, "formatItalic");
   assert.equal(parseHostToFrameMessage({ type: "formatLink" })?.type, "formatLink");
   assert.equal(parseHostToFrameMessage({ type: "toggleMode" })?.type, "toggleMode");

@@ -71,6 +71,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
       | "findPrev"
       | "openFeedback"
       | "formatBold"
+      | "cut"
       | "formatItalic"
       | "formatLink"
       | "toggleMode"

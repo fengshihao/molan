@@ -22,6 +22,7 @@ declare global {
       copyText?(text: string): Promise<void>;
       find?: { open(): void; next(): void; prev(): void };
       format?: { bold(): boolean; italic(): boolean; link(): boolean };
+      cut?(): boolean;
       toggleMode?(): boolean;
       outline?: { toggle?(): void | Promise<void>; close?(): void };
     };
@@ -279,6 +280,10 @@ function bootVscodeBridge() {
     }
     if (msg.type === "formatBold") {
       window.MolanEditor.format?.bold();
+      return;
+    }
+    if (msg.type === "cut") {
+      window.MolanEditor.cut?.();
       return;
     }
     if (msg.type === "formatItalic") {

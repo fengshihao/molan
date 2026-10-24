@@ -11202,6 +11202,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     external_exports.object({ type: external_exports.literal("findNext") }),
     external_exports.object({ type: external_exports.literal("findPrev") }),
     external_exports.object({ type: external_exports.literal("formatBold") }),
+    external_exports.object({ type: external_exports.literal("cut") }),
     external_exports.object({ type: external_exports.literal("formatItalic") }),
     external_exports.object({ type: external_exports.literal("formatLink") }),
     external_exports.object({ type: external_exports.literal("toggleMode") }),
@@ -11907,6 +11908,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       }
       if (msg.type === "formatBold") {
         window.MolanEditor.format?.bold();
+        return;
+      }
+      if (msg.type === "cut") {
+        window.MolanEditor.cut?.();
         return;
       }
       if (msg.type === "formatItalic") {

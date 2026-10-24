@@ -575,6 +575,10 @@
       italic() { return formatHotkeys.italic(); },
       link() { return formatHotkeys.link(); },
     },
+    /** 扩展把 Cmd/Ctrl+X 送进 webview 后调用 */
+    cut() {
+      return lastEditorApi?.cutSelection?.() === true;
+    },
     /** 对应顶栏阅读/编辑按钮；扩展经 toggleMode 消息调用 */
     toggleMode() {
       const modeBtn = document.getElementById("modeBtn");

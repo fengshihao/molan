@@ -203,10 +203,13 @@
           hljs: { style: "kimbie-dark", lineNumber: false },
           math: { engine: "KaTeX", inlineDigit: true },
           markdown: markdownOpts,
+          render: { media: { enable: false } },
           after() {
             if (seq !== previewSeq) return;
             lastPreviewSource = sourceText;
             const root = previewHost || previewBody;
+            restoreFalseMedia(previewBody);
+            renderLinkMedia(previewBody);
             stampMermaidSources(root, sourceText);
             enhanceMermaidPreviews(root);
             scheduleFitTables(root);
@@ -469,6 +472,9 @@
         scheduleFitTables(vditorRoot);
         return value;
       },
+      cutSelection() {
+        return performHostCut(vditor, previewing, false) === "cut";
+      },
       focus() {
         if (previewing || !vditor) return;
         const editable = readingContentRoot(false);
@@ -647,6 +653,7 @@
       },
     });
 
+    bindVscodeCut(() => vditor, () => previewing);
     syncLiteClass();
     lastEditorApi = api;
     if (options.defaultPreview === false) {

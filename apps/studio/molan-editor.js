@@ -8320,6 +8320,172 @@
     return () => root.removeEventListener("paste", onPaste, true);
   }
 
+  /* --- media: 阅读预览里的音视频链接 --- */
+  // Vditor 3.10.9 用 /^.+.(mp3|wav|flac)$/ 判断音频，点号未转义。
+  // pdf-to-mp3、https://github.com/x/pdf-to-mp3 都会被换成 <audio>。
+  const AUDIO_LINK_RE = /\.(mp3|wav|flac)$/i;
+  const VIDEO_LINK_RE = /\.(mp4|m4v|ogg|ogv|webm)$/i;
+
+  function mediaLinkPath(url) {
+    let raw = String(url || "").trim();
+    if (!raw) return "";
+    if (/^[a-z][a-z0-9+.-]*:/i.test(raw) && !/^https?:/i.test(raw)) return "";
+    const cut = raw.search(/[?#]/);
+    if (cut >= 0) raw = raw.slice(0, cut);
+    try { raw = decodeURIComponent(raw); } catch (_) { /* 保留原样 */ }
+    return raw;
+  }
+
+  function mediaLinkKind(url) {
+    const path = mediaLinkPath(url);
+    if (!path) return "";
+    if (VIDEO_LINK_RE.test(path)) return "video";
+    if (AUDIO_LINK_RE.test(path)) return "audio";
+    return "";
+  }
+
+  function restoreFalseMedia(root) {
+    if (!root?.querySelectorAll) return;
+    for (const el of [...root.querySelectorAll("audio[src], video[src]")]) {
+      const src = el.getAttribute("src") || "";
+      const kind = el.tagName === "VIDEO" ? "video" : "audio";
+      if (mediaLinkKind(src) === kind) continue;
+      const link = document.createElement("a");
+      link.setAttribute("href", src);
+      link.textContent = src;
+      el.replaceWith(link);
+    }
+  }
+
+  function renderLinkMedia(root) {
+    if (!root?.querySelectorAll) return;
+    for (const link of [...root.querySelectorAll("a[href]")]) {
+      if (link.closest("pre, code")) continue;
+      const href = link.getAttribute("href") || "";
+      const kind = mediaLinkKind(href);
+      if (kind !== "audio" && kind !== "video") continue;
+      const el = document.createElement(kind);
+      el.setAttribute("controls", "controls");
+      el.setAttribute("src", href);
+      link.replaceWith(el);
+    }
+  }
+
+  /* --- cut: 编辑态 Cmd/Ctrl+X。VS Code 会在外层吃掉快捷键，改由扩展把剪切送进 webview --- */
+  let cutGuardAt = 0;
+
+  function writeCutClipboard(text) {
+    const value = String(text ?? "");
+    if (!value) return;
+    const hostCopy = global.__molanHostCopyText;
+    if (typeof hostCopy === "function") {
+      try {
+        void hostCopy(value);
+        return;
+      } catch (_) { /* 改走浏览器剪贴板 */ }
+    }
+    const clipboard = global.navigator?.clipboard;
+    if (typeof clipboard?.writeText === "function") {
+      clipboard.writeText(value).catch(() => {});
+    }
+  }
+
+  function cutPlainField(el) {
+    if (!el || el.disabled || el.readOnly) return false;
+    const tag = el.tagName;
+    if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    if (typeof start !== "number" || typeof end !== "number" || start === end) return false;
+    writeCutClipboard(String(el.value).slice(start, end));
+    el.setRangeText("", start, end, "end");
+    el.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteByCut" }));
+    return true;
+  }
+
+  function irCutRoot(vditor) {
+    return vditor?.vditor?.ir?.element
+      || vditor?.ir?.element
+      || document.querySelector("#vditor .vditor-ir");
+  }
+
+  function rangeInRoot(root, range) {
+    if (!root || !range) return false;
+    const node = range.commonAncestorContainer;
+    return node === root || root.contains(node);
+  }
+
+  function markdownFromCutRange(vditor, range) {
+    const temp = document.createElement("div");
+    temp.appendChild(range.cloneContents());
+    const lute = vditor?.vditor?.lute || vditor?.lute;
+    if (lute && typeof lute.VditorIRDOM2Md === "function") {
+      try {
+        const md = String(lute.VditorIRDOM2Md(temp.innerHTML) || "").trim();
+        if (md) return md;
+      } catch (_) { /* 退回纯文本 */ }
+    }
+    return range.toString();
+  }
+
+  function deleteCutRange(root, range) {
+    const sel = window.getSelection();
+    try { root.focus({ preventScroll: true }); } catch (_) {
+      try { root.focus(); } catch (__) { /* ignore */ }
+    }
+    if (sel && range) {
+      try {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (_) { /* 选区可能已经失效 */ }
+    }
+    let deleted = false;
+    try { deleted = document.execCommand("delete"); } catch (_) { deleted = false; }
+    if (deleted) return;
+    try { range.deleteContents(); } catch (_) { return; }
+    if (sel && range) {
+      try {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (_) { /* ignore */ }
+    }
+    root.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "deleteByCut" }));
+  }
+
+  function performHostCut(vditor, isPreviewing, deferDelete) {
+    const now = Date.now();
+    if (now - cutGuardAt < 80) return "repeat";
+    const field = document.activeElement;
+    if (cutPlainField(field)) {
+      cutGuardAt = now;
+      return "cut";
+    }
+    if (isPreviewing) return "skip";
+    const root = irCutRoot(vditor);
+    const sel = window.getSelection();
+    if (!root || !sel || sel.rangeCount === 0 || sel.isCollapsed) return "skip";
+    const range = sel.getRangeAt(0);
+    if (!rangeInRoot(root, range)) return "skip";
+    const text = markdownFromCutRange(vditor, range);
+    if (!text) return "skip";
+    writeCutClipboard(text);
+    cutGuardAt = now;
+    if (deferDelete) window.setTimeout(() => deleteCutRange(root, range), 0);
+    else deleteCutRange(root, range);
+    return "cut";
+  }
+
+  function bindVscodeCut(getVditor, isPreviewing) {
+    if (!isVscodeHost() || bindVscodeCut.bound) return;
+    bindVscodeCut.bound = true;
+    document.addEventListener("cut", (event) => {
+      const result = performHostCut(getVditor(), isPreviewing(), true);
+      if (result === "skip") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+
   /* --- create: MolanEditor.create --- */
   function create(options = {}) {
     const elementId = options.elementId || "vditor";
@@ -8525,10 +8691,13 @@
           hljs: { style: "kimbie-dark", lineNumber: false },
           math: { engine: "KaTeX", inlineDigit: true },
           markdown: markdownOpts,
+          render: { media: { enable: false } },
           after() {
             if (seq !== previewSeq) return;
             lastPreviewSource = sourceText;
             const root = previewHost || previewBody;
+            restoreFalseMedia(previewBody);
+            renderLinkMedia(previewBody);
             stampMermaidSources(root, sourceText);
             enhanceMermaidPreviews(root);
             scheduleFitTables(root);
@@ -8791,6 +8960,9 @@
         scheduleFitTables(vditorRoot);
         return value;
       },
+      cutSelection() {
+        return performHostCut(vditor, previewing, false) === "cut";
+      },
       focus() {
         if (previewing || !vditor) return;
         const editable = readingContentRoot(false);
@@ -8969,6 +9141,7 @@
       },
     });
 
+    bindVscodeCut(() => vditor, () => previewing);
     syncLiteClass();
     lastEditorApi = api;
     if (options.defaultPreview === false) {
@@ -9653,6 +9826,10 @@
       bold() { return formatHotkeys.bold(); },
       italic() { return formatHotkeys.italic(); },
       link() { return formatHotkeys.link(); },
+    },
+    /** 扩展把 Cmd/Ctrl+X 送进 webview 后调用 */
+    cut() {
+      return lastEditorApi?.cutSelection?.() === true;
     },
     /** 对应顶栏阅读/编辑按钮；扩展经 toggleMode 消息调用 */
     toggleMode() {

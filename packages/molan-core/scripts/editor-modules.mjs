@@ -29,6 +29,8 @@ export const EDITOR_MODULES = [
   "selection.js",
   "preview-dblclick.js",
   "paste-image.js",
+  "media.js",
+  "cut.js",
   "create.js",
   "export-paper.js",
   "export.js",

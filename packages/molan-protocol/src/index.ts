@@ -69,6 +69,7 @@ export const HostToFrameMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("findNext") }),
   z.object({ type: z.literal("findPrev") }),
   z.object({ type: z.literal("formatBold") }),
+  z.object({ type: z.literal("cut") }),
   z.object({ type: z.literal("formatItalic") }),
   z.object({ type: z.literal("formatLink") }),
   z.object({ type: z.literal("toggleMode") }),
