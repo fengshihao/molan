@@ -45,7 +45,11 @@ mustContain("css/site.css", ["--ink", "Instrument Serif", ".hero", ".lang-switch
 if (!fs.existsSync(path.join(site, "try/index.html"))) {
   errors.push("try/index.html missing");
 } else {
-  mustContain("try/index.html", ["molan"]);
+  mustContain("try/index.html", ["molan", "manifest.webmanifest", "installPwaBtn", "molan-pwa.js", "molan-pwa.css"]);
+  mustContain("try/manifest.webmanifest", ["\"short_name\"", "icon-192.png", "standalone"]);
+  mustContain("try/sw.js", ["molan-shell", "fetch"]);
+  mustContain("try/molan-pwa.js", ["beforeinstallprompt", "serviceWorker"]);
+  mustContain("try/molan-pwa.css", ["button.prefs-link"]);
 }
 
 if (!fs.existsSync(path.join(site, "assets/intro.gif"))) {

@@ -51,11 +51,34 @@ for (const [fromName, toName] of [
   if (fs.existsSync(from)) copyFile(from, to);
 }
 
+// 门户 try/ 另存 vendor 与演示动图；studio 本地常无 vendor/，整目录删掉会弄丢 Pages 产物。
+const stashDir = fs.mkdtempSync(path.join(root, ".sync-stash-"));
+const preserve = ["vendor"];
+for (const name of fs.existsSync(tryDir) ? fs.readdirSync(tryDir) : []) {
+  if (name.startsWith("demo-") && name.endsWith(".gif")) preserve.push(name);
+}
+for (const name of preserve) {
+  const from = path.join(tryDir, name);
+  if (fs.existsSync(from)) {
+    const to = path.join(stashDir, name);
+    fs.renameSync(from, to);
+  }
+}
+
 fs.rmSync(tryDir, { recursive: true, force: true });
 ensureDir(tryDir);
 copyDir(studio, tryDir, {
   skip: ["node_modules", "deploy", "deploy.example", "scripts", ".DS_Store", "package.json"],
 });
+
+for (const name of preserve) {
+  const from = path.join(stashDir, name);
+  const to = path.join(tryDir, name);
+  if (!fs.existsSync(from)) continue;
+  if (fs.existsSync(to)) fs.rmSync(to, { recursive: true, force: true });
+  fs.renameSync(from, to);
+}
+fs.rmSync(stashDir, { recursive: true, force: true });
 
 ensureDir(assetsDir);
 for (const name of [

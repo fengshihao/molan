@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>墨览 · Markdown Studio</title>
+  <meta name="theme-color" content="#1E2A24" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="墨览" />
+  <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" href="./favicon.png" />
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
   <script>
@@ -53,6 +58,7 @@
   <link rel="preload" href="./vendor/vditor/dist/method.min.js" as="script" />
   <link rel="stylesheet" href="./vendor/vditor/dist/index.css" />
   <link rel="stylesheet" href="./molan.css?v=20261017d" />
+  <link rel="stylesheet" href="./molan-pwa.css?v=20261025a" />
 </head>
 <body>
   <div class="app">
@@ -105,6 +111,7 @@
             <div class="prefs-section">
               <div class="prefs-label" data-i18n="prefsEditors">编辑器</div>
               <div class="prefs-links">
+                <button type="button" class="prefs-link prefs-install-pwa" id="installPwaBtn" hidden data-i18n="installPwa">安装到桌面</button>
                 <a class="prefs-link" href="vscode:extension/fengshihao.molan-markdown" data-i18n="installVscode">安装 VS Code 插件</a>
                 <a class="prefs-link" href="cursor:extension/fengshihao.molan-markdown" data-i18n="installCursor">安装 Cursor 插件</a>
                 <a class="prefs-link" href="./guide.html" data-i18n="guideLink">使用教程</a>
@@ -243,9 +250,10 @@
   </div>
 
   <script src="./vendor/vditor/dist/method.min.js"></script>
-  <script src="./molan-i18n.js?v=20261017d"></script>
+  <script src="./molan-i18n.js?v=20261025a"></script>
   <script src="./molan-aphorisms.js?v=20260815n"></script>
   <script src="./molan-editor.js?v=20261017d"></script>
   <script src="./molan-app.js?v=20260905c"></script>
+  <script src="./molan-pwa.js?v=20261025a"></script>
 </body>
 </html>
