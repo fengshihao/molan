@@ -97,7 +97,7 @@ assert(html.includes("./vendor/vditor/dist/method.min.js"), "html loads local me
 assert(html.includes("./vendor/vditor/dist/js/lute/lute.min.js"), "html preloads local lute");
 assert(html.includes("molan-editor.js?v=20261017d"), "studio html cache-busts table editor");
 assert(html.includes("molan.css?v=20261017d"), "studio html cache-busts table css");
-assert(html.includes("molan-i18n.js?v=20261017d"), "studio html cache-busts table i18n");
+assert(html.includes("molan-i18n.js?v=20261025a"), "studio html cache-busts table i18n");
 assert(html.includes("molan-app.js?v=20260905c"), "studio html cache-busts studio app");
 assert(html.includes('id="exportMenu"'), "studio has export menu");
 assert(html.includes('data-export="png"'), "studio can export a png");
