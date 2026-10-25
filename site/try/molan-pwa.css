@@ -1,0 +1,17 @@
+/* PWA 安装按钮：与侧栏 prefs-link 同形，独立文件以免被 sync-media 覆盖 molan.css */
+button.prefs-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--accent-soft);
+  cursor: pointer;
+  text-align: inherit;
+}
+
+button.prefs-link:hover {
+  border-bottom-color: currentColor;
+}

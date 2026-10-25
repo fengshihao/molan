@@ -30,6 +30,7 @@ const MIME = {
   ".js": "text/javascript; charset=utf-8",
   ".md": "text/markdown; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
@@ -40,7 +41,7 @@ const MIME = {
   ".ico": "image/x-icon",
 };
 
-const COMPRESS = new Set([".html", ".js", ".css", ".svg", ".json", ".md", ".txt", ".map"]);
+const COMPRESS = new Set([".html", ".js", ".css", ".svg", ".json", ".webmanifest", ".md", ".txt", ".map"]);
 
 function cacheControl(rel) {
   // 只有裁剪后的 Vditor 适合长缓存。本仓库的 css/js 即使带 ?v=，
