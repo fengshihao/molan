@@ -803,6 +803,39 @@
     return false;
   }
 
+  function fileParam() {
+    try {
+      const q = new URLSearchParams(location.search);
+      const f = (q.get("file") || "").trim();
+      return f || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function loadFileParamLibrary() {
+    const target = fileParam();
+    if (!target || files.length) return;
+    try {
+      const res = await fetch(target);
+      if (!res.ok) throw new Error(String(res.status));
+      const text = await res.text();
+      const name = decodeURIComponent(target.split("/").pop() || "") || "document.md";
+      const folder = t("previewFolder");
+      const path = `${folder}/${name}`;
+      setFiles([{
+        path,
+        name,
+        dir: folder,
+        size: new Blob([text]).size,
+        text,
+      }], path);
+    } catch (err) {
+      console.warn(err);
+      toast(t("previewFetchFailed"));
+    }
+  }
+
   const SAMPLE_DOC = "实例演示.md";
 
   async function fetchSampleFiles() {
@@ -1743,6 +1776,7 @@
     .then(() => {
       renderSidebarList();
       if (wantsDemo()) return loadDemoLibrary();
+      return loadFileParamLibrary();
     })
     .catch((err) => console.warn(err));
 })();
