@@ -877,6 +877,56 @@
     if (path) openFile(path);
   }
 
+  /* --- 宿主注入：WebView / 自动化工具直接把 Markdown 文本送进 studio --- */
+  let hostReady = false;
+  let pendingHostText = null;
+
+  function openHostText(name, text) {
+    if (!confirmDiscardIfDirty()) return false;
+    const safeName = String(name || "document.md").replace(/[\\/:*?"<>|]/g, "-") || "document.md";
+    const folder = t("previewFolder");
+    const path = `${folder}/${safeName}`;
+    setFiles([{
+      path,
+      name: safeName,
+      dir: folder,
+      size: new Blob([text]).size,
+      text,
+    }], path);
+    return true;
+  }
+
+  window.MolanHost = {
+    /** 宿主（Android WebView evaluateJavascript、自动化等）注入单文档。 */
+    openText(name, text) {
+      if (typeof text !== "string" || !text) return false;
+      if (hostReady) return openHostText(name, text);
+      pendingHostText = [name, text];
+      return true;
+    },
+    isReady() {
+      return hostReady;
+    },
+  };
+
+  window.addEventListener("message", (event) => {
+    // 仅接受同窗口注入（WebView 注入脚本 / 同页 postMessage），避免被第三方页面投喂
+    if (event.source !== window) return;
+    const data = event.data;
+    if (data && data.type === "molan:openText" && typeof data.text === "string") {
+      window.MolanHost.openText(data.name, data.text);
+    }
+  });
+
+  function flushPendingHostText() {
+    hostReady = true;
+    if (pendingHostText) {
+      const [name, text] = pendingHostText;
+      pendingHostText = null;
+      openHostText(name, text);
+    }
+  }
+
   function setFiles(list, openPath) {
     files = list.sort((a, b) => a.path.localeCompare(b.path, locale()));
     searchInput.value = "";
@@ -1778,5 +1828,6 @@
       if (wantsDemo()) return loadDemoLibrary();
       return loadFileParamLibrary();
     })
-    .catch((err) => console.warn(err));
+    .catch((err) => console.warn(err))
+    .finally(() => flushPendingHostText());
 })();
