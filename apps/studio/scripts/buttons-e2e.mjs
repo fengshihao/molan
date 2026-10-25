@@ -210,9 +210,12 @@ async function main() {
       el.scrollIntoView({ block: "center" });
     });
     await page.hover(".molan-mermaid-shell, .language-mermaid");
+    // 工具条容器常驻 pointer-events:none；可点的是悬停后出现的 __icons
     await page.waitForFunction(() => {
-      const bar = document.querySelector(".molan-diagram-toolbar");
-      return !!(bar && getComputedStyle(bar).pointerEvents !== "none");
+      const icons = document.querySelector(".molan-diagram-toolbar__icons");
+      if (!icons) return false;
+      const style = getComputedStyle(icons);
+      return style.pointerEvents !== "none" && Number(style.opacity) > 0;
     }, { timeout: 8000 });
   }
 
