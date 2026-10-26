@@ -881,8 +881,18 @@
   let hostReady = false;
   let pendingHostText = null;
 
-  function openHostText(name, text) {
-    if (!confirmDiscardIfDirty()) return false;
+  function notifyAgent1Ready() {
+    if (!isAgent1Embed()) return;
+    document.documentElement.classList.remove("agent1-boot");
+    document.documentElement.classList.add("agent1-ready");
+    try {
+      var b = window.Agent1Molan || (typeof Agent1Molan !== "undefined" ? Agent1Molan : null);
+      if (b && b.onContentReady) b.onContentReady();
+    } catch (_) { /* ignore */ }
+  }
+
+  function openHostText(name, text, opts = {}) {
+    if (!opts.force && !confirmDiscardIfDirty()) return false;
     const safeName = String(name || "document.md").replace(/[\\/:*?"<>|]/g, "-") || "document.md";
     const folder = t("previewFolder");
     const path = `${folder}/${safeName}`;
@@ -898,10 +908,11 @@
 
   window.MolanHost = {
     /** 宿主（Android WebView evaluateJavascript、自动化等）注入单文档。 */
-    openText(name, text) {
+    openText(name, text, opts = {}) {
       if (typeof text !== "string" || !text) return false;
-      if (hostReady) return openHostText(name, text);
-      pendingHostText = [name, text];
+      const options = opts && typeof opts === "object" ? opts : {};
+      if (hostReady) return openHostText(name, text, options);
+      pendingHostText = { name, text, force: !!options.force };
       return true;
     },
     isReady() {
@@ -921,9 +932,9 @@
   function flushPendingHostText() {
     hostReady = true;
     if (pendingHostText) {
-      const [name, text] = pendingHostText;
+      const { name, text, force } = pendingHostText;
       pendingHostText = null;
-      openHostText(name, text);
+      openHostText(name, text, { force: !!force });
     }
   }
 
@@ -1533,6 +1544,7 @@
       applyingRemote = false;
       setDirty(false);
       updateStatusRight();
+      notifyAgent1Ready();
     } catch (err) {
       console.warn(err);
       if (seq !== openSeq) return;
@@ -1627,7 +1639,7 @@
     }
   }
 
-  pickBtn.addEventListener("click", () => {
+  pickBtn?.addEventListener("click", () => {
     markPickHintSeen();
     pickFolder();
   });
@@ -1649,7 +1661,7 @@
     else scheduleAphorismCycle();
   });
 
-  dirInput.addEventListener("change", () => {
+  dirInput?.addEventListener("change", () => {
     if (!confirmDiscardIfDirty()) {
       dirInput.value = "";
       return;
@@ -1658,12 +1670,12 @@
   });
 
   let searchTimer = 0;
-  searchInput.addEventListener("input", () => {
+  searchInput?.addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => renderSidebarList(), 80);
   });
 
-  fileList.addEventListener("click", (e) => {
+  fileList?.addEventListener("click", (e) => {
     const removeBtn = e.target.closest("[data-remove-recent]");
     if (removeBtn) {
       removeRecentFolder(removeBtn.getAttribute("data-remove-recent"), e);
@@ -1681,7 +1693,7 @@
     openFile(path);
   });
 
-  saveBtn.addEventListener("click", () => saveActiveFile());
+  saveBtn?.addEventListener("click", () => saveActiveFile());
 
   if (findBtn && !findBtn.dataset.bound) {
     findBtn.dataset.bound = "1";
@@ -1739,7 +1751,7 @@
     }
   }, true);
 
-  copyBtn.addEventListener("click", async () => {
+  copyBtn?.addEventListener("click", async () => {
     if (!editorApi) return;
     try {
       const copy = window.MolanEditor?.copyText;
@@ -1810,8 +1822,10 @@
 
   fillLangSelect();
   window.MolanI18n?.applyDom();
-  showWelcome();
-  initAphorism();
+  if (!isAgent1Embed()) {
+    showWelcome();
+    initAphorism();
+  }
   const langSelect = document.getElementById("langSelect");
   if (langSelect) {
     langSelect.addEventListener("change", () => {
@@ -1821,11 +1835,22 @@
     });
   }
 
+  function isAgent1Embed() {
+    if (document.documentElement.dataset.agent1Embed === "1") return true;
+    try {
+      return typeof window.Agent1Molan !== "undefined"
+        && typeof window.Agent1Molan.readMdJson === "function";
+    } catch (_) {
+      return false;
+    }
+  }
+
   refreshRecentFolders()
-    .then(() => seedSampleLibrary())
+    .then(() => (isAgent1Embed() || files.length ? undefined : seedSampleLibrary()))
     .then(() => {
       renderSidebarList();
       if (wantsDemo()) return loadDemoLibrary();
+      if (isAgent1Embed()) return;
       return loadFileParamLibrary();
     })
     .catch((err) => console.warn(err))
