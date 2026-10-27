@@ -2,7 +2,7 @@
   "name": "molan-markdown",
   "displayName": "墨览 Markdown",
   "description": "打开即阅读，要点再编辑。所见即所得：主题、表格、Mermaid、公式。Open to read, click to edit. WYSIWYG with themes, tables, Mermaid, math.",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "publisher": "fengshihao",
   "license": "MIT",
   "icon": "icon.png",
@@ -22,8 +22,17 @@
   "engines": {
     "vscode": "^1.74.0"
   },
-  "categories": ["Other"],
-  "keywords": ["markdown", "vditor", "wysiwyg", "墨览", "mermaid", "typora"],
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "vditor",
+    "wysiwyg",
+    "墨览",
+    "mermaid",
+    "typora"
+  ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -32,10 +41,18 @@
         "viewType": "molan.markdownEditor",
         "displayName": "墨览",
         "selector": [
-          { "filenamePattern": "*.md" },
-          { "filenamePattern": "*.markdown" },
-          { "filenamePattern": "*.mdown" },
-          { "filenamePattern": "*.mdx" }
+          {
+            "filenamePattern": "*.md"
+          },
+          {
+            "filenamePattern": "*.markdown"
+          },
+          {
+            "filenamePattern": "*.mdown"
+          },
+          {
+            "filenamePattern": "*.mdx"
+          }
         ],
         "priority": "default"
       }
