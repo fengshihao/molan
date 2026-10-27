@@ -31,6 +31,7 @@ export const EDITOR_MODULES = [
   "paste-image.js",
   "media.js",
   "cut.js",
+  "copy.js",
   "create.js",
   "export-paper.js",
   "export.js",

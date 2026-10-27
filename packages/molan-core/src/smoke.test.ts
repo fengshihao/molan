@@ -138,6 +138,44 @@ test("预览双击段落进入编辑", () => {
   assert.match(src, /dblclick/);
 });
 
+test("预览复制保留 Markdown 标记", () => {
+  const src = editorSrc();
+  assert.match(src, /function bindPreviewCopy/);
+  assert.match(src, /function markdownFromPreviewSelection/);
+  assert.match(src, /function expandMarkdownSpan/);
+  assert.match(src, /function markdownFromPreviewHtml/);
+  assert.match(src, /lute\.HTML2Md/);
+  assert.match(src, /copySelection\(\)/);
+  assert.match(src, /copy\(\) \{\s*return lastEditorApi\?\.copySelection/);
+
+  const take = (name: string) => {
+    const start = src.indexOf(`function ${name}`);
+    assert.ok(start >= 0, name);
+    let depth = 0;
+    let i = src.indexOf("{", start);
+    for (; i < src.length; i += 1) {
+      if (src[i] === "{") depth += 1;
+      else if (src[i] === "}") {
+        depth -= 1;
+        if (depth === 0) return src.slice(start, i + 1);
+      }
+    }
+    throw new Error(name);
+  };
+  const api = new Function(
+    `${take("expandMarkdownSpan")}\nreturn { expandMarkdownSpan };`,
+  )() as { expandMarkdownSpan: (s: string, a: number, b: number) => { start: number; end: number } | null };
+  const bold = "say **hello** now";
+  const boldHit = api.expandMarkdownSpan(bold, bold.indexOf("hello"), bold.indexOf("hello") + 5);
+  assert.equal(bold.slice(boldHit!.start, boldHit!.end), "**hello**");
+  const link = "see [docs](https://a.test) please";
+  const linkHit = api.expandMarkdownSpan(link, link.indexOf("docs"), link.indexOf("docs") + 4);
+  assert.equal(link.slice(linkHit!.start, linkHit!.end), "[docs](https://a.test)");
+  const list = "- item one\n- item two";
+  const listHit = api.expandMarkdownSpan(list, list.indexOf("item one"), list.indexOf("item one") + 8);
+  assert.equal(list.slice(listHit!.start, listHit!.end), "- item one");
+});
+
 test("molan-editor.js 导出 MolanEditor.create", () => {
   const src = editorSrc();
   assert.match(src, /MolanEditor\.create|global\.MolanEditor\s*=/);

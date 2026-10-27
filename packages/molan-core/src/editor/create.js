@@ -475,6 +475,14 @@
       cutSelection() {
         return performHostCut(vditor, previewing, false) === "cut";
       },
+      copySelection() {
+        return performPreviewCopy(
+          () => previewBody,
+          () => previewing,
+          () => api.getValue(),
+          null,
+        ) === "copy";
+      },
       focus() {
         if (previewing || !vditor) return;
         const editable = readingContentRoot(false);
@@ -654,6 +662,11 @@
     });
 
     bindVscodeCut(() => vditor, () => previewing);
+    bindPreviewCopy(
+      () => previewBody,
+      () => previewing,
+      () => api.getValue(),
+    );
     syncLiteClass();
     lastEditorApi = api;
     if (options.defaultPreview === false) {

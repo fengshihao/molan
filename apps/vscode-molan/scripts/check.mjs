@@ -229,6 +229,8 @@ assert(editorSource.includes("preloadLute"), "preloads lute before preview");
 assert(editorSource.includes("function copyTextToClipboard"), "text copy falls back when clipboard API is blocked");
 assert(editorSource.includes("function mermaidCopySource"), "mermaid copy-code can recover source in preview");
 assert(editorSource.includes("function bindPreviewCodeCopy"), "code fence copy uses the same clipboard fallback");
+assert(editorSource.includes("function bindPreviewCopy"), "preview selection copy keeps Markdown");
+assert(editorSource.includes("markdownFromPreviewSelection"), "preview copy maps selection to Markdown");
 assert(editorSource.includes("mermaidCopySource(shell, getVditor)"), "mermaid edit recovers source the same way as copy-code");
 
 const bridge = readFileSync(join(root, "media/vscode-bridge.js"), "utf8");

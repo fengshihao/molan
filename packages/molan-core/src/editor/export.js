@@ -579,6 +579,10 @@
     cut() {
       return lastEditorApi?.cutSelection?.() === true;
     },
+    /** 预览态复制：把选区写成 Markdown */
+    copy() {
+      return lastEditorApi?.copySelection?.() === true;
+    },
     /** 对应顶栏阅读/编辑按钮；扩展经 toggleMode 消息调用 */
     toggleMode() {
       const modeBtn = document.getElementById("modeBtn");
