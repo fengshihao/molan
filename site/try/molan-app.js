@@ -527,10 +527,28 @@
     el.classList.add(className);
   }
 
-  function labelAction(el, label) {
+  function labelToolbarButton(el, label) {
     if (!el || label == null) return;
     el.title = label;
     el.setAttribute("aria-label", label);
+  }
+
+  function labelAction(el, label) {
+    labelToolbarButton(el, label);
+  }
+
+  function isApplePlatform() {
+    const platform = navigator.platform || "";
+    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
+    try {
+      if (navigator.userAgentData?.platform === "macOS") return true;
+    } catch (_) { /* ignore */ }
+    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
+  }
+
+  function toolbarShortcut(label, combo) {
+    const mod = isApplePlatform() ? "⌘" : "Ctrl";
+    return `${label} (${mod}+${combo})`;
   }
 
   function isCompatSaveMode() {
@@ -575,7 +593,7 @@
     if (!modeBtn) return;
     const preview = !!(editorApi?.isPreview?.());
     modeBtn.classList.toggle("is-preview", preview);
-    labelAction(modeBtn, preview ? t("modeEdit") : t("modePreview"));
+    labelAction(modeBtn, toolbarShortcut(preview ? t("modeEdit") : t("modePreview"), "E"));
     modeBtn.hidden = !activePath;
     if (!activePath) {
       syncSaveButton();

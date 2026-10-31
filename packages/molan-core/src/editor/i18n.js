@@ -165,3 +165,28 @@
     if (vars) s = s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] == null ? "" : String(vars[k])));
     return s;
   }
+
+  /** Mac/iOS 用 ⌘，Windows/Linux 用 Ctrl（与 VS Code / 系统快捷键一致） */
+  function isApplePlatform() {
+    const platform = navigator.platform || "";
+    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
+    try {
+      if (navigator.userAgentData?.platform === "macOS") return true;
+    } catch (_) { /* ignore */ }
+    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
+  }
+
+  function primaryModPrefix() {
+    return isApplePlatform() ? "⌘" : "Ctrl";
+  }
+
+  /** 顶栏按钮 tooltip：当前平台的主修饰键 + 组合键 */
+  function toolbarShortcut(label, combo) {
+    return `${label} (${primaryModPrefix()}+${combo})`;
+  }
+
+  function labelToolbarButton(el, label) {
+    if (!el || label == null) return;
+    el.title = label;
+    el.setAttribute("aria-label", label);
+  }

@@ -243,6 +243,31 @@
     return s;
   }
 
+  /** Mac/iOS 用 ⌘，Windows/Linux 用 Ctrl（与 VS Code / 系统快捷键一致） */
+  function isApplePlatform() {
+    const platform = navigator.platform || "";
+    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
+    try {
+      if (navigator.userAgentData?.platform === "macOS") return true;
+    } catch (_) { /* ignore */ }
+    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
+  }
+
+  function primaryModPrefix() {
+    return isApplePlatform() ? "⌘" : "Ctrl";
+  }
+
+  /** 顶栏按钮 tooltip：当前平台的主修饰键 + 组合键 */
+  function toolbarShortcut(label, combo) {
+    return `${label} (${primaryModPrefix()}+${combo})`;
+  }
+
+  function labelToolbarButton(el, label) {
+    if (!el || label == null) return;
+    el.title = label;
+    el.setAttribute("aria-label", label);
+  }
+
   /* --- mermaid-theme: 纸面色、toast、Mermaid 主题与预加载 --- */
   function cssVar(name, fallback) {
     try {
@@ -2915,9 +2940,8 @@
     applySourceViewI18n();
     const outlineBtn = document.getElementById("outlineBtn");
     if (outlineBtn) {
-      const label = t(outlineBtn.classList.contains("is-on") ? "outlineCloseAria" : "outlineAria");
-      outlineBtn.title = label;
-      outlineBtn.setAttribute("aria-label", label);
+      const base = t(outlineBtn.classList.contains("is-on") ? "outlineCloseAria" : "outlineAria");
+      labelToolbarButton(outlineBtn, toolbarShortcut(base, "Shift+O"));
     }
     const undoBtn = document.getElementById("undoBtn");
     if (undoBtn) {
@@ -4530,8 +4554,7 @@
       replaceAll.setAttribute("aria-label", t("findReplaceAllAria"));
     }
     if (btn) {
-      btn.title = t("findAria");
-      btn.setAttribute("aria-label", t("findAria"));
+      labelToolbarButton(btn, toolbarShortcut(t("findAria"), "F"));
     }
     updateFindCount();
   }
@@ -9482,11 +9505,9 @@
   function applyExportI18n() {
     const btn = document.getElementById("pdfBtn");
     const menu = document.getElementById("exportMenu");
-    const label = t("exportAria");
-    if (btn) {
-      btn.title = label;
-      btn.setAttribute("aria-label", label);
-    }
+    let label = t("exportAria");
+    if (!isUnsafePrintHost()) label = toolbarShortcut(label, "P");
+    if (btn) labelToolbarButton(btn, label);
     if (menu) menu.setAttribute("aria-label", label);
     menu?.querySelectorAll("[data-export]").forEach((el) => {
       const key = el.getAttribute("data-export") === "png" ? "exportPng" : "exportPdf";
@@ -9564,16 +9585,6 @@
       }
     } catch (_) { /* ignore */ }
     return false;
-  }
-
-  /** Mac/iOS 用 ⌘，Windows/Linux 用 Ctrl（与 VS Code / 系统快捷键一致） */
-  function isApplePlatform() {
-    const platform = navigator.platform || "";
-    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
-    try {
-      if (navigator.userAgentData?.platform === "macOS") return true;
-    } catch (_) { /* ignore */ }
-    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
   }
 
   function isPrimaryModKey(e, key) {

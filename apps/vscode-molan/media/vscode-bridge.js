@@ -11302,6 +11302,23 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     return fileName.replace(/\.(md|markdown|mdx|mdown)$/i, "");
   }
 
+  // src/toolbar-shortcut.ts
+  function isApplePlatform() {
+    if (typeof navigator === "undefined") return false;
+    const platform = navigator.platform || "";
+    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
+    try {
+      const nav = navigator;
+      if (nav.userAgentData?.platform === "macOS") return true;
+    } catch {
+    }
+    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
+  }
+  function toolbarShortcut(label, combo) {
+    const mod = isApplePlatform() ? "\u2318" : "Ctrl";
+    return `${label} (${mod}+${combo})`;
+  }
+
   // src/core.ts
   function createBridgeCore(options) {
     const {
@@ -11334,7 +11351,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       if (!modeBtn) return;
       const preview = editorApi?.isPreview?.() ?? (readOnlyFeatures ? true : false);
       modeBtn.classList.toggle("is-preview", preview);
-      const label = preview ? "\u7F16\u8F91" : "\u9884\u89C8";
+      const base = preview ? "\u7F16\u8F91" : "\u9884\u89C8";
+      const label = toolbarShortcut(base, "E");
       modeBtn.title = label;
       modeBtn.setAttribute("aria-label", label);
       if (readOnlyFeatures) {
@@ -11967,7 +11985,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
       }
     });
-    function isApplePlatform() {
+    function isApplePlatform2() {
       const platform = navigator.platform || "";
       if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
       try {
@@ -11979,7 +11997,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }
     function isPrimaryModKey(e, key) {
       if (e.key.toLowerCase() !== key || e.shiftKey || e.altKey) return false;
-      if (isApplePlatform()) return e.metaKey && !e.ctrlKey;
+      if (isApplePlatform2()) return e.metaKey && !e.ctrlKey;
       return e.ctrlKey && !e.metaKey;
     }
     document.addEventListener("keydown", (e) => {

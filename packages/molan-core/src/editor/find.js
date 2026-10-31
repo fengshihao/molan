@@ -364,8 +364,7 @@
       replaceAll.setAttribute("aria-label", t("findReplaceAllAria"));
     }
     if (btn) {
-      btn.title = t("findAria");
-      btn.setAttribute("aria-label", t("findAria"));
+      labelToolbarButton(btn, toolbarShortcut(t("findAria"), "F"));
     }
     updateFindCount();
   }

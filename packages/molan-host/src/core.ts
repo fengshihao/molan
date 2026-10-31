@@ -1,6 +1,7 @@
 import type { EditorApi, FrameToHostMessage, HostToFrameMessage } from "@molan/protocol";
 import { parseHostToFrameMessage } from "@molan/protocol";
 import { stripMarkdownExtension } from "./link-utils.js";
+import { toolbarShortcut } from "./toolbar-shortcut.js";
 
 export type BridgeChrome = {
   readerTitle?: HTMLElement | null;
@@ -63,7 +64,8 @@ export function createBridgeCore(options: BridgeCoreOptions) {
     if (!modeBtn) return;
     const preview = editorApi?.isPreview?.() ?? (readOnlyFeatures ? true : false);
     modeBtn.classList.toggle("is-preview", preview);
-    const label = preview ? "编辑" : "预览";
+    const base = preview ? "编辑" : "预览";
+    const label = toolbarShortcut(base, "E");
     modeBtn.title = label;
     modeBtn.setAttribute("aria-label", label);
     if (readOnlyFeatures) {

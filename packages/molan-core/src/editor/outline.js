@@ -25,9 +25,8 @@
     applySourceViewI18n();
     const outlineBtn = document.getElementById("outlineBtn");
     if (outlineBtn) {
-      const label = t(outlineBtn.classList.contains("is-on") ? "outlineCloseAria" : "outlineAria");
-      outlineBtn.title = label;
-      outlineBtn.setAttribute("aria-label", label);
+      const base = t(outlineBtn.classList.contains("is-on") ? "outlineCloseAria" : "outlineAria");
+      labelToolbarButton(outlineBtn, toolbarShortcut(base, "Shift+O"));
     }
     const undoBtn = document.getElementById("undoBtn");
     if (undoBtn) {

@@ -2,11 +2,9 @@
   function applyExportI18n() {
     const btn = document.getElementById("pdfBtn");
     const menu = document.getElementById("exportMenu");
-    const label = t("exportAria");
-    if (btn) {
-      btn.title = label;
-      btn.setAttribute("aria-label", label);
-    }
+    let label = t("exportAria");
+    if (!isUnsafePrintHost()) label = toolbarShortcut(label, "P");
+    if (btn) labelToolbarButton(btn, label);
     if (menu) menu.setAttribute("aria-label", label);
     menu?.querySelectorAll("[data-export]").forEach((el) => {
       const key = el.getAttribute("data-export") === "png" ? "exportPng" : "exportPdf";
@@ -84,16 +82,6 @@
       }
     } catch (_) { /* ignore */ }
     return false;
-  }
-
-  /** Mac/iOS 用 ⌘，Windows/Linux 用 Ctrl（与 VS Code / 系统快捷键一致） */
-  function isApplePlatform() {
-    const platform = navigator.platform || "";
-    if (/Mac|iPhone|iPad|iPod/i.test(platform)) return true;
-    try {
-      if (navigator.userAgentData?.platform === "macOS") return true;
-    } catch (_) { /* ignore */ }
-    return /Mac OS X|Macintosh/i.test(navigator.userAgent || "");
   }
 
   function isPrimaryModKey(e, key) {

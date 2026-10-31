@@ -122,6 +122,16 @@ test("预览选区会上报前后文，且点输入框折叠选区不会清焦�
   assert.match(src, /key !== "a"/);
 });
 
+test("顶栏按钮 tooltip 标上常用快捷键", () => {
+  const src = editorSrc();
+  assert.match(src, /function toolbarShortcut\(/);
+  assert.match(src, /toolbarShortcut\(t\("findAria"\), "F"\)/);
+  assert.match(src, /toolbarShortcut\(base, "Shift\+O"\)/);
+  assert.match(src, /toolbarShortcut\(label, "P"\)/);
+  const host = readFileSync(join(root, "..", "molan-host", "src", "core.ts"), "utf8");
+  assert.match(host, /toolbarShortcut\(base, "E"\)/);
+});
+
 test("Cmd/Ctrl+E 点顶栏切换阅读和编辑", () => {
   const src = editorSrc();
   assert.match(src, /对应顶栏阅读\/编辑按钮/);
