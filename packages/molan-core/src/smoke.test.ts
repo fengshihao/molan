@@ -186,6 +186,14 @@ test("预览复制保留 Markdown 标记", () => {
   assert.equal(list.slice(listHit!.start, listHit!.end), "- item one");
 });
 
+test("表格里 Tab 跳到下一格，最后一格再 Tab 加一行", () => {
+  const src = editorSrc();
+  assert.match(src, /function stepTableCell\(cell, direction\)/);
+  assert.match(src, /e\.key !== "Tab"/);
+  assert.match(src, /insertTableRow\(cells\[cells\.length - 1\], "after"\)/);
+  assert.match(src, /created\?\.parentElement\?\.cells\?\.\[0\]/);
+});
+
 test("molan-editor.js 导出 MolanEditor.create", () => {
   const src = editorSrc();
   assert.match(src, /MolanEditor\.create|global\.MolanEditor\s*=/);

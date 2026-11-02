@@ -2132,6 +2132,29 @@
     sel.addRange(range);
   }
 
+  function tableCellsInOrder(table) {
+    const cells = [];
+    Array.from(table?.rows || []).forEach((row) => {
+      Array.from(row.cells || []).forEach((cell) => cells.push(cell));
+    });
+    return cells;
+  }
+
+  /** Tab 向右，Shift+Tab 向左。最后一格再 Tab 就在下方加一行，并停在新行第一格。 */
+  function stepTableCell(cell, direction) {
+    const table = cell?.closest?.("table");
+    if (!table) return { cell, added: false };
+    const cells = tableCellsInOrder(table);
+    const index = cells.indexOf(cell);
+    if (index < 0) return { cell, added: false };
+    const nextIndex = index + direction;
+    if (nextIndex >= 0 && nextIndex < cells.length) return { cell: cells[nextIndex], added: false };
+    if (direction < 0) return { cell, added: false };
+    const created = insertTableRow(cells[cells.length - 1], "after");
+    const first = created?.parentElement?.cells?.[0] || created;
+    return { cell: first || cell, added: Boolean(first && first !== cell) };
+  }
+
   function ensureTbody(table) {
     if (table.tBodies[0]) return table.tBodies[0];
     const tbody = document.createElement("tbody");
@@ -2378,6 +2401,25 @@
       notifyTableEdit(vditor, root);
       scheduleSync();
     });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab" || e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
+      const active = document.activeElement;
+      if (active?.closest?.("input, textarea, .molan-find-bar, .molan-table-picker")) return;
+      const vditor = getVditor?.();
+      if (root.classList.contains("is-preview") || currentEditorMode(vditor) !== "ir") return;
+      const cell = tableCellFromNode(window.getSelection()?.anchorNode);
+      if (!cell || !root.contains(cell) || !cell.closest(".vditor-ir")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const stepped = stepTableCell(cell, e.shiftKey ? -1 : 1);
+      if (stepped.cell && stepped.cell !== cell) {
+        lastCell = stepped.cell;
+        focusTableCell(stepped.cell);
+      }
+      if (stepped.added) notifyTableEdit(vditor, root);
+      scheduleSync();
+    }, true);
   }
 
   function hideTablePicker() {

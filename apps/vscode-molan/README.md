@@ -14,7 +14,7 @@ Abre para leer. Pulsa para editar. Guarda en el archivo original.
 
 - **纸面**：宣纸、墨夜（默认）、终端、胭脂、青石、薄雾、朱砂；可在设置里微调亮度 / 对比 / 强调色
 - **排版**：预览可调字号、行距、段距、字距，记在本机
-- **内容**：表格、数学公式、任务列表、代码块；预览时悬停行首「+」可插入标题、列表、代码、表格等
+- **内容**：表格（Tab 跳到下一格，最后一格再 Tab 加一行）、数学公式、任务列表、代码块；预览时悬停行首「+」可插入标题、列表、代码、表格等
 - **流程图**：Mermaid，可放大拖动、滚轮缩放，也可复制源码或图片
 - **导出**：PDF 或图片
 - **查找**：`Cmd/Ctrl+F`
@@ -27,7 +27,7 @@ Typora-style WYSIWYG. A `.md` file opens in preview; click **Edit** to change it
 
 - **Papers**: Xuan, Ink night (default), Terminal, Rouge, Slate, Mist, Cinnabar; brightness / contrast / accent fine-tuning in settings
 - **Type**: size, line height, paragraph spacing, and letter spacing in preview; remembered on this machine
-- **Content**: tables, math, task lists, code blocks; hover the leading **+** in preview to insert headings, lists, code, tables
+- **Content**: tables (Tab moves to the next cell; Tab in the last cell adds a row), math, task lists, code blocks; hover the leading **+** in preview to insert headings, lists, code, tables
 - **Diagrams**: Mermaid, zoom and pan, copy source or image
 - **Export**: PDF or image
 - **Find**: `Cmd/Ctrl+F`
@@ -40,7 +40,7 @@ WYSIWYG al estilo Typora. Un `.md` se abre en vista previa; pulsa **Editar** par
 
 - **Papeles**: xuan, noche de tinta (predeterminado), terminal, carmín
 - **Texto**: tamaño, interlineado, espacio entre párrafos y letras en la vista previa; se recuerda en este equipo
-- **Contenido**: tablas, fórmulas, listas de tareas, bloques de código; en la vista previa, el **+** a la izquierda inserta títulos, listas, código y tablas
+- **Contenido**: tablas (Tab pasa a la siguiente celda; Tab en la última añade una fila), fórmulas, listas de tareas, bloques de código; en la vista previa, el **+** a la izquierda inserta títulos, listas, código y tablas
 - **Diagramas**: Mermaid, ampliar y arrastrar, copiar código o imagen
 - **Exportar**: PDF o imagen
 - **Buscar**: `Cmd/Ctrl+F`
