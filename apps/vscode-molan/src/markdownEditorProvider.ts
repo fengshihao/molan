@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { renderHostHtml } from "@molan/host";
 import type { FrameToHostMessage, HostToFrameMessage } from "@molan/protocol";
 import { savePastedImageBeside } from "./savePastedImage.js";
+import { usageEvent, usageNoteMarkdown } from "./usage.js";
 
 function asFrameMessage(raw: unknown): FrameToHostMessage | null {
   if (!raw || typeof raw !== "object" || !("type" in raw)) return null;
@@ -120,6 +121,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
 
     const fileName = this.fileName(document.uri);
     let ready = false;
+    usageNoteMarkdown(key, document.content);
 
     const sendInit = () => {
       const msg: HostToFrameMessage = {
@@ -144,7 +146,20 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         // Vditor setValue/getValue 往返可能规范化 Markdown；webview 已过滤，这里再挡一层。
         if (msg.value === document.content) return;
         document.content = msg.value;
+        usageNoteMarkdown(key, document.content);
         this._onDidChangeCustomDocument.fire({ document });
+        return;
+      }
+      if (msg.type === "usage") {
+        usageEvent(msg.name);
+        return;
+      }
+      if (msg.type === "previewChange") {
+        if (msg.isPreview === false) usageEvent("edit");
+        return;
+      }
+      if (msg.type === "wantEdit") {
+        usageEvent("edit");
         return;
       }
       if (msg.type === "save") {
@@ -216,6 +231,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         });
       if (dirty) return;
       document.content = text;
+      usageNoteMarkdown(key, text);
       if (ready) {
         const msg: HostToFrameMessage = {
           type: "setContent",

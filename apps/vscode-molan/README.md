@@ -19,6 +19,8 @@ Abre para leer. Pulsa para editar. Guarda en el archivo original.
 - **导出**：PDF 或图片
 - **查找**：`Cmd/Ctrl+F`
 
+使用统计默认跟随编辑器的「使用情况」遥测。只发送功能名（例如打开、编辑、表格），不发送路径和正文。可在设置里关闭 `molan.usageTelemetry`。
+
 ## English
 
 Typora-style WYSIWYG. A `.md` file opens in preview; click **Edit** to change it; `Cmd/Ctrl+S` writes back to the file. Close without edits and it will not ask to save.
@@ -30,6 +32,8 @@ Typora-style WYSIWYG. A `.md` file opens in preview; click **Edit** to change it
 - **Export**: PDF or image
 - **Find**: `Cmd/Ctrl+F`
 
+Usage stats follow the editor's usage telemetry. Events are feature names only (open, edit, table), never paths or document text. Turn off `molan.usageTelemetry` to stop them.
+
 ## Español
 
 WYSIWYG al estilo Typora. Un `.md` se abre en vista previa; pulsa **Editar** para cambiar; `Cmd/Ctrl+S` escribe el archivo original. Si no has cambiado nada, al cerrar no pregunta si guardar.
@@ -40,6 +44,8 @@ WYSIWYG al estilo Typora. Un `.md` se abre en vista previa; pulsa **Editar** par
 - **Diagramas**: Mermaid, ampliar y arrastrar, copiar código o imagen
 - **Exportar**: PDF o imagen
 - **Buscar**: `Cmd/Ctrl+F`
+
+Las estadísticas siguen la telemetría de uso del editor. Solo se envía el nombre de la función, nunca rutas ni el texto. Desactiva `molan.usageTelemetry` para detenerlas.
 
 https://fengshihao.github.io/molan/try/extension.html
 

@@ -290,6 +290,7 @@
       const btn = e.target.closest("[data-theme]");
       if (!btn) return;
       const id = btn.getAttribute("data-theme");
+      reportUsage("theme");
       applyTheme(id);
       paintThemeTweakControls();
       toast(t("themeSwitched", { name: t(THEME_I18N[id] || id) }));

@@ -422,6 +422,7 @@
   }
 
   function openFind() {
+    reportUsage("find");
     closeType();
     closeSourceView();
     initFind();

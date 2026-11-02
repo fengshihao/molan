@@ -125,6 +125,9 @@ function bindFeedbackPanel(post: (msg: unknown) => void, toast: (msg: string) =>
 
 function bootVscodeBridge() {
   const vscode = acquireVsCodeApi();
+  (window as Window & { __molanReportUsage?: (name: string) => void }).__molanReportUsage = (name) => {
+    vscode.postMessage({ type: "usage", name });
+  };
   const toast = (msg: string) => window.MolanEditor.toast(msg);
   const countWords = (text: string) => window.MolanEditor.countWords(text);
   window.__molanHostCopyText = async (text) => {

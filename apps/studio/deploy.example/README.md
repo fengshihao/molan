@@ -20,6 +20,16 @@ chmod +x apps/studio/deploy/upload.sh
 
 没有 `deploy/upload.sh` 时，`pnpm molan:publish` 也会**自动跳过网站同步**并继续发 Open VSX（会打印提示，不再报错退出）。
 
+## 每天多少人打开了官网
+
+页面会请求 `https://molan.guoyoutech.cn/m.gif`。在服务器上对 nginx 访问日志运行：
+
+```bash
+python3 scripts/site-daily-ips.py /var/log/nginx/access.log
+```
+
+输出是每天的独立 IP 数和页面路径，不列出 IP。
+
 ## 环境变量
 
 - `OVSX_PAT` — Open VSX 发布令牌（必需）

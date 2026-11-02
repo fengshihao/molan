@@ -57,6 +57,16 @@
         "priority": "default"
       }
     ],
+    "configuration": {
+      "title": "墨览",
+      "properties": {
+        "molan.usageTelemetry": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "在编辑器允许「使用情况」遥测时，向墨览发送匿名功能事件（激活、打开、编辑、大纲、查找、格式、表格、流程图、公式、纸面）。不包含文件路径和正文。关闭后不再发送。"
+        }
+      }
+    },
     "configurationDefaults": {
       "workbench.editorAssociations": {
         "*.md": "molan.markdownEditor",
@@ -261,7 +271,7 @@
     "compile": "node ./scripts/ensure-deps.mjs && pnpm --filter @molan/protocol build && pnpm --filter @molan/core build && pnpm --filter @molan/host build && node ./scripts/sync-media.mjs && tsc -p ./ --noEmit && node ./scripts/bundle.mjs",
     "watch": "node ./scripts/bundle.mjs --watch",
     "typecheck": "tsc -p ./ --noEmit",
-    "check": "pnpm compile && node ./scripts/check.mjs && node ./scripts/zod-compile.test.mjs && node ./scripts/vscode-install-e2e.mjs",
+    "check": "pnpm compile && node --test src/usage-logic.test.mjs && node ./scripts/check.mjs && node ./scripts/zod-compile.test.mjs && node ./scripts/vscode-install-e2e.mjs",
     "package": "pnpm compile && npx --yes @vscode/vsce package --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://fengshihao.github.io/molan/try",
     "publish": "pnpm compile && npx --yes @vscode/vsce publish --no-dependencies --baseContentUrl https://github.com/fengshihao/molan/blob/main/apps/vscode-molan --baseImagesUrl https://fengshihao.github.io/molan/try"
   },

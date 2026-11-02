@@ -96,6 +96,10 @@ export const FrameToHostMessageSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("previewChange"), isPreview: z.boolean() }),
   z.object({ type: z.literal("wantEdit") }),
+  z.object({
+    type: z.literal("usage"),
+    name: z.enum(["edit", "outline", "find", "format", "theme"]),
+  }),
   z.object({ type: z.literal("theme"), theme: MolanThemeSchema }),
   z.object({
     type: z.literal("state"),

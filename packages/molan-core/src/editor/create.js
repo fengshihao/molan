@@ -525,6 +525,7 @@
           notifyPreview();
           return true;
         }
+        reportUsage("edit");
         if (sourceOpen) {
           commitSourceFromTextarea();
           spot = captureSourceReadingSpot() || spot;

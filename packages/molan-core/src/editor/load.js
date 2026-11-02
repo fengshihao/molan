@@ -69,3 +69,13 @@
     if (markdownHasMermaid(text)) return preloadMermaid(cdn);
     return Promise.resolve();
   }
+
+  const usageReported = Object.create(null);
+  function reportUsage(name) {
+    if (!name || usageReported[name]) return;
+    usageReported[name] = 1;
+    try {
+      const fn = global.__molanReportUsage;
+      if (typeof fn === "function") fn(name);
+    } catch (_) { /* ignore */ }
+  }

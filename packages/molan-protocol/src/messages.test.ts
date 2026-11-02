@@ -77,6 +77,10 @@ test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
   assert.equal(parseHostToFrameMessage({ type: "toggleMode" })?.type, "toggleMode");
   assert.equal(parseHostToFrameMessage({ type: "outlineToggle" })?.type, "outlineToggle");
   assert.equal(parseHostToFrameMessage({ type: "openFeedback" })?.type, "openFeedback");
+  const usage = parseFrameToHostMessage({ type: "usage", name: "find" });
+  assert.equal(usage?.type, "usage");
+  if (usage?.type === "usage") assert.equal(usage.name, "find");
+  assert.equal(parseFrameToHostMessage({ type: "usage", name: "path" }), null);
   assert.equal(parseFrameToHostMessage({ type: "theme", theme: "hack" })?.theme, "hack");
   assert.equal(parseFrameToHostMessage({ type: "theme", theme: "bad" }), null);
   assert.equal(parseFrameToHostMessage({ type: "copyText", value: "abc" })?.type, "copyText");

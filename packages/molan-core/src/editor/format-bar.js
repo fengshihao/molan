@@ -414,6 +414,7 @@
     };
 
     const applyFormatAction = (type) => {
+      if (type === "bold" || type === "italic" || type === "link") reportUsage("format");
       if (type === "link") {
         if (!captureForFormat()) return false;
         openLink();

@@ -11226,6 +11226,10 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     }),
     external_exports.object({ type: external_exports.literal("previewChange"), isPreview: external_exports.boolean() }),
     external_exports.object({ type: external_exports.literal("wantEdit") }),
+    external_exports.object({
+      type: external_exports.literal("usage"),
+      name: external_exports.enum(["edit", "outline", "find", "format", "theme"])
+    }),
     external_exports.object({ type: external_exports.literal("theme"), theme: MolanThemeSchema }),
     external_exports.object({
       type: external_exports.literal("state"),
@@ -11788,6 +11792,9 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function bootVscodeBridge() {
     const vscode = acquireVsCodeApi();
+    window.__molanReportUsage = (name) => {
+      vscode.postMessage({ type: "usage", name });
+    };
     const toast = (msg) => window.MolanEditor.toast(msg);
     const countWords = (text) => window.MolanEditor.countWords(text);
     window.__molanHostCopyText = async (text) => {

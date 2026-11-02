@@ -1,9 +1,11 @@
 import * as vscode from "vscode";
 import { MOLAN_ISSUES_CHOOSE } from "@molan/host";
 import { MolanEditorProvider } from "./markdownEditorProvider";
+import { startUsage, usageEvent } from "./usage";
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(MolanEditorProvider.register(context));
+  startUsage(context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("molan.openWith", async (uri?: vscode.Uri) => {
@@ -45,15 +47,36 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("molan.find", () => MolanEditorProvider.postToActive("find")),
-    vscode.commands.registerCommand("molan.findNext", () => MolanEditorProvider.postToActive("findNext")),
-    vscode.commands.registerCommand("molan.findPrev", () => MolanEditorProvider.postToActive("findPrev")),
-    vscode.commands.registerCommand("molan.formatBold", () => MolanEditorProvider.postToActive("formatBold")),
+    vscode.commands.registerCommand("molan.find", () => {
+      usageEvent("find");
+      MolanEditorProvider.postToActive("find");
+    }),
+    vscode.commands.registerCommand("molan.findNext", () => {
+      usageEvent("find");
+      MolanEditorProvider.postToActive("findNext");
+    }),
+    vscode.commands.registerCommand("molan.findPrev", () => {
+      usageEvent("find");
+      MolanEditorProvider.postToActive("findPrev");
+    }),
+    vscode.commands.registerCommand("molan.formatBold", () => {
+      usageEvent("format");
+      MolanEditorProvider.postToActive("formatBold");
+    }),
     vscode.commands.registerCommand("molan.cut", () => MolanEditorProvider.postToActive("cut")),
-    vscode.commands.registerCommand("molan.formatItalic", () => MolanEditorProvider.postToActive("formatItalic")),
-    vscode.commands.registerCommand("molan.formatLink", () => MolanEditorProvider.postToActive("formatLink")),
+    vscode.commands.registerCommand("molan.formatItalic", () => {
+      usageEvent("format");
+      MolanEditorProvider.postToActive("formatItalic");
+    }),
+    vscode.commands.registerCommand("molan.formatLink", () => {
+      usageEvent("format");
+      MolanEditorProvider.postToActive("formatLink");
+    }),
     vscode.commands.registerCommand("molan.toggleMode", () => MolanEditorProvider.postToActive("toggleMode")),
-    vscode.commands.registerCommand("molan.outlineToggle", () => MolanEditorProvider.postToActive("outlineToggle")),
+    vscode.commands.registerCommand("molan.outlineToggle", () => {
+      usageEvent("outline");
+      MolanEditorProvider.postToActive("outlineToggle");
+    }),
     vscode.commands.registerCommand("molan.reportFeedback", async () => {
       if (MolanEditorProvider.postToActive("openFeedback")) return;
       await vscode.env.openExternal(vscode.Uri.parse(MOLAN_ISSUES_CHOOSE));

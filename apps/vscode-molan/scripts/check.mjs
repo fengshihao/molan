@@ -70,6 +70,9 @@ assert(js.includes("feedbackBtn"), "vscode header has feedback button");
 assert(js.includes("__MOLAN_FEEDBACK__"), "webview injects feedback env");
 assert(js.includes("molan.reportFeedback"), "feedback command registered");
 assert(js.includes("molan.readPosition"), "extension persists reading position per document");
+assert(js.includes("gateway.umami.is"), "usage collector endpoint");
+assert(js.includes("extension.molan"), "usage events use a fixed hostname");
+assert(js.includes("usageTelemetry"), "usage opt-out setting is wired");
 assert(js.includes("savePastedImageBeside"), "extension saves pasted screenshots beside the markdown file");
 assert(!js.includes('id="themeBtn"'), "vscode has no standalone theme button");
 assert(js.includes("molan-theme"), "webview restores stored theme");
@@ -152,6 +155,7 @@ assert(!app.includes("savePickedImageBesideActive"), "studio no longer copies lo
 assert(!app.includes("loadThemeFonts"), "theme fonts live in editor core");
 
 const editorSource = readFileSync(join(viewer, "molan-editor.js"), "utf8");
+assert(editorSource.includes("__molanReportUsage"), "editor reports feature use without document text");
 assert(editorSource.includes("initType"), "reader type controls");
 assert(editorSource.includes("molan-table-toolbar"), "table structure toolbar");
 assert(editorSource.includes("molan-table-picker"), "table size picker");

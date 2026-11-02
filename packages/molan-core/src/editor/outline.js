@@ -301,6 +301,7 @@
   }
 
   async function openOutline() {
+    reportUsage("outline");
     if (outlineCtx?.getPreviewing?.()) {
       renderLiteOutline();
     } else {

@@ -75,6 +75,16 @@
     return Promise.resolve();
   }
 
+  const usageReported = Object.create(null);
+  function reportUsage(name) {
+    if (!name || usageReported[name]) return;
+    usageReported[name] = 1;
+    try {
+      const fn = global.__molanReportUsage;
+      if (typeof fn === "function") fn(name);
+    } catch (_) { /* ignore */ }
+  }
+
   /* --- i18n: 内置文案回退（MolanI18n 优先） --- */
   function t(key, vars) {
     if (global.MolanI18n && typeof global.MolanI18n.t === "function") {
@@ -3216,6 +3226,7 @@
   }
 
   async function openOutline() {
+    reportUsage("outline");
     if (outlineCtx?.getPreviewing?.()) {
       renderLiteOutline();
     } else {
@@ -3868,6 +3879,7 @@
     };
 
     const applyFormatAction = (type) => {
+      if (type === "bold" || type === "italic" || type === "link") reportUsage("format");
       if (type === "link") {
         if (!captureForFormat()) return false;
         openLink();
@@ -4612,6 +4624,7 @@
   }
 
   function openFind() {
+    reportUsage("find");
     closeType();
     closeSourceView();
     initFind();
@@ -5878,6 +5891,7 @@
       const btn = e.target.closest("[data-theme]");
       if (!btn) return;
       const id = btn.getAttribute("data-theme");
+      reportUsage("theme");
       applyTheme(id);
       paintThemeTweakControls();
       toast(t("themeSwitched", { name: t(THEME_I18N[id] || id) }));
@@ -9251,6 +9265,7 @@
           notifyPreview();
           return true;
         }
+        reportUsage("edit");
         if (sourceOpen) {
           commitSourceFromTextarea();
           spot = captureSourceReadingSpot() || spot;
