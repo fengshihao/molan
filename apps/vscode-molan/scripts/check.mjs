@@ -74,6 +74,7 @@ assert(js.includes("gateway.umami.is"), "usage collector endpoint");
 assert(js.includes("extension.molan"), "usage events use a fixed hostname");
 assert(js.includes("usageTelemetry"), "usage opt-out setting is wired");
 assert(js.includes("savePastedImageBeside"), "extension saves pasted screenshots beside the markdown file");
+assert(js.includes("splitLocalLink"), "extension opens local file links at a line");
 assert(!js.includes('id="themeBtn"'), "vscode has no standalone theme button");
 assert(js.includes("molan-theme"), "webview restores stored theme");
 
@@ -241,6 +242,7 @@ const bridge = readFileSync(join(root, "media/vscode-bridge.js"), "utf8");
 assert(bridge.includes("await setPreview(true, { skipRender: true })"), "defaults to preview on init");
 assert(bridge.includes("value !== baseline"), "ignores Vditor setValue round-trip");
 assert(bridge.includes("openRelative"), "webview opens relative markdown links");
+assert(bridge.includes("isLocalResourceHref"), "webview opens local file links in the editor");
 assert(bridge.includes("scrollPreviewToFragment"), "webview scrolls to in-doc heading anchors");
 assert(bridge.includes("saveReadPosition"), "webview reports reading position so the host can persist it");
 assert(bridge.includes("applyReadPosition"), "webview restores the last reading position when a document opens");

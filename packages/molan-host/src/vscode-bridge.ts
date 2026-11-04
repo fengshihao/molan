@@ -9,7 +9,14 @@ import {
   type FeedbackEnv,
   type FeedbackKind,
 } from "./feedback.js";
-import { isExternalHttp, isMarkdownHref, relativeToLinkBase } from "./link-utils.js";
+import {
+  isExternalHttp,
+  isLocalResourceHref,
+  isMarkdownHref,
+  isVscodeResourceHref,
+  localLinkToOpen,
+  relativeToLinkBase,
+} from "./link-utils.js";
 import { scrollPreviewToFragment } from "./preview-anchor.js";
 import { applyReadPosition, captureReadPosition } from "./read-position.js";
 
@@ -396,23 +403,27 @@ function bootVscodeBridge() {
       }
       if (/^(mailto:|tel:)/i.test(attr)) return;
       const linkBase = window.__MOLAN_LINK_BASE__ || "";
-      if (isExternalHttp(attr, linkBase)) {
+      const resource = isVscodeResourceHref(attr) || isVscodeResourceHref(a.href);
+      if (isExternalHttp(attr, linkBase) && !resource) {
         event.preventDefault();
         event.stopPropagation();
         vscode.postMessage({ type: "openExternal", value: attr });
         return;
       }
       const rel = relativeToLinkBase(attr || a.href, linkBase);
-      if (rel.startsWith("#")) {
+      if (rel.startsWith("#") || attr.startsWith("#")) {
         event.preventDefault();
         event.stopPropagation();
-        scrollPreviewToFragment(rel);
+        scrollPreviewToFragment(rel.startsWith("#") ? rel : attr);
         return;
       }
-      if (!isMarkdownHref(rel) && !isMarkdownHref(attr) && !isMarkdownHref(a.href)) return;
+      // 非 Markdown 的本地文件也要拦住。否则浏览器会打开
+      // https://file+.vscode-resource.vscode-cdn.net/... 这种打不开的地址。
+      const markdown = isMarkdownHref(rel) || isMarkdownHref(attr) || isMarkdownHref(a.href);
+      if (!markdown && !isLocalResourceHref(attr, rel) && !isLocalResourceHref(a.href, rel)) return;
       event.preventDefault();
       event.stopPropagation();
-      vscode.postMessage({ type: "openRelative", value: rel || attr });
+      vscode.postMessage({ type: "openRelative", value: localLinkToOpen(attr || a.href, rel) });
     },
     true,
   );

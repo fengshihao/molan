@@ -11238,6 +11238,7 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       dirty: external_exports.boolean(),
       isPreview: external_exports.boolean()
     }),
+    /** 相对当前文档的本地文件。Markdown 用墨览打开，其它文件用编辑器打开，`#L516` 跳到行 */
     external_exports.object({ type: external_exports.literal("openRelative"), value: external_exports.string() }),
     external_exports.object({ type: external_exports.literal("openExternal"), value: external_exports.string() }),
     external_exports.object({ type: external_exports.literal("copyText"), value: external_exports.string() }),
@@ -11272,9 +11273,37 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
 
   // src/link-utils.ts
   var MD_LINK = /\.(md|markdown|mdx|mdown)([?#]|$)/i;
+  var URI_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+  var WINDOWS_DRIVE = /^[a-z]:[\\/]/i;
+  function hasUriScheme(value) {
+    return URI_SCHEME.test(value) && !WINDOWS_DRIVE.test(value);
+  }
   function isMarkdownHref(href) {
     const pathPart = String(href || "").split("#")[0].split("?")[0];
     return MD_LINK.test(pathPart);
+  }
+  function isVscodeResourceHref(href) {
+    return /vscode-resource\.vscode-cdn\.net/i.test(href) || /^vscode-resource:/i.test(href) || /^vscode-webview-resource:/i.test(href);
+  }
+  function isLocalResourceHref(href, resolvedRelative = "") {
+    const raw = String(href || "").trim();
+    if (!raw || raw.startsWith("#") || raw.startsWith("//")) return false;
+    if (/^(?:mailto|tel|javascript|data|blob):/i.test(raw)) return false;
+    if (isVscodeResourceHref(raw) || /^file:/i.test(raw)) return true;
+    if (hasUriScheme(raw)) {
+      if (!/^https?:/i.test(raw)) return false;
+      const rel = String(resolvedRelative || "").trim();
+      if (!rel || rel.startsWith("#") || hasUriScheme(rel) || rel === raw) return false;
+      return true;
+    }
+    return true;
+  }
+  function localLinkToOpen(href, resolvedRelative) {
+    const rel = String(resolvedRelative || "").trim();
+    const raw = String(href || "").trim();
+    if (rel && !hasUriScheme(rel)) return rel;
+    if (raw && !hasUriScheme(raw)) return raw;
+    return rel || raw;
   }
   function relativeToLinkBase(href, linkBase) {
     const raw = String(href || "").trim();
@@ -12036,23 +12065,25 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         }
         if (/^(mailto:|tel:)/i.test(attr)) return;
         const linkBase = window.__MOLAN_LINK_BASE__ || "";
-        if (isExternalHttp(attr, linkBase)) {
+        const resource = isVscodeResourceHref(attr) || isVscodeResourceHref(a.href);
+        if (isExternalHttp(attr, linkBase) && !resource) {
           event.preventDefault();
           event.stopPropagation();
           vscode.postMessage({ type: "openExternal", value: attr });
           return;
         }
         const rel = relativeToLinkBase(attr || a.href, linkBase);
-        if (rel.startsWith("#")) {
+        if (rel.startsWith("#") || attr.startsWith("#")) {
           event.preventDefault();
           event.stopPropagation();
-          scrollPreviewToFragment(rel);
+          scrollPreviewToFragment(rel.startsWith("#") ? rel : attr);
           return;
         }
-        if (!isMarkdownHref(rel) && !isMarkdownHref(attr) && !isMarkdownHref(a.href)) return;
+        const markdown = isMarkdownHref(rel) || isMarkdownHref(attr) || isMarkdownHref(a.href);
+        if (!markdown && !isLocalResourceHref(attr, rel) && !isLocalResourceHref(a.href, rel)) return;
         event.preventDefault();
         event.stopPropagation();
-        vscode.postMessage({ type: "openRelative", value: rel || attr });
+        vscode.postMessage({ type: "openRelative", value: localLinkToOpen(attr || a.href, rel) });
       },
       true
     );

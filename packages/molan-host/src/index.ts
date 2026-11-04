@@ -1,9 +1,16 @@
 export { createBridgeCore, type BridgeChrome, type BridgeCoreOptions } from "./core.js";
 export {
+  filesystemPathFromWebviewHref,
   isExternalHttp,
+  isLocalResourceHref,
   isMarkdownHref,
+  isVscodeResourceHref,
+  localLinkToOpen,
+  parseLineFragment,
   relativeToLinkBase,
+  splitLocalLink,
   stripMarkdownExtension,
+  type LineLocation,
 } from "./link-utils.js";
 export { scrollPreviewToFragment, findPreviewHeadingTarget } from "./preview-anchor.js";
 export {

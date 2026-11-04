@@ -1,5 +1,10 @@
 import * as vscode from "vscode";
-import { renderHostHtml } from "@molan/host";
+import {
+  filesystemPathFromWebviewHref,
+  isMarkdownHref,
+  renderHostHtml,
+  splitLocalLink,
+} from "@molan/host";
 import type { FrameToHostMessage, HostToFrameMessage } from "@molan/protocol";
 import { savePastedImageBeside } from "./savePastedImage.js";
 import { usageEvent, usageNoteMarkdown } from "./usage.js";
@@ -171,7 +176,7 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         return;
       }
       if (msg.type === "openRelative") {
-        await this.openRelativeMarkdown(document.uri, msg.value);
+        await this.openRelativeLink(document.uri, msg.value);
         return;
       }
       if (msg.type === "openExternal") {
@@ -316,19 +321,63 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
     return parts[parts.length - 1] || uri.path;
   }
 
-  private async openRelativeMarkdown(from: vscode.Uri, href: string): Promise<void> {
-    const pathPart = href.split("#")[0].split("?")[0].trim();
-    if (!pathPart) return;
-    const segments = pathPart.replace(/\\/g, "/").split("/").filter((s) => s && s !== ".");
-    if (!segments.length) return;
-    const target = vscode.Uri.joinPath(from, "..", ...segments);
+  private async openRelativeLink(from: vscode.Uri, href: string): Promise<void> {
+    const { path, location } = splitLocalLink(href);
+    const target = this.resolveLocalTarget(from, path);
+    if (!target) return;
     try {
       await vscode.workspace.fs.stat(target);
     } catch {
       void vscode.window.showWarningMessage(`找不到「${this.fileName(target)}」`);
       return;
     }
-    await vscode.commands.executeCommand("vscode.openWith", target, MolanEditorProvider.viewType);
+    if (isMarkdownHref(target.path)) {
+      await vscode.commands.executeCommand("vscode.openWith", target, MolanEditorProvider.viewType);
+      return;
+    }
+    const options: vscode.TextDocumentShowOptions = {};
+    if (location) {
+      options.selection = new vscode.Range(
+        location.line - 1,
+        location.column - 1,
+        location.endLine - 1,
+        location.endColumn - 1,
+      );
+    }
+    await vscode.commands.executeCommand("vscode.open", target, options);
+  }
+
+  private resolveLocalTarget(from: vscode.Uri, pathPart: string): vscode.Uri | null {
+    const path = pathPart.trim();
+    if (!path || path === "." || path === "./") return null;
+    if (/^file:/i.test(path)) {
+      try {
+        return vscode.Uri.parse(path);
+      } catch {
+        return null;
+      }
+    }
+    if (/^https?:/i.test(path)) {
+      const fsPath = filesystemPathFromWebviewHref(path);
+      return fsPath ? vscode.Uri.file(fsPath) : null;
+    }
+    if (/^[a-zA-Z]:[\\/]/.test(path) || path.startsWith("/")) {
+      const fsPath = /^\/[a-zA-Z]:[\\/]/.test(path) ? path.slice(1) : path;
+      return vscode.Uri.file(fsPath);
+    }
+    const segments = path
+      .replace(/\\/g, "/")
+      .split("/")
+      .filter((segment) => segment && segment !== ".")
+      .map((segment) => {
+        try {
+          return decodeURIComponent(segment);
+        } catch {
+          return segment;
+        }
+      });
+    if (!segments.length) return null;
+    return vscode.Uri.joinPath(from, "..", ...segments);
   }
 
   private getLocalRoots(document: MolanDocument): vscode.Uri[] {

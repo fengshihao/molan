@@ -108,6 +108,7 @@ export const FrameToHostMessageSchema = z.discriminatedUnion("type", [
     dirty: z.boolean(),
     isPreview: z.boolean(),
   }),
+  /** 相对当前文档的本地文件。Markdown 用墨览打开，其它文件用编辑器打开，`#L516` 跳到行 */
   z.object({ type: z.literal("openRelative"), value: z.string() }),
   z.object({ type: z.literal("openExternal"), value: z.string() }),
   z.object({ type: z.literal("copyText"), value: z.string() }),
