@@ -82,6 +82,13 @@ export const HostToFrameMessageSchema = z.discriminatedUnion("type", [
     requestId: z.number(),
     markdown: z.string(),
   }),
+  /** 扩展把可打印网页写入用户选定的路径后回告；path 仅在 saved 时有值 */
+  z.object({
+    type: z.literal("savedExport"),
+    requestId: z.number(),
+    status: z.enum(["saved", "cancelled", "failed"]),
+    path: z.string(),
+  }),
 ]);
 export type HostToFrameMessage = z.infer<typeof HostToFrameMessageSchema>;
 
@@ -121,6 +128,13 @@ export const FrameToHostMessageSchema = z.discriminatedUnion("type", [
     requestId: z.number(),
     mime: z.string(),
     data: z.string(),
+  }),
+  /** 编辑器窗口不能打印时，把可打印网页交给扩展，用保存对话框落盘 */
+  z.object({
+    type: z.literal("saveExport"),
+    requestId: z.number(),
+    filename: z.string(),
+    text: z.string(),
   }),
   z.object({
     type: z.literal("selection"),

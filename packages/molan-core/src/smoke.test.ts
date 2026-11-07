@@ -206,6 +206,8 @@ test("molan-editor.js 导出 MolanEditor.create", () => {
   assert.match(src, /function isPrimaryModKey\(/);
   assert.match(src, /VS Code\/Cursor：⌘\/Ctrl\+P 是 Quick Open/);
   assert.match(src, /function downloadPrintableHtml\(/);
+  assert.match(src, /setExportSaver/);
+  assert.match(src, /exportPdfSaved/);
   assert.match(src, /molan-print-doc/);
   assert.match(src, /function isolatePreviewForPrint\(/);
   assert.match(src, /M9 7\.5 4\.5 12 9 16\.5/);

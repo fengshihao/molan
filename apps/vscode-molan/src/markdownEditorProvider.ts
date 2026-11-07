@@ -192,6 +192,10 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
         void this.readPositionStore.set(document.uri, msg.value);
         return;
       }
+      if (msg.type === "saveExport") {
+        void savePrintableHtml(webviewPanel, document.uri, msg);
+        return;
+      }
       if (msg.type === "savePastedImage") {
         const reply = async () => {
           const out: HostToFrameMessage = {
@@ -453,6 +457,61 @@ class ReadPositionStore {
 
   set(uri: vscode.Uri, value: string): Thenable<void> {
     return this.state.update(this.key(uri), value);
+  }
+}
+
+function safeExportFileName(name: string): string {
+  const base = String(name || "document.html").split(/[/\\]/).pop() || "document.html";
+  const cleaned = base.replace(/[\\/:*?"<>|]+/g, "_").replace(/^\.+/, "").trim() || "document.html";
+  return cleaned.toLowerCase().endsWith(".html") ? cleaned : `${cleaned}.html`;
+}
+
+function defaultExportUri(documentUri: vscode.Uri, filename: string): vscode.Uri {
+  const beside = documentUri.scheme === "file" || documentUri.scheme === "vscode-remote"
+    ? vscode.Uri.joinPath(documentUri, "..")
+    : vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (beside) return vscode.Uri.joinPath(beside, filename);
+  return vscode.Uri.file(filename);
+}
+
+async function savePrintableHtml(
+  webviewPanel: vscode.WebviewPanel,
+  documentUri: vscode.Uri,
+  msg: Extract<FrameToHostMessage, { type: "saveExport" }>,
+): Promise<void> {
+  const reply = (status: "saved" | "cancelled" | "failed", path = "") => {
+    const out: HostToFrameMessage = {
+      type: "savedExport",
+      requestId: msg.requestId,
+      status,
+      path,
+    };
+    void webviewPanel.webview.postMessage(out);
+  };
+  try {
+    const filename = safeExportFileName(msg.filename);
+    const target = await vscode.window.showSaveDialog({
+      defaultUri: defaultExportUri(documentUri, filename),
+      filters: { HTML: ["html"] },
+      saveLabel: "保存网页",
+      title: "保存可打印网页",
+    });
+    if (!target) {
+      reply("cancelled");
+      return;
+    }
+    await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(msg.text));
+    const label = target.fsPath || target.path;
+    reply("saved", label);
+    const reveal = "在文件管理器中显示";
+    const actions = target.scheme === "file" ? [reveal] : [];
+    const choice = await vscode.window.showInformationMessage(`已保存网页：${label}`, ...actions);
+    if (choice === reveal) {
+      await vscode.commands.executeCommand("revealFileInOS", target);
+    }
+  } catch {
+    reply("failed");
+    void vscode.window.showWarningMessage("无法保存网页。");
   }
 }
 

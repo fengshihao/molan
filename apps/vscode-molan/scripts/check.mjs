@@ -74,6 +74,8 @@ assert(js.includes("gateway.umami.is"), "usage collector endpoint");
 assert(js.includes("extension.molan"), "usage events use a fixed hostname");
 assert(js.includes("usageTelemetry"), "usage opt-out setting is wired");
 assert(js.includes("savePastedImageBeside"), "extension saves pasted screenshots beside the markdown file");
+assert(js.includes("showSaveDialog"), "extension saves printable HTML through a save dialog");
+assert(js.includes("savedExport"), "extension reports where the printable HTML was saved");
 assert(js.includes("splitLocalLink"), "extension opens local file links at a line");
 assert(!js.includes('id="themeBtn"'), "vscode has no standalone theme button");
 assert(js.includes("molan-theme"), "webview restores stored theme");
@@ -216,6 +218,7 @@ assert(editorSource.includes("function isApplePlatform"), "print shortcut is Mac
 assert(editorSource.includes("function isPrimaryModKey"), "uses primary modifier per platform");
 assert(editorSource.includes("isUnsafePrintHost()) return"), "does not steal Cmd/Ctrl+P in VS Code");
 assert(editorSource.includes("function downloadPrintableHtml"), "falls back to printable HTML download");
+assert(editorSource.includes("setExportSaver"), "editor can hand printable HTML to the host");
 assert(readFileSync(join(viewer, "molan-i18n.js"), "utf8").includes("exportPdfUseBrowser"), "i18n explains cursor print fallback");
 assert(editorSource.includes("create("), "has create()");
 assert(editorSource.includes("setPreview"), "preview mode API");
@@ -250,6 +253,7 @@ assert(bridge.includes("quickOpen"), "webview forwards Cmd/Ctrl+P to Quick Open"
 assert(bridge.includes("isPrimaryModKey"), "bridge uses platform primary modifier");
 assert(bridge.includes("copyText"), "webview asks the extension host to write clipboard as fallback");
 assert(bridge.includes("savePastedImage"), "webview asks host to save pasted clipboard images");
+assert(bridge.includes("saveExport"), "webview asks host to save printable HTML with a path");
 assert(bridge.includes("saveClipboardImage"), "webview wires clipboard image paste into the editor");
 assert(editorSource.includes("bindClipboardImagePaste"), "editor intercepts image paste");
 assert(editorSource.includes("imageFileFromClipboard"), "paste reads image files from the clipboard");

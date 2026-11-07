@@ -140,6 +140,13 @@
     return clone.innerHTML || "";
   }
 
+  let exportSaver = null;
+
+  /** 扩展注册后，可打印网页走保存对话框，而不是 webview 里点链下载 */
+  function setExportSaver(fn) {
+    exportSaver = typeof fn === "function" ? fn : null;
+  }
+
   function downloadBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -152,10 +159,10 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  function downloadPrintableHtml() {
+  async function downloadPrintableHtml() {
     const title = printDocumentTitle();
     const body = clonePreviewHtml();
-    if (!body.trim()) return false;
+    if (!body.trim()) return { status: "failed" };
     const css = collectSameOriginCss();
     const html = `<!DOCTYPE html>
 <html class="${printDocClass()}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
@@ -234,8 +241,18 @@
   </script>
 </body>
 </html>`;
-    downloadBlob(`${safeFileName(title)}.html`, new Blob([html], { type: "text/html;charset=utf-8" }));
-    return true;
+    const filename = `${safeFileName(title)}.html`;
+    if (typeof exportSaver === "function") {
+      try {
+        const saved = await exportSaver({ filename, text: html });
+        if (saved?.status === "saved" || saved?.status === "cancelled" || saved?.status === "failed") {
+          return saved;
+        }
+      } catch (_) { /* 宿主没写成 */ }
+      return { status: "failed" };
+    }
+    downloadBlob(filename, new Blob([html], { type: "text/html;charset=utf-8" }));
+    return { status: "downloaded" };
   }
 
   function isolatePreviewForPrint() {
@@ -507,8 +524,14 @@
       await waitFrame();
 
       if (unsafePrint) {
-        if (!downloadPrintableHtml()) {
+        const saved = await downloadPrintableHtml();
+        if (!saved || saved.status === "failed") {
           toast(t("exportPdfFail"));
+          return;
+        }
+        if (saved.status === "cancelled") return;
+        if (saved.status === "saved") {
+          toast(t("exportPdfSaved", { path: saved.path || "" }));
           return;
         }
         toast(t("exportPdfUseBrowser"));
@@ -539,6 +562,7 @@
     countWords,
     exportPdf,
     exportPng,
+    setExportSaver,
     escapeMdAlt,
     applyMermaidTheme,
     refreshMermaidDiagrams,

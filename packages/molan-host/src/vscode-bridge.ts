@@ -32,6 +32,9 @@ declare global {
       cut?(): boolean;
       toggleMode?(): boolean;
       outline?: { toggle?(): void | Promise<void>; close?(): void };
+      setExportSaver?(
+        fn: (file: { filename: string; text: string }) => Promise<{ status: string; path?: string }>,
+      ): void;
     };
     __MOLAN_VDITOR_CDN__?: string;
     __MOLAN_LINK_BASE__?: string;
@@ -132,6 +135,24 @@ function bindFeedbackPanel(post: (msg: unknown) => void, toast: (msg: string) =>
 
 function bootVscodeBridge() {
   const vscode = acquireVsCodeApi();
+
+  let exportNextId = 1;
+  const exportWaiters = new Map<number, (result: { status: string; path: string }) => void>();
+
+  function saveExportFile(file: { filename: string; text: string }) {
+    const requestId = exportNextId++;
+    return new Promise<{ status: string; path: string }>((resolve) => {
+      exportWaiters.set(requestId, resolve);
+      vscode.postMessage({
+        type: "saveExport",
+        requestId,
+        filename: file.filename,
+        text: file.text,
+      });
+    });
+  }
+
+  window.MolanEditor.setExportSaver?.(saveExportFile);
   (window as Window & { __molanReportUsage?: (name: string) => void }).__molanReportUsage = (name) => {
     vscode.postMessage({ type: "usage", name });
   };
@@ -267,6 +288,16 @@ function bootVscodeBridge() {
       pastedImageWaiters.get(msg.requestId)?.(
         typeof msg.markdown === "string" ? msg.markdown : "",
       );
+      return;
+    }
+
+    if (msg.type === "savedExport" && typeof msg.requestId === "number") {
+      const waiter = exportWaiters.get(msg.requestId);
+      exportWaiters.delete(msg.requestId);
+      waiter?.({
+        status: typeof msg.status === "string" ? msg.status : "failed",
+        path: typeof msg.path === "string" ? msg.path : "",
+      });
       return;
     }
 

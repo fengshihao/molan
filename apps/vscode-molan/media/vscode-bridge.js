@@ -11214,6 +11214,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       type: external_exports.literal("pastedImage"),
       requestId: external_exports.number(),
       markdown: external_exports.string()
+    }),
+    /** 扩展把可打印网页写入用户选定的路径后回告；path 仅在 saved 时有值 */
+    external_exports.object({
+      type: external_exports.literal("savedExport"),
+      requestId: external_exports.number(),
+      status: external_exports.enum(["saved", "cancelled", "failed"]),
+      path: external_exports.string()
     })
   ]);
   var FrameToHostMessageSchema = external_exports.discriminatedUnion("type", [
@@ -11251,6 +11258,13 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
       requestId: external_exports.number(),
       mime: external_exports.string(),
       data: external_exports.string()
+    }),
+    /** 编辑器窗口不能打印时，把可打印网页交给扩展，用保存对话框落盘 */
+    external_exports.object({
+      type: external_exports.literal("saveExport"),
+      requestId: external_exports.number(),
+      filename: external_exports.string(),
+      text: external_exports.string()
     }),
     external_exports.object({
       type: external_exports.literal("selection"),
@@ -11821,6 +11835,21 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   }
   function bootVscodeBridge() {
     const vscode = acquireVsCodeApi();
+    let exportNextId = 1;
+    const exportWaiters = /* @__PURE__ */ new Map();
+    function saveExportFile(file2) {
+      const requestId = exportNextId++;
+      return new Promise((resolve) => {
+        exportWaiters.set(requestId, resolve);
+        vscode.postMessage({
+          type: "saveExport",
+          requestId,
+          filename: file2.filename,
+          text: file2.text
+        });
+      });
+    }
+    window.MolanEditor.setExportSaver?.(saveExportFile);
     window.__molanReportUsage = (name) => {
       vscode.postMessage({ type: "usage", name });
     };
@@ -11941,6 +11970,15 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         pastedImageWaiters.get(msg.requestId)?.(
           typeof msg.markdown === "string" ? msg.markdown : ""
         );
+        return;
+      }
+      if (msg.type === "savedExport" && typeof msg.requestId === "number") {
+        const waiter = exportWaiters.get(msg.requestId);
+        exportWaiters.delete(msg.requestId);
+        waiter?.({
+          status: typeof msg.status === "string" ? msg.status : "failed",
+          path: typeof msg.path === "string" ? msg.path : ""
+        });
         return;
       }
       const handled = await bridge.handleHostMessage(msg);

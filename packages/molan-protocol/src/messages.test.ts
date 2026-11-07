@@ -96,6 +96,24 @@ test("parseHostToFrameMessage / parseFrameToHostMessage 安全解析", () => {
     parseHostToFrameMessage({ type: "pastedImage", requestId: 3, markdown: "![x](a.png)" })?.type,
     "pastedImage",
   );
+  assert.equal(
+    parseFrameToHostMessage({ type: "saveExport", requestId: 4, filename: "note.html", text: "<p>hi</p>" })
+      ?.type,
+    "saveExport",
+  );
+  assert.equal(parseFrameToHostMessage({ type: "saveExport", requestId: 4, filename: "note.html" }), null);
+  const savedExport = parseHostToFrameMessage({
+    type: "savedExport",
+    requestId: 4,
+    status: "saved",
+    path: "/tmp/note.html",
+  });
+  assert.equal(savedExport?.type, "savedExport");
+  if (savedExport?.type === "savedExport") assert.equal(savedExport.path, "/tmp/note.html");
+  assert.equal(
+    parseHostToFrameMessage({ type: "savedExport", requestId: 4, status: "nope", path: "" }),
+    null,
+  );
   const selection = parseFrameToHostMessage({
     type: "selection",
     headingPath: ["用户故事"],
