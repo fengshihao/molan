@@ -104,6 +104,58 @@
     return String(source).slice(span.start, span.end);
   }
 
+  function isPipeTableMarkdown(text) {
+    const lines = String(text || "").split("\n");
+    if (lines.length < 2) return false;
+    return /\|/.test(lines[0]) && /^\s*\|?[\s:|-]*-{3,}/.test(lines[1]);
+  }
+
+  function tableElementFromRange(root, range) {
+    if (!root || !range) return null;
+    let node = range.commonAncestorContainer;
+    if (node?.nodeType === 3) node = node.parentElement;
+    const table = node?.closest?.("table");
+    if (!table || !root.contains(table)) return null;
+    return table;
+  }
+
+  function markdownFromPreviewTable(source, root, range) {
+    if (!root || !range || typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") {
+      return "";
+    }
+    const tableEl = tableElementFromRange(root, range);
+    if (!tableEl) return "";
+    const mdBlocks = splitMdBlocks(source);
+    const blocks = topLevelBlocks(root);
+    const host = typeof closestTopBlock === "function" ? closestTopBlock(tableEl, root) : null;
+    if (host && blocks.length && mdBlocks.length === blocks.length) {
+      const idx = blocks.indexOf(host);
+      if (idx >= 0) {
+        const md = mdBlocks[idx]?.text;
+        if (isPipeTableMarkdown(md)) return md;
+      }
+    }
+    const anchor = flattenTableCopyAnchor(tableEl);
+    if (!anchor) return "";
+    const hit = mdBlocks.find((b) => isPipeTableMarkdown(b.text) && tableMarkdownMatchesAnchor(b.text, anchor));
+    return hit?.text || "";
+  }
+
+  function flattenTableCopyAnchor(table) {
+    if (!table) return "";
+    return [...table.querySelectorAll("th, td")]
+      .map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .join("\t");
+  }
+
+  function tableMarkdownMatchesAnchor(md, anchor) {
+    const cells = String(anchor || "").split("\t").filter(Boolean);
+    if (!cells.length) return false;
+    const compact = String(md || "").replace(/\s+/g, " ");
+    return cells.every((cell) => compact.includes(cell.replace(/\s+/g, " ")));
+  }
+
   function markdownFromPreviewBlocks(source, root, range) {
     if (typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") return "";
     const blocks = topLevelBlocks(root);
@@ -149,6 +201,9 @@
   function markdownFromPreviewSelection(root, range, source) {
     if (!root || !range) return "";
     const clipped = typeof clipRangeToRoot === "function" ? clipRangeToRoot(root, range) : range;
+    const fromTable = markdownFromPreviewTable(source, root, clipped);
+    if (fromTable) return fromTable;
+
     const fromSource = markdownFromPreviewSource(source, root, clipped);
     const temp = document.createElement("div");
     try {

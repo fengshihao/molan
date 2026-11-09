@@ -1,4 +1,18 @@
-  /* --- preview-dblclick: 预览里双击段落进入编辑 --- */
+  /* --- preview-dblclick: 预览里双击选中段落；Alt+双击进入编辑 --- */
+  function selectPreviewBlock(block) {
+    if (!block) return;
+    const range = document.createRange();
+    try {
+      range.selectNodeContents(block);
+    } catch (_) {
+      return;
+    }
+    const sel = window.getSelection();
+    if (!sel) return;
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   function bindPreviewDblclickEdit(root, handlers) {
     if (!root || root.dataset.molanPreviewDblclick === "1") return;
     root.dataset.molanPreviewDblclick = "1";
@@ -23,10 +37,14 @@
       if (modeBtn && (modeBtn.hidden || modeBtn.disabled)) return;
       const block = closestTopBlock(e.target, root);
       if (!block) return;
-      const spot = captureReadingSpotFromBlock(block, e.clientY);
-      if (!spot) return;
       e.preventDefault();
       e.stopPropagation();
-      void handlers.enterEdit?.(spot);
+      if (e.altKey) {
+        const spot = captureReadingSpotFromBlock(block, e.clientY);
+        if (!spot) return;
+        void handlers.enterEdit?.(spot);
+        return;
+      }
+      selectPreviewBlock(block);
     });
   }

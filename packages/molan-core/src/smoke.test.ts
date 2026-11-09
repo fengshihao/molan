@@ -141,10 +141,12 @@ test("Cmd/Ctrl+E 点顶栏切换阅读和编辑", () => {
   assert.match(src, /molan-host-vscode/);
 });
 
-test("预览双击段落进入编辑", () => {
+test("预览双击选中段落，Alt+双击进入编辑", () => {
   const src = editorSrc();
   assert.match(src, /function bindPreviewDblclickEdit/);
+  assert.match(src, /function selectPreviewBlock/);
   assert.match(src, /function captureReadingSpotFromBlock/);
+  assert.match(src, /e\.altKey/);
   assert.match(src, /dblclick/);
 });
 
@@ -154,6 +156,7 @@ test("预览复制保留 Markdown 标记", () => {
   assert.match(src, /function markdownFromPreviewSelection/);
   assert.match(src, /function expandMarkdownSpan/);
   assert.match(src, /function markdownFromPreviewHtml/);
+  assert.match(src, /function markdownFromPreviewTable/);
   assert.match(src, /lute\.HTML2Md/);
   assert.match(src, /copySelection\(\)/);
   assert.match(src, /copy\(\) \{\s*return lastEditorApi\?\.copySelection/);

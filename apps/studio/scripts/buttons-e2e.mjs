@@ -554,6 +554,29 @@ async function main() {
       }));
     });
     await page.waitForFunction(() => {
+      if (!window.__molan.isPreview()) return false;
+      const sel = window.getSelection();
+      if (!sel?.rangeCount || sel.isCollapsed) return false;
+      return String(sel.toString() || "").includes("第二段正文");
+    }, { timeout: 8000 });
+    assert(true, "双击预览段落应选中该段");
+
+    await page.evaluate(() => {
+      const root = document.getElementById("molanPreviewBody");
+      const block = [...(root?.querySelectorAll("p") || [])].find((p) =>
+        (p.textContent || "").includes("第二段正文"),
+      );
+      if (!block) throw new Error("预览正文缺少第二段");
+      const rect = block.getBoundingClientRect();
+      block.dispatchEvent(new MouseEvent("dblclick", {
+        bubbles: true,
+        cancelable: true,
+        altKey: true,
+        clientX: rect.left + 12,
+        clientY: rect.top + 8,
+      }));
+    });
+    await page.waitForFunction(() => {
       if (window.__molan.isPreview()) return false;
       const sel = window.getSelection();
       if (!sel?.rangeCount) return false;
@@ -566,7 +589,7 @@ async function main() {
       }
       return false;
     }, { timeout: 20000 });
-    assert(true, "双击预览段落后光标应落在对应 IR 块");
+    assert(true, "Alt+双击预览段落后光标应落在对应 IR 块");
     await page.click("#modeBtn");
     await page.waitForFunction(() => window.__molan.isPreview() === true, { timeout: 15000 });
 
