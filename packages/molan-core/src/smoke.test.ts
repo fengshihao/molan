@@ -54,6 +54,16 @@ test("大纲按钮在顶栏标题左侧，不浮在纸面上", () => {
   assert.doesNotMatch(src, /dock\.style\.position = "absolute"/);
 });
 
+test("预览滚动时大纲高亮当前节", () => {
+  const src = editorSrc();
+  assert.match(src, /function previewingForOutlineSpy/);
+  assert.match(src, /function scheduleOutlineScrollSpy/);
+  assert.match(src, /function activePreviewHeadingIndex/);
+  assert.match(src, /is-reading/);
+  const css = readFileSync(join(root, "src", "molan.css"), "utf8");
+  assert.match(css, /li\.is-reading > span/);
+});
+
 test("大纲可用快捷键打开并用方向键跳转", () => {
   const src = editorSrc();
   assert.match(src, /function toggleOutlineHotkey/);

@@ -188,6 +188,8 @@
         previewSelection.decorate();
         armPreviewTasks(previewBody);
         scheduleOutlineRefresh();
+        attachOutlineScrollTargets();
+        scheduleOutlineScrollSpy();
       };
       if (spot && lastPreviewSource === sourceText && previewBody.childElementCount) {
         finishPreview();

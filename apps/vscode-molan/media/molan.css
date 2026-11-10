@@ -1700,6 +1700,13 @@
       color: var(--accent-deep);
       background: color-mix(in srgb, var(--accent) 18%, transparent);
     }
+    .editor-wrap > .vditor-outline li.is-reading > span {
+      color: var(--accent-deep);
+      background: color-mix(in srgb, var(--accent) 11%, transparent);
+    }
+    .editor-wrap > .vditor-outline li.is-reading.is-pick > span {
+      background: color-mix(in srgb, var(--accent) 20%, transparent);
+    }
 
     .reader-actions #saveBtn {
       overflow: hidden;

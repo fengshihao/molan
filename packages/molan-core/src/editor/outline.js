@@ -151,11 +151,15 @@
         return `<li data-level="${level}"><span data-target-id="lite-${i}">${escapeOutlineText(h.textContent)}</span></li>`;
       })
       .join("");
+    attachOutlineScrollTargets();
+    scheduleOutlineScrollSpy();
     return panel;
   }
 
   let outlineRefreshTimer = 0;
   let outlinePickIndex = -1;
+  let outlineReadingIndex = -1;
+  let outlineScrollSpyTimer = 0;
 
   function outlineItemSpans() {
     const panel = vditorOutlineEl();
@@ -178,6 +182,112 @@
     const li = items[outlinePickIndex]?.closest("li");
     li?.classList.add("is-pick");
     li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function previewHeadingsForOutline() {
+    const root = document.getElementById("molanPreviewBody") || document.querySelector(".molan-preview");
+    if (!root) return [];
+    return [...root.querySelectorAll("h1, h2, h3, h4, h5, h6")];
+  }
+
+  function previewScrollerForOutline() {
+    if (typeof readingScroller === "function") return readingScroller(true);
+    const root = document.getElementById("molanPreviewBody") || document.querySelector(".molan-preview");
+    if (!root) return null;
+    let node = root.parentElement;
+    while (node && node !== document.documentElement) {
+      const style = getComputedStyle(node);
+      const oy = style.overflowY;
+      if ((oy === "auto" || oy === "scroll" || oy === "overlay") && node.scrollHeight > node.clientHeight + 2) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function activePreviewHeadingIndex() {
+    const scroller = previewScrollerForOutline();
+    const heads = previewHeadingsForOutline();
+    if (!scroller || !heads.length) return -1;
+    const offset = Math.min(112, Math.max(56, scroller.clientHeight * 0.24));
+  const probe = scroller.scrollTop + offset;
+    let best = 0;
+    for (let i = 0; i < heads.length; i += 1) {
+      const el = heads[i];
+      let top = el.offsetTop;
+      if (el.offsetParent && el.offsetParent !== scroller) {
+        top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      }
+      if (top <= probe + 2) best = i;
+    }
+    return best;
+  }
+
+  function paintOutlineReading() {
+    const panel = vditorOutlineEl();
+    if (!panel) return;
+    const items = outlineItemSpans();
+    panel.querySelectorAll("li.is-reading").forEach((li) => li.classList.remove("is-reading"));
+    if (outlineReadingIndex < 0 || outlineReadingIndex >= items.length) return;
+    const li = items[outlineReadingIndex]?.closest("li");
+    li?.classList.add("is-reading");
+    if (outlineIsOpen()) li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function previewingForOutlineSpy() {
+    if (outlineCtx?.getPreviewing?.()) return true;
+    const body = document.getElementById("molanPreviewBody");
+    const host = document.getElementById("molanPreview");
+    if (!body?.childElementCount) return false;
+    if (!host) return true;
+    return getComputedStyle(host).display !== "none";
+  }
+
+  function flushOutlineScrollSpy() {
+    if (!previewingForOutlineSpy()) {
+      if (outlineReadingIndex !== -1) {
+        outlineReadingIndex = -1;
+        paintOutlineReading();
+      }
+      return;
+    }
+    const next = activePreviewHeadingIndex();
+    if (next === outlineReadingIndex) return;
+    outlineReadingIndex = next;
+    paintOutlineReading();
+  }
+
+  function scheduleOutlineScrollSpy() {
+    clearTimeout(outlineScrollSpyTimer);
+    outlineScrollSpyTimer = window.setTimeout(flushOutlineScrollSpy, 48);
+  }
+
+  const outlineScrollSpySeen = new WeakSet();
+
+  function attachOutlineScrollTargets() {
+    const nodes = [
+      document.getElementById("molanPreviewBody"),
+      typeof readingScroller === "function" ? readingScroller(true) : null,
+      typeof readingScroller === "function" ? readingScroller(false) : null,
+      document.querySelector(".vditor-ir"),
+      document.querySelector(".vditor-wysiwyg"),
+    ].filter(Boolean);
+    for (const node of nodes) {
+      if (outlineScrollSpySeen.has(node)) continue;
+      outlineScrollSpySeen.add(node);
+      node.addEventListener("scroll", () => {
+        if (!previewingForOutlineSpy()) return;
+        scheduleOutlineScrollSpy();
+      }, { passive: true });
+    }
+  }
+
+  function bindOutlineScrollSpy() {
+    if (bindOutlineScrollSpy.bound) return;
+    bindOutlineScrollSpy.bound = true;
+    attachOutlineScrollTargets();
+    window.addEventListener("resize", () => scheduleOutlineScrollSpy());
   }
 
   function activateOutlineItem(span) {
@@ -209,6 +319,7 @@
     if (outlineCtx?.getPreviewing?.()) {
       renderLiteOutline();
       relocateVditorOutline();
+      scheduleOutlineScrollSpy();
       return;
     }
     const inner = innerVditor(outlineCtx?.getVditor?.());
@@ -321,6 +432,8 @@
     } else if (shown) {
       shown.classList.add("is-in");
     }
+    attachOutlineScrollTargets();
+    flushOutlineScrollSpy();
   }
 
   function ensureEditorChrome(ctx) {
@@ -446,8 +559,11 @@
         e.preventDefault();
         e.stopPropagation();
         scrollToHeading(index);
+        window.setTimeout(scheduleOutlineScrollSpy, 420);
       }, true);
     }
+
+    bindOutlineScrollSpy();
 
     if (!ensureEditorChrome._bound) {
       ensureEditorChrome._bound = true;
