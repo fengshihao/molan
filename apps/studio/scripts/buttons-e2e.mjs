@@ -398,6 +398,35 @@ async function main() {
     });
     assert(!editorPreview.hasScale, `编辑预览不应 CSS scale，transform=${editorPreview.transform}`);
     assert(!editorPreview.hasFO && editorPreview.hasText, "编辑预览标签应变为 SVG text");
+    await page.click(".molan-mermaid-editor-zoom-in");
+    await page.click(".molan-mermaid-editor-zoom-in");
+    const zoomedW = await page.evaluate(() => {
+      return document.querySelector(".molan-mermaid-editor-preview svg")?.getBoundingClientRect().width || 0;
+    });
+    assert(zoomedW > 80, `流程图编辑预览放大后应有可见尺寸，实际 ${zoomedW}`);
+    await page.evaluate(() => {
+      const ta = document.querySelector(".molan-mermaid-editor-source");
+      if (!ta) return;
+      const next = String(ta.value).replace("开始", "开始·");
+      ta.value = next;
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.waitForFunction(
+      () => {
+        const svg = document.querySelector(".molan-mermaid-editor-preview svg");
+        const w = svg?.getBoundingClientRect().width || 0;
+        return w > 80;
+      },
+      { timeout: 10000 },
+    );
+    const afterEditW = await page.evaluate(() => {
+      return document.querySelector(".molan-mermaid-editor-preview svg")?.getBoundingClientRect().width || 0;
+    });
+    assert(
+      afterEditW >= zoomedW * 0.92,
+      `左侧改源码后预览缩放应保留，${zoomedW} → ${afterEditW}`,
+    );
+    assert(true, "流程图编辑改源码后预览缩放不闪回");
     await page.click(".molan-mermaid-editor-cancel");
     await page.waitForFunction(() => !document.getElementById("molanMermaidEditor"), { timeout: 4000 });
     assert(true, "关闭流程图编辑对话框");

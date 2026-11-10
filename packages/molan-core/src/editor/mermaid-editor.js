@@ -129,25 +129,30 @@
         placeSvgCanvas(canvas, rect, width, height, previewPanX, previewPanY);
       };
 
-      const resetPreviewView = () => {
+      const syncPreviewFitFromSvg = () => {
         const canvas = preview.querySelector(".molan-mermaid-editor-preview-canvas");
         const svg = canvas?.querySelector("svg");
+        if (!svg) {
+          previewFitW = 1;
+          previewFitH = 1;
+          applyPreviewTransform();
+          return;
+        }
+        const rect = preview.getBoundingClientRect();
+        const display = fitSvgToBox(svg, rect.width, rect.height, 24);
+        previewFitW = display.width;
+        previewFitH = display.height;
+        applyPreviewTransform();
+      };
+
+      const resetPreviewView = () => {
         previewScale = 1;
         previewPanX = 0;
         previewPanY = 0;
         previewDragging = false;
         previewDragOrigin = null;
         preview.classList.remove("is-dragging");
-        if (svg) {
-          const rect = preview.getBoundingClientRect();
-          const display = fitSvgToBox(svg, rect.width, rect.height, 24);
-          previewFitW = display.width;
-          previewFitH = display.height;
-        } else {
-          previewFitW = 1;
-          previewFitH = 1;
-        }
-        applyPreviewTransform();
+        syncPreviewFitFromSvg();
       };
 
       const setPreviewScale = (next, origin) => {
@@ -199,7 +204,7 @@
           uniquifySvgIds(liveSvg);
           vectorizeSvgForeignObjects(liveSvg);
           orthogonalizeFlowEdges(liveSvg);
-          resetPreviewView();
+          syncPreviewFitFromSvg();
         } catch (err) {
           if (seq !== previewSeq) return;
           showPreviewError(err);
