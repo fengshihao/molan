@@ -4896,7 +4896,6 @@
     .molan-mermaid-editor-preview svg {
       max-width: none;
       max-height: none;
-      height: auto;
       pointer-events: none;
       shape-rendering: geometricPrecision;
       text-rendering: geometricPrecision;

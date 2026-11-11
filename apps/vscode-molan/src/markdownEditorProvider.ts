@@ -402,7 +402,9 @@ export class MolanEditorProvider implements vscode.CustomEditorProvider<MolanDoc
     const vditorMethodJs = webview.asWebviewUri(vscode.Uri.joinPath(vditorRoot, "dist", "method.min.js"));
     const vditorLuteJs = webview.asWebviewUri(vscode.Uri.joinPath(vditorRoot, "dist", "js", "lute", "lute.min.js"));
     const vditorIconsJs = webview.asWebviewUri(vscode.Uri.joinPath(vditorRoot, "dist", "js", "icons", "ant.js"));
-    const editorJs = webview.asWebviewUri(vscode.Uri.joinPath(media, "molan-editor.js"));
+    const editorJs = webview.asWebviewUri(vscode.Uri.joinPath(media, "molan-editor.js").with({
+      query: "v=20261111c",
+    }));
     const bridgeJs = webview.asWebviewUri(vscode.Uri.joinPath(media, "vscode-bridge.js"));
     const vditorCdn = webview.asWebviewUri(vditorRoot).toString();
     const linkBase = `${webview.asWebviewUri(vscode.Uri.joinPath(document.uri, "..")).toString()}/`;

@@ -47,10 +47,10 @@
   function setSvgDisplaySize(svg, width, height) {
     svg.setAttribute("width", String(width));
     svg.setAttribute("height", String(height));
-    svg.style.width = `${width}px`;
-    svg.style.height = `${height}px`;
-    svg.style.maxWidth = "none";
-    svg.style.maxHeight = "none";
+    svg.style.setProperty("width", `${width}px`, "important");
+    svg.style.setProperty("height", `${height}px`, "important");
+    svg.style.setProperty("max-width", "none", "important");
+    svg.style.setProperty("max-height", "none", "important");
   }
 
   function computeSvgFitDisplay(natural, maxW, maxH, insetFactor = 0.94) {

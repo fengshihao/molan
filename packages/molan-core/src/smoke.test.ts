@@ -354,8 +354,10 @@ test("流程图编辑器预览只缩放不打开灯箱", () => {
   assert.match(src, /molan-mermaid-editor-zoom-in/);
   assert.match(src, /molan-mermaid-editor-zoom-out/);
   assert.match(src, /setPreviewScale/);
-  assert.match(src, /const syncPreviewFitFromSvg = \(\) =>/);
-  assert.match(src, /orthogonalizeFlowEdges\(liveSvg\);\s*syncPreviewFitFromSvg\(\)/);
+  assert.match(src, /const holdPreviewCamera = \(svg, snap\) =>/);
+  assert.match(src, /holdPreviewCamera\(liveSvg, camera\)/);
+  assert.match(src, /mermaidEditIsLocal/);
+  assert.match(src, /tryPatchPreviewLabels\(text\)/);
   assert.match(src, /lightboxEdit/);
   assert.match(src, /setOnEdit/);
   assert.doesNotMatch(src, /molan-mermaid-editor-copy/);

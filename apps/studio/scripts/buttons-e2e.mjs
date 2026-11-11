@@ -398,33 +398,112 @@ async function main() {
     });
     assert(!editorPreview.hasScale, `编辑预览不应 CSS scale，transform=${editorPreview.transform}`);
     assert(!editorPreview.hasFO && editorPreview.hasText, "编辑预览标签应变为 SVG text");
-    await page.click(".molan-mermaid-editor-zoom-in");
-    await page.click(".molan-mermaid-editor-zoom-in");
-    const zoomedW = await page.evaluate(() => {
-      return document.querySelector(".molan-mermaid-editor-preview svg")?.getBoundingClientRect().width || 0;
+    const wideFlow = [
+      "flowchart TD",
+      "  A[用户提交订单请求] --> B[订单服务校验参数]",
+      "  B --> C{库存是否充足?}",
+      "  C -->|库存不足| D[返回失败并提示补货]",
+      "  C -->|库存充足| E[锁定库存并生成预扣记录]",
+      "  E --> F[调用支付网关创建支付单]",
+      "  F --> G{支付是否成功?}",
+      "  G -->|失败| H[释放库存并通知用户]",
+      "  G -->|成功| I[通知仓储系统拣货发货]",
+      "  I --> J[发送订单完成通知给用户]",
+    ].join("\n");
+    await page.evaluate((src) => {
+      const ta = document.querySelector(".molan-mermaid-editor-source");
+      if (!ta) return;
+      ta.value = src;
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }, wideFlow);
+    await page.waitForFunction(
+      () => (document.querySelector(".molan-mermaid-editor-preview svg")?.textContent || "").includes("订单服务校验参数"),
+      { timeout: 10000 },
+    );
+    await sleep(200);
+    const beforeNodes = await page.evaluate(() => {
+      const root = document.querySelector(".molan-mermaid-editor-preview")?.getBoundingClientRect();
+      const nodes = [];
+      document.querySelectorAll(".molan-mermaid-editor-preview g.node").forEach((el) => {
+        const text = (el.textContent || "").replace(/\\s+/g, " ").trim();
+        const box = el.getBoundingClientRect();
+        if (!text || !root || box.height < 2) return;
+        nodes.push({
+          text,
+          h: box.height,
+          dx: box.left + box.width / 2 - (root.left + root.width / 2),
+          dy: box.top + box.height / 2 - (root.top + root.height / 2),
+        });
+      });
+      return nodes;
     });
-    assert(zoomedW > 80, `流程图编辑预览放大后应有可见尺寸，实际 ${zoomedW}`);
+    const stableBefore = beforeNodes.find((node) => node.text.includes("订单服务校验参数"));
+    assert(stableBefore && stableBefore.h > 8, `应能量到未改节点，实际 ${JSON.stringify(beforeNodes.map((n) => n.text))}`);
     await page.evaluate(() => {
       const ta = document.querySelector(".molan-mermaid-editor-source");
       if (!ta) return;
-      const next = String(ta.value).replace("开始", "开始·");
-      ta.value = next;
+      ta.value = String(ta.value).replace("用户提交订单请求", "用户提交订单请求啊");
       ta.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await page.waitForFunction(
-      () => {
-        const svg = document.querySelector(".molan-mermaid-editor-preview svg");
-        const w = svg?.getBoundingClientRect().width || 0;
-        return w > 80;
-      },
+      () => (document.querySelector(".molan-mermaid-editor-preview svg")?.textContent || "").includes("用户提交订单请求啊"),
       { timeout: 10000 },
     );
-    const afterEditW = await page.evaluate(() => {
-      return document.querySelector(".molan-mermaid-editor-preview svg")?.getBoundingClientRect().width || 0;
+    await sleep(200);
+    const afterNodes = await page.evaluate(() => {
+      const root = document.querySelector(".molan-mermaid-editor-preview")?.getBoundingClientRect();
+      const nodes = [];
+      document.querySelectorAll(".molan-mermaid-editor-preview g.node").forEach((el) => {
+        const text = (el.textContent || "").replace(/\\s+/g, " ").trim();
+        const box = el.getBoundingClientRect();
+        if (!text || !root || box.height < 2) return;
+        nodes.push({
+          text,
+          h: box.height,
+          dx: box.left + box.width / 2 - (root.left + root.width / 2),
+          dy: box.top + box.height / 2 - (root.top + root.height / 2),
+        });
+      });
+      return nodes;
+    });
+    const stableAfter = afterNodes.find((node) => node.text.includes("订单服务校验参数"));
+    assert(stableAfter, "改一个字后未改节点应还在");
+    assert(
+      stableAfter.h >= stableBefore.h * 0.88 && stableAfter.h <= stableBefore.h * 1.12,
+      `小改后未改节点像素高度应大致不变，${stableBefore.h} → ${stableAfter.h}`,
+    );
+    assert(
+      Math.hypot(stableAfter.dx - stableBefore.dx, stableAfter.dy - stableBefore.dy) < 72,
+      `小改后未改节点位置应留在原处，偏移 ${Math.hypot(stableAfter.dx - stableBefore.dx, stableAfter.dy - stableBefore.dy).toFixed(1)}`,
+    );
+    assert(true, "流程图小改后预览缩放和焦点保持");
+    await page.click(".molan-mermaid-editor-zoom-in");
+    await page.click(".molan-mermaid-editor-zoom-in");
+    const zoomedH = await page.evaluate(() => {
+      const hit = [...document.querySelectorAll(".molan-mermaid-editor-preview g.node")]
+        .find((el) => (el.textContent || "").includes("订单服务校验参数"));
+      return hit?.getBoundingClientRect().height || 0;
+    });
+    assert(zoomedH > 8, `流程图编辑预览放大后节点应更大，实际 ${zoomedH}`);
+    await page.evaluate(() => {
+      const ta = document.querySelector(".molan-mermaid-editor-source");
+      if (!ta) return;
+      ta.value = String(ta.value).replace("发送订单完成通知给用户", "发送订单完成通知给用户。");
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await page.waitForFunction(
+      () => (document.querySelector(".molan-mermaid-editor-preview svg")?.textContent || "").includes("发送订单完成通知给用户。"),
+      { timeout: 10000 },
+    );
+    await sleep(200);
+    const afterZoomH = await page.evaluate(() => {
+      const hit = [...document.querySelectorAll(".molan-mermaid-editor-preview g.node")]
+        .find((el) => (el.textContent || "").includes("订单服务校验参数"));
+      return hit?.getBoundingClientRect().height || 0;
     });
     assert(
-      afterEditW >= zoomedW * 0.92,
-      `左侧改源码后预览缩放应保留，${zoomedW} → ${afterEditW}`,
+      afterZoomH >= zoomedH * 0.88 && afterZoomH <= zoomedH * 1.12,
+      `放大后改源码，节点高度应保留，${zoomedH} → ${afterZoomH}`,
     );
     assert(true, "流程图编辑改源码后预览缩放不闪回");
     await page.click(".molan-mermaid-editor-cancel");

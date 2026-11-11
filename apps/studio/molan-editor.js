@@ -691,10 +691,10 @@
   function setSvgDisplaySize(svg, width, height) {
     svg.setAttribute("width", String(width));
     svg.setAttribute("height", String(height));
-    svg.style.width = `${width}px`;
-    svg.style.height = `${height}px`;
-    svg.style.maxWidth = "none";
-    svg.style.maxHeight = "none";
+    svg.style.setProperty("width", `${width}px`, "important");
+    svg.style.setProperty("height", `${height}px`, "important");
+    svg.style.setProperty("max-width", "none", "important");
+    svg.style.setProperty("max-height", "none", "important");
   }
 
   function computeSvgFitDisplay(natural, maxW, maxH, insetFactor = 0.94) {
@@ -6458,6 +6458,8 @@
       let previewPanY = 0;
       let previewDragging = false;
       let previewDragOrigin = null;
+      let previewViewEstablished = false;
+      let lastPreviewSource = "";
 
       const finish = (applied) => {
         if (settled) return;
@@ -6479,20 +6481,138 @@
         placeSvgCanvas(canvas, rect, width, height, previewPanX, previewPanY);
       };
 
-      const syncPreviewFitFromSvg = () => {
-        const canvas = preview.querySelector(".molan-mermaid-editor-preview-canvas");
-        const svg = canvas?.querySelector("svg");
+      const readSvgFrame = (svg) => {
+        const vb = svg?.viewBox?.baseVal;
+        if (vb && vb.width > 0 && vb.height > 0) {
+          return { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+        }
+        const natural = svgNaturalSize(svg);
+        return { x: 0, y: 0, width: Math.max(1, natural.width), height: Math.max(1, natural.height) };
+      };
+
+      const mermaidEditIsLocal = (prev, next) => {
+        const a = String(prev || "").trim();
+        const b = String(next || "").trim();
+        if (!a || !b) return false;
+        if (a === b) return true;
+        const longer = Math.max(a.length, b.length, 1);
+        if (Math.abs(a.length - b.length) / longer > 0.18) return false;
+        const lineDelta = Math.abs(a.split("\n").length - b.split("\n").length);
+        return lineDelta <= 2;
+      };
+
+      const textAffinity = (a, b) => {
+        if (!a || !b) return 0;
+        if (a === b) return 1;
+        const short = a.length <= b.length ? a : b;
+        const long = a.length <= b.length ? b : a;
+        if (long.includes(short)) return 0.75 + 0.2 * (short.length / long.length);
+        return 0;
+      };
+
+      const previewNodeMetrics = () => {
+        const root = preview.getBoundingClientRect();
+        const cx = root.left + root.width / 2;
+        const cy = root.top + root.height / 2;
+        const nodes = [];
+        preview.querySelectorAll("g.node, g.actor").forEach((el) => {
+          const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+          if (!text) return;
+          const box = el.getBoundingClientRect();
+          if (box.width < 1 || box.height < 1) return;
+          nodes.push({
+            text,
+            dx: box.left + box.width / 2 - cx,
+            dy: box.top + box.height / 2 - cy,
+            h: box.height,
+          });
+        });
+        return nodes;
+      };
+
+      const capturePreviewCamera = () => {
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        if (!previewViewEstablished || !svg || preview.classList.contains("is-error")) return null;
+        const frame = readSvgFrame(svg);
+        const nodes = previewNodeMetrics();
+        let focus = null;
+        for (const node of nodes) {
+          const dist = node.dx * node.dx + node.dy * node.dy;
+          if (!focus || dist < focus.dist) focus = { ...node, dist };
+        }
+        return {
+          frame,
+          px: (previewFitW * previewScale) / frame.width,
+          scale: previewScale,
+          panX: previewPanX,
+          panY: previewPanY,
+          nodes,
+          focus,
+        };
+      };
+
+      const holdPreviewCamera = (svg, snap) => {
         if (!svg) {
           previewFitW = 1;
           previewFitH = 1;
           applyPreviewTransform();
           return;
         }
-        const rect = preview.getBoundingClientRect();
-        const display = fitSvgToBox(svg, rect.width, rect.height, 24);
-        previewFitW = display.width;
-        previewFitH = display.height;
-        applyPreviewTransform();
+        if (!snap) {
+          const rect = preview.getBoundingClientRect();
+          const display = fitSvgToBox(svg, rect.width, rect.height, 24);
+          previewFitW = display.width;
+          previewFitH = display.height;
+          applyPreviewTransform();
+          return;
+        }
+        const frame = readSvgFrame(svg);
+        ensureSvgViewBox(svg, { width: frame.width, height: frame.height });
+        storeSvgNaturalSize(svg, { width: frame.width, height: frame.height });
+        let px = snap.px > 0 ? snap.px : (snap.frame.width > 0 ? 1 / snap.frame.width : 1);
+        const place = () => {
+          previewScale = snap.scale;
+          previewFitW = Math.max(1, (frame.width * px) / previewScale);
+          previewFitH = Math.max(1, (frame.height * px) / previewScale);
+          applyPreviewTransform();
+        };
+        previewPanX = snap.panX;
+        previewPanY = snap.panY;
+        place();
+        void preview.offsetHeight;
+        const now = previewNodeMetrics();
+        const ratios = [];
+        for (const prev of snap.nodes) {
+          const next = now.find((node) => node.text === prev.text);
+          if (!next || prev.h < 4) continue;
+          ratios.push(prev.h / next.h);
+        }
+        if (ratios.length >= 2) {
+          ratios.sort((a, b) => a - b);
+          const mid = ratios[Math.floor(ratios.length / 2)];
+          const spread = ratios[ratios.length - 1] - ratios[0];
+          if (spread < 0.12 && Math.abs(mid - 1) > 0.08) {
+            px *= mid;
+            place();
+            void preview.offsetHeight;
+          }
+        }
+        const fresh = previewNodeMetrics();
+        let target = null;
+        if (snap.focus) {
+          for (const node of fresh) {
+            const score = textAffinity(snap.focus.text, node.text);
+            if (score < 0.72) continue;
+            const dist = Math.hypot(node.dx - snap.focus.dx, node.dy - snap.focus.dy);
+            const rank = score * 10000 - dist;
+            if (!target || rank > target.rank) target = { node, rank };
+          }
+        }
+        if (target) {
+          previewPanX += snap.focus.dx - target.node.dx;
+          previewPanY += snap.focus.dy - target.node.dy;
+          applyPreviewTransform();
+        }
       };
 
       const resetPreviewView = () => {
@@ -6502,7 +6622,8 @@
         previewDragging = false;
         previewDragOrigin = null;
         preview.classList.remove("is-dragging");
-        syncPreviewFitFromSvg();
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        holdPreviewCamera(svg, null);
       };
 
       const setPreviewScale = (next, origin) => {
@@ -6530,18 +6651,83 @@
         }[c]))}</pre>`;
       };
 
+      const extractBracketLabels = (src) => {
+        const labels = [];
+        const re = /\[([^\]\n]*)\]|\{([^}\n]*)\}|\(([^)\n]*)\)|\|([^|\n]*)\|/g;
+        let match = re.exec(src);
+        while (match) {
+          labels.push(String(match[1] ?? match[2] ?? match[3] ?? match[4] ?? "").trim());
+          match = re.exec(src);
+        }
+        return labels;
+      };
+
+      const labelSkeleton = (src) => String(src || "")
+        .replace(/\[[^\]\n]*\]/g, "[]")
+        .replace(/\{[^}\n]*\}/g, "{}")
+        .replace(/\([^)\n]*\)/g, "()")
+        .replace(/\|[^|\n]*\|/g, "||");
+
+      const tryPatchPreviewLabels = (next) => {
+        const prev = lastPreviewSource;
+        if (!prev || !previewViewEstablished || preview.classList.contains("is-error")) return false;
+        if (labelSkeleton(prev) !== labelSkeleton(next)) return false;
+        const oldLabels = extractBracketLabels(prev);
+        const newLabels = extractBracketLabels(next);
+        if (!oldLabels.length || oldLabels.length !== newLabels.length) return false;
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        if (!svg) return false;
+        const changes = [];
+        for (let i = 0; i < oldLabels.length; i += 1) {
+          if (oldLabels[i] !== newLabels[i]) changes.push([oldLabels[i], newLabels[i]]);
+        }
+        if (!changes.length) {
+          lastPreviewSource = next;
+          return true;
+        }
+        const used = new Set();
+        for (const [from, to] of changes) {
+          let hit = false;
+          svg.querySelectorAll("g.node, g.edgeLabel").forEach((el) => {
+            if (hit || used.has(el)) return;
+            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+            if (text !== from) return;
+            const textEl = el.querySelector("text");
+            if (!textEl) return;
+            const tspans = [...textEl.querySelectorAll("tspan")];
+            if (tspans.length > 1) return;
+            if (tspans.length === 1) tspans[0].textContent = to;
+            else textEl.textContent = to;
+            used.add(el);
+            hit = true;
+          });
+          if (!hit) return false;
+        }
+        lastPreviewSource = next;
+        return true;
+      };
+
       const renderPreview = async () => {
         const seq = ++previewSeq;
         const text = textarea.value.trim();
         if (!text) {
           preview.classList.remove("is-error");
           preview.innerHTML = "";
+          previewViewEstablished = false;
           resetPreviewView();
           return;
         }
         if (!global.mermaid || typeof global.mermaid.render !== "function") {
           showPreviewError(t("diagramNotReady"));
           return;
+        }
+        if (tryPatchPreviewLabels(text)) return;
+        const hold = mermaidEditIsLocal(lastPreviewSource, text);
+        const camera = hold ? capturePreviewCamera() : null;
+        if (!camera) {
+          previewScale = 1;
+          previewPanX = 0;
+          previewPanY = 0;
         }
         try {
           applyMermaidTheme();
@@ -6554,7 +6740,9 @@
           uniquifySvgIds(liveSvg);
           vectorizeSvgForeignObjects(liveSvg);
           orthogonalizeFlowEdges(liveSvg);
-          syncPreviewFitFromSvg();
+          holdPreviewCamera(liveSvg, camera);
+          previewViewEstablished = true;
+          lastPreviewSource = text;
         } catch (err) {
           if (seq !== previewSeq) return;
           showPreviewError(err);
