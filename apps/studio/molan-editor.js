@@ -97,6 +97,8 @@
       copyImageFail: "复制图片失败",
       cannotEdit: "无法进入编辑",
       enteredEdit: "已进入源码编辑，点空白处退出",
+      gestureHint: "双击选中段落 · {alt}+双击或 {mod}E 编辑",
+      gestureHintClose: "知道了",
       editSource: "编辑源码",
       viewDiagram: "观看流程图",
       copyCode: "复制代码",
@@ -8637,7 +8639,11 @@
   }
 
   function bindPreviewDblclickEdit(root, handlers) {
-    if (!root || root.dataset.molanPreviewDblclick === "1") return;
+    if (!root) return;
+    if (root.dataset.molanPreviewDblclick === "1") {
+      ensureGestureHint();
+      return;
+    }
     root.dataset.molanPreviewDblclick = "1";
 
     const blocked = [
@@ -8670,6 +8676,51 @@
       }
       selectPreviewBlock(block);
     });
+    ensureGestureHint();
+  }
+
+  const GESTURE_HINT_KEY = "molan-gesture-hint";
+
+  function gestureHintDismissed() {
+    try { return localStorage.getItem(GESTURE_HINT_KEY) === "off"; }
+    catch (_) { return false; }
+  }
+
+  function dismissGestureHint() {
+    try { localStorage.setItem(GESTURE_HINT_KEY, "off"); }
+    catch (_) { /* ignore */ }
+    document.getElementById("molanGestureHint")?.remove();
+  }
+
+  function ensureGestureHint() {
+    const preview = document.getElementById("molanPreview") || document.querySelector(".molan-preview");
+    if (!preview) return;
+    const modeBtn = document.getElementById("modeBtn");
+    const canEdit = !document.body.classList.contains("is-readonly")
+      && !(modeBtn && (modeBtn.hidden || modeBtn.disabled));
+    if (!canEdit || gestureHintDismissed()) {
+      document.getElementById("molanGestureHint")?.remove();
+      return;
+    }
+    let bar = document.getElementById("molanGestureHint");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "molanGestureHint";
+      bar.className = "molan-gesture-hint";
+      bar.setAttribute("role", "note");
+      bar.innerHTML = `<p></p><button type="button" class="molan-gesture-hint__close"></button>`;
+      bar.querySelector("button").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissGestureHint();
+      });
+      preview.insertBefore(bar, preview.firstChild);
+    }
+    const alt = isApplePlatform() ? "Option" : "Alt";
+    bar.querySelector("p").textContent = t("gestureHint", { alt, mod: primaryModPrefix() });
+    const closeBtn = bar.querySelector("button");
+    closeBtn.textContent = t("gestureHintClose");
+    closeBtn.setAttribute("aria-label", t("gestureHintClose"));
   }
 
   /* --- paste-image: 粘贴剪贴板截图，交给宿主落盘并插入相对路径 --- */

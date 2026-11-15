@@ -229,6 +229,11 @@ async function main() {
     await sleep(400);
 
     assert(await page.evaluate(() => window.__molan.isPreview()) === true, "默认预览模式");
+    const gestureHint = await page.evaluate(() => document.getElementById("molanGestureHint")?.innerText || "");
+    assert(/双击选中段落/.test(gestureHint) && /编辑/.test(gestureHint), `阅读手势提示应出现在纸面，实际「${gestureHint}」`);
+    await page.click("#molanGestureHint .molan-gesture-hint__close");
+    await page.waitForFunction(() => !document.getElementById("molanGestureHint"));
+    assert(await page.evaluate(() => localStorage.getItem("molan-gesture-hint")) === "off", "收起阅读手势提示后应记住");
 
     const fallbackCopy = await page.evaluate(async () => {
       const orig = navigator.clipboard.writeText.bind(navigator.clipboard);

@@ -3037,6 +3037,37 @@
       user-select: text;
     }
 
+    .molan-gesture-hint {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 0;
+      padding: 7px 22px 8px;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .molan-gesture-hint p {
+      margin: 0;
+    }
+
+    .molan-gesture-hint__close {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .molan-gesture-hint__close:hover {
+      color: var(--ink);
+    }
+
     .editor-wrap.is-lite-preview .molan-preview {
       display: flex;
     }
@@ -5075,6 +5106,7 @@
       .status-bar,
       .welcome,
       .toast,
+      .molan-gesture-hint,
       .lightbox,
       .molan-find-bar,
       .molan-format-bar,

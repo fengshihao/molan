@@ -10,6 +10,8 @@
       copyImageFail: "复制图片失败",
       cannotEdit: "无法进入编辑",
       enteredEdit: "已进入源码编辑，点空白处退出",
+      gestureHint: "双击选中段落 · {alt}+双击或 {mod}E 编辑",
+      gestureHintClose: "知道了",
       editSource: "编辑源码",
       viewDiagram: "观看流程图",
       copyCode: "复制代码",

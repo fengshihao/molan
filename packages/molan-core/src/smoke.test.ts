@@ -158,6 +158,9 @@ test("预览双击选中段落，Alt+双击进入编辑", () => {
   assert.match(src, /function captureReadingSpotFromBlock/);
   assert.match(src, /e\.altKey/);
   assert.match(src, /dblclick/);
+  assert.match(src, /function ensureGestureHint/);
+  assert.match(src, /molan-gesture-hint/);
+  assert.match(src, /molan-gesture-hint === "off"|GESTURE_HINT_KEY/);
 });
 
 test("预览复制保留 Markdown 标记", () => {

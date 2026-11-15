@@ -14,7 +14,11 @@
   }
 
   function bindPreviewDblclickEdit(root, handlers) {
-    if (!root || root.dataset.molanPreviewDblclick === "1") return;
+    if (!root) return;
+    if (root.dataset.molanPreviewDblclick === "1") {
+      ensureGestureHint();
+      return;
+    }
     root.dataset.molanPreviewDblclick = "1";
 
     const blocked = [
@@ -47,4 +51,49 @@
       }
       selectPreviewBlock(block);
     });
+    ensureGestureHint();
+  }
+
+  const GESTURE_HINT_KEY = "molan-gesture-hint";
+
+  function gestureHintDismissed() {
+    try { return localStorage.getItem(GESTURE_HINT_KEY) === "off"; }
+    catch (_) { return false; }
+  }
+
+  function dismissGestureHint() {
+    try { localStorage.setItem(GESTURE_HINT_KEY, "off"); }
+    catch (_) { /* ignore */ }
+    document.getElementById("molanGestureHint")?.remove();
+  }
+
+  function ensureGestureHint() {
+    const preview = document.getElementById("molanPreview") || document.querySelector(".molan-preview");
+    if (!preview) return;
+    const modeBtn = document.getElementById("modeBtn");
+    const canEdit = !document.body.classList.contains("is-readonly")
+      && !(modeBtn && (modeBtn.hidden || modeBtn.disabled));
+    if (!canEdit || gestureHintDismissed()) {
+      document.getElementById("molanGestureHint")?.remove();
+      return;
+    }
+    let bar = document.getElementById("molanGestureHint");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "molanGestureHint";
+      bar.className = "molan-gesture-hint";
+      bar.setAttribute("role", "note");
+      bar.innerHTML = `<p></p><button type="button" class="molan-gesture-hint__close"></button>`;
+      bar.querySelector("button").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissGestureHint();
+      });
+      preview.insertBefore(bar, preview.firstChild);
+    }
+    const alt = isApplePlatform() ? "Option" : "Alt";
+    bar.querySelector("p").textContent = t("gestureHint", { alt, mod: primaryModPrefix() });
+    const closeBtn = bar.querySelector("button");
+    closeBtn.textContent = t("gestureHintClose");
+    closeBtn.setAttribute("aria-label", t("gestureHintClose"));
   }
