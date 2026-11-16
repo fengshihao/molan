@@ -9144,9 +9144,190 @@
     return mdBlocks.slice(first, last + 1).map((b) => b.text).join("\n\n");
   }
 
+  function normalizeCodeText(text) {
+    return String(text || "").replace(/\u200b/g, "").replace(/\r\n/g, "\n").replace(/\n+$/, "");
+  }
+
+  function codeTextKey(text) {
+    return normalizeCodeText(text).replace(/^\n/, "");
+  }
+
+  function parseFenceBlock(text) {
+    const lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+    if (lines.length < 2) return null;
+    const open = lines[0].match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (!open) return null;
+    const mark = open[1][0];
+    const len = open[1].length;
+    let closeAt = lines.length;
+    for (let i = 1; i < lines.length; i += 1) {
+      const found = lines[i].match(/^ {0,3}(`{3,}|~{3,})\s*$/);
+      if (found && found[1][0] === mark && found[1].length >= len) {
+        closeAt = i;
+        break;
+      }
+    }
+    if (closeAt >= lines.length) return null;
+    const info = String(open[2] || "").trim();
+    const token = info.split(/\s+/)[0] || "";
+    const lang = token.split(String.fromCharCode(123))[0].replace(/,$/, "");
+    return {
+      lang,
+      body: lines.slice(1, closeAt).join("\n"),
+      raw: lines.slice(0, closeAt + 1).join("\n"),
+    };
+  }
+
+  function canonicalCodeLang(lang) {
+    const key = String(lang || "").trim().toLowerCase();
+    const alias = {
+      js: "javascript",
+      javascript: "javascript",
+      jsx: "javascript",
+      ts: "typescript",
+      typescript: "typescript",
+      tsx: "typescript",
+      py: "python",
+      python: "python",
+      sh: "bash",
+      shell: "bash",
+      bash: "bash",
+      zsh: "bash",
+      yml: "yaml",
+      yaml: "yaml",
+      md: "markdown",
+      markdown: "markdown",
+      html: "xml",
+      svg: "xml",
+      xml: "xml",
+    };
+    return alias[key] || key;
+  }
+
+  function fenceMarkdown(lang, body) {
+    const info = String(lang || "").trim().split(/\s+/)[0] || "";
+    const safe = /^[A-Za-z0-9_+#.-]*$/.test(info) ? info : "";
+    const text = codeTextKey(body);
+    let fence = "```";
+    while (text.includes(fence) || safe.includes(fence)) fence += "`";
+    return `${fence}${safe}\n${text}\n${fence}`;
+  }
+
+  function findSourceFence(source, codeNorm, langHint) {
+    if (!codeNorm || typeof splitMdBlocks !== "function") return null;
+    const hits = [];
+    for (const block of splitMdBlocks(source)) {
+      const fence = parseFenceBlock(block.text);
+      if (!fence || codeTextKey(fence.body) !== codeNorm) continue;
+      hits.push(fence);
+    }
+    if (!hits.length) return null;
+    if (hits.length === 1) return hits[0];
+    const hint = canonicalCodeLang(langHint);
+    return hits.find((fence) => canonicalCodeLang(fence.lang) === hint) || hits[0];
+  }
+
+  function fencedMarkdownForCodeSelection(source, selected, codeText, langHint) {
+    const selectedKey = codeTextKey(selected);
+    if (!selectedKey) return "";
+    const fence = findSourceFence(source, codeTextKey(codeText), langHint);
+    if (fence && selectedKey === codeTextKey(fence.body)) return fence.raw;
+    const domLang = String(langHint || "").trim().toLowerCase();
+    const lang = fence
+      ? fence.lang
+      : (domLang === "plaintext" || domLang === "undefined" ? "" : langHint);
+    return fenceMarkdown(lang, selectedKey);
+  }
+
+  function closestPre(node) {
+    const el = node?.nodeType === 1 ? node : node?.parentElement;
+    if (!el) return null;
+    if (el.tagName === "PRE") return el;
+    return el.closest?.("pre") || null;
+  }
+
+  function preFromBoundary(container, offset, isStart) {
+    if (!container) return null;
+    if (container.nodeType === 3) return closestPre(container);
+    if (container.nodeType !== 1) return null;
+    const index = isStart ? offset : offset - 1;
+    const child = index >= 0 ? container.childNodes[index] : null;
+    if (child) {
+      const fromChild = closestPre(child);
+      if (fromChild) return fromChild;
+    }
+    return closestPre(container);
+  }
+
+  function clipRangeToElement(el, range) {
+    if (!el || !range) return null;
+    const clipped = range.cloneRange();
+    const bound = document.createRange();
+    bound.selectNodeContents(el);
+    try {
+      if (clipped.compareBoundaryPoints(Range.START_TO_START, bound) < 0) {
+        clipped.setStart(bound.startContainer, bound.startOffset);
+      }
+      if (clipped.compareBoundaryPoints(Range.END_TO_END, bound) > 0) {
+        clipped.setEnd(bound.endContainer, bound.endOffset);
+      }
+    } catch (_) {
+      return null;
+    }
+    if (clipped.collapsed) return null;
+    return clipped;
+  }
+
+  function codeLanguage(pre, code) {
+    const names = `${code?.className || ""} ${pre?.className || ""}`.split(/\s+/);
+    for (const name of names) {
+      const found = /^(?:language|lang)-([A-Za-z0-9_+-]+)$/.exec(name);
+      if (!found) continue;
+      const lang = found[1].toLowerCase();
+      if (!lang || lang === "undefined" || lang === "plaintext" || lang === "hljs") continue;
+      return found[1];
+    }
+    return "";
+  }
+
+  function skipPreviewCodePre(pre) {
+    if (!pre || !pre.querySelector?.("code")) return true;
+    if (pre.classList?.contains("vditor-ir__marker--pre")) return true;
+    if (pre.closest?.(".vditor-ir__marker--pre, .language-mermaid, .molan-mermaid-shell")) return true;
+    const lang = codeLanguage(pre, pre.querySelector("code")).toLowerCase();
+    if (lang === "mermaid" || lang === "math" || lang === "katex") return true;
+    return !!pre.querySelector(".language-mermaid, .language-math, .katex, .katex-display");
+  }
+
+  function codeBodyText(code) {
+    if (!code) return "";
+    const clone = code.cloneNode(true);
+    clone.querySelectorAll(".vditor-copy, button, .hljs-ln-numbers").forEach((el) => el.remove());
+    return clone.textContent || "";
+  }
+
+  function markdownFromPreviewCode(source, root, range) {
+    if (!root || !range || range.collapsed) return "";
+    const startPre = preFromBoundary(range.startContainer, range.startOffset, true);
+    const endPre = preFromBoundary(range.endContainer, range.endOffset, false);
+    if (!startPre || startPre !== endPre || !root.contains(startPre) || skipPreviewCodePre(startPre)) return "";
+    const code = startPre.querySelector(":scope > code") || startPre.querySelector("code");
+    if (!code) return "";
+    const clipped = clipRangeToElement(code, range);
+    if (!clipped) return "";
+    return fencedMarkdownForCodeSelection(
+      source,
+      clipped.toString(),
+      codeBodyText(code),
+      codeLanguage(startPre, code),
+    );
+  }
+
   function markdownFromPreviewSelection(root, range, source) {
     if (!root || !range) return "";
     const clipped = typeof clipRangeToRoot === "function" ? clipRangeToRoot(root, range) : range;
+    const fromCode = markdownFromPreviewCode(source, root, clipped);
+    if (fromCode) return fromCode;
     const fromTable = markdownFromPreviewTable(source, root, clipped);
     if (fromTable) return fromTable;
 

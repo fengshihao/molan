@@ -167,6 +167,106 @@ async function main() {
     assert(!media.videoFalse, "clip-to-webm 不会变成视频播放器");
 
     await page.evaluate(async () => {
+      await window.__molan.setValue([
+        "用 `molan` 打开。",
+        "",
+        "```js",
+        "const molan = 1;",
+        "console.log(molan);",
+        "```",
+        "",
+        "段落后面。",
+      ].join("\n"), true);
+    });
+    await page.waitForFunction(() => {
+      const code = document.querySelector("#molanPreviewBody pre code");
+      return (code?.textContent || "").includes("console.log(molan)");
+    }, { timeout: 15000 });
+    const codeCopy = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      window.__fenceCopies = [];
+      window.__molanHostCopyText = (text) => { window.__fenceCopies.push(String(text ?? "")); };
+      const copyNow = () => {
+        const before = window.__fenceCopies.length;
+        document.dispatchEvent(new ClipboardEvent("copy", { bubbles: true, cancelable: true }));
+        return window.__fenceCopies.length > before ? window.__fenceCopies[window.__fenceCopies.length - 1] : "";
+      };
+      const selectRange = (range) => {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      };
+      const rangeForNeedle = (rootNode, needle) => {
+        const full = rootNode.textContent || "";
+        const at = full.indexOf(needle);
+        if (at < 0) return null;
+        const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT);
+        let seen = 0;
+        let startNode = null;
+        let startOffset = 0;
+        let endNode = null;
+        let endOffset = 0;
+        const endAt = at + needle.length;
+        let node = walker.nextNode();
+        while (node) {
+          const text = node.textContent || "";
+          const next = seen + text.length;
+          if (!startNode && at >= seen && at <= next) {
+            startNode = node;
+            startOffset = at - seen;
+          }
+          if (startNode && endAt >= seen && endAt <= next) {
+            endNode = node;
+            endOffset = endAt - seen;
+            break;
+          }
+          seen = next;
+          node = walker.nextNode();
+        }
+        if (!startNode || !endNode) return null;
+        const range = document.createRange();
+        range.setStart(startNode, startOffset);
+        range.setEnd(endNode, endOffset);
+        return range;
+      };
+      const root = document.getElementById("molanPreviewBody");
+      const code = root.querySelector("pre code");
+      const whole = document.createRange();
+      whole.selectNodeContents(code);
+      selectRange(whole);
+      const full = copyNow();
+      await wait(120);
+      selectRange(rangeForNeedle(code, "console.log"));
+      const partial = copyNow();
+      await wait(120);
+      const inlineCode = [...root.querySelectorAll("code")].find((el) => !el.closest("pre") && (el.textContent || "").includes("molan"));
+      const inlineRange = document.createRange();
+      inlineRange.selectNodeContents(inlineCode);
+      selectRange(inlineRange);
+      const inline = copyNow();
+      await wait(120);
+      selectRange(rangeForNeedle(root, "段落后面"));
+      const prose = copyNow();
+      return { full, partial, inline, prose, lang: code.className };
+    });
+    assert(
+      codeCopy.full === "```js\nconst molan = 1;\nconsole.log(molan);\n```",
+      `拖选整段代码应带 js 围栏，实际「${codeCopy.full}」 class=${codeCopy.lang}`,
+    );
+    assert(
+      codeCopy.partial === "```js\nconsole.log\n```",
+      `拖选代码片段应带同一语言围栏，实际「${codeCopy.partial}」`,
+    );
+    assert(
+      codeCopy.inline === "`molan`" && !codeCopy.inline.startsWith("```"),
+      `行内代码仍是短反引号，实际「${codeCopy.inline}」`,
+    );
+    assert(
+      codeCopy.prose === "" || codeCopy.prose === "段落后面。",
+      `普通段落复制不包代码围栏，实际「${codeCopy.prose}」`,
+    );
+
+    await page.evaluate(async () => {
       await window.__molan.setValue(
         "# 流程图\n\n```mermaid\nflowchart TD\n  A[开始] --> B{是否继续?}\n  B -->|是| C[完成]\n  B -->|否| D[结束]\n```\n",
         true,

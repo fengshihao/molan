@@ -170,6 +170,8 @@ test("预览复制保留 Markdown 标记", () => {
   assert.match(src, /function expandMarkdownSpan/);
   assert.match(src, /function markdownFromPreviewHtml/);
   assert.match(src, /function markdownFromPreviewTable/);
+  assert.match(src, /function markdownFromPreviewCode/);
+  assert.match(src, /function fencedMarkdownForCodeSelection/);
   assert.match(src, /lute\.HTML2Md/);
   assert.match(src, /copySelection\(\)/);
   assert.match(src, /copy\(\) \{\s*return lastEditorApi\?\.copySelection/);
@@ -200,6 +202,30 @@ test("预览复制保留 Markdown 标记", () => {
   const list = "- item one\n- item two";
   const listHit = api.expandMarkdownSpan(list, list.indexOf("item one"), list.indexOf("item one") + 8);
   assert.equal(list.slice(listHit!.start, listHit!.end), "- item one");
+
+  const fenceApi = new Function(
+    `${["normalizeCodeText", "codeTextKey", "parseFenceBlock", "canonicalCodeLang", "fenceMarkdown", "findSourceFence", "fencedMarkdownForCodeSelection", "isFenceLine", "fenceClose", "splitMdBlocks"].map((name) => take(name)).join("\n")}\nreturn { fencedMarkdownForCodeSelection };`,
+  )() as {
+    fencedMarkdownForCodeSelection: (source: string, selected: string, codeText: string, lang: string) => string;
+  };
+  const fenced = "intro\n\n```js\nconst molan = 1;\nconsole.log(molan);\n```\n\n尾声";
+  const whole = "const molan = 1;\nconsole.log(molan);";
+  assert.equal(
+    fenceApi.fencedMarkdownForCodeSelection(fenced, `${whole}\n`, whole, "javascript"),
+    "```js\nconst molan = 1;\nconsole.log(molan);\n```",
+  );
+  assert.equal(
+    fenceApi.fencedMarkdownForCodeSelection(fenced, "console.log", whole, "javascript"),
+    "```js\nconsole.log\n```",
+  );
+  assert.equal(
+    fenceApi.fencedMarkdownForCodeSelection("```\nplain\n```", "plain", "plain", "plaintext"),
+    "```\nplain\n```",
+  );
+  assert.equal(
+    fenceApi.fencedMarkdownForCodeSelection("nope", "a```b", "a```b", ""),
+    "````\na```b\n````",
+  );
 });
 
 test("表格里 Tab 跳到下一格，最后一格再 Tab 加一行", () => {
