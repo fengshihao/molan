@@ -3250,7 +3250,15 @@
       box-sizing: border-box;
       margin: 0 auto !important;
       padding: 22px 40px 56px 52px !important;
+      /*
+       * Vditor 默认 height:100% 且 overflow-x:auto 会让 overflow-y 也变成 auto，
+       * pre 成为内层纵向滚动容器；焦点在表格单元格时滚轮无法把下方行滚进视口（#21）。
+       * 纸面随内容增高，由外层 .vditor-ir 统一纵向滚动；横向仍可在 pre 内滚宽表。
+       */
       overflow-x: auto;
+      overflow-y: visible !important;
+      height: auto !important;
+      min-height: 100%;
       font-family: var(--reader-font) !important;
       font-size: var(--reader-size) !important;
       line-height: var(--reader-leading) !important;

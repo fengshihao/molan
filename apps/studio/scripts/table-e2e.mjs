@@ -141,6 +141,42 @@ async function main() {
     await page.waitForSelector(".vditor-toolbar [data-type='table']", { timeout: 20000 });
     await sleep(400);
 
+    // #21 长表：单元格持焦时滚轮应能滚到末行（放在其它表格用例之前，避免状态干扰）
+    {
+      const tallMd = [
+        "| H | H |",
+        "| --- | --- |",
+        ...Array.from({ length: 55 }, (_, i) => `| R${i} | x |`),
+      ].join("\n");
+      await page.evaluate((md) => window.__molan.setValue(md, true), tallMd);
+      await sleep(400);
+      await page.click(".vditor-ir table td, .vditor-ir table th");
+      await sleep(120);
+      const scrollCheck = await page.evaluate(() => {
+        const table = document.querySelector(".vditor-ir table");
+        const scroller = document.querySelector(".vditor-ir");
+        if (!table || !scroller) return { bound: false, max: 0, scrollTop: 0, lastVisible: false };
+        for (let i = 0; i < 28; i += 1) {
+          table.dispatchEvent(new WheelEvent("wheel", { deltaY: 500, bubbles: true, cancelable: true }));
+        }
+        const last = document.querySelector(".vditor-ir table tr:last-child td");
+        const box = scroller.getBoundingClientRect();
+        const cell = last?.getBoundingClientRect();
+        return {
+          bound: document.getElementById("vditor")?.dataset?.molanTableControls === "1",
+          max: Math.max(0, scroller.scrollHeight - scroller.clientHeight),
+          scrollTop: scroller.scrollTop,
+          lastVisible: cell ? cell.top < box.bottom - 4 && cell.bottom > box.top + 4 : false,
+        };
+      });
+      assert(scrollCheck.bound, "表格控件已绑定");
+      assert(scrollCheck.max > 100, `长表应超出视口（maxScroll=${scrollCheck.max}）`);
+      assert(scrollCheck.scrollTop > 80, `长表滚轮应产生纵向滚动（scrollTop=${scrollCheck.scrollTop}）`);
+      assert(scrollCheck.lastVisible, "长表滚轮应能把最后一行滚进视口");
+      await page.evaluate(() => window.__molan.setValue(["# 表格自测", "", "点这里插入表格。", ""].join("\n"), true));
+      await sleep(300);
+    }
+
     const tablesBefore = await page.evaluate(() => document.querySelectorAll(".vditor-ir table").length);
     assert(tablesBefore === 0, "打开编辑器时还没有表格");
 
