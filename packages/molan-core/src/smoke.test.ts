@@ -511,3 +511,12 @@ test("查找栏可以替换当前匹配和全部匹配", () => {
   assert.match(css, /\.molan-find-row/);
   assert.match(css, /\.molan-find-action/);
 });
+
+test("长表编辑：外层纵向滚动并转发表格内滚轮（#21）", () => {
+  const src = editorSrc();
+  const css = readFileSync(join(root, "src", "molan.css"), "utf8");
+  assert.match(src, /function irVerticalScroller/);
+  assert.match(src, /\.closest\?\.\("\.vditor-ir table"\)/);
+  assert.match(css, /overflow-y: visible !important/);
+  assert.match(css, /height: auto !important/);
+});

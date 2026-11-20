@@ -147,6 +147,18 @@
     return root?.querySelector?.(".vditor-ir") || root;
   }
 
+  /** 编辑区纵向滚动容器：避免 pre.vditor-reset 内层滚动时表格单元格持焦滚轮不生效（#21） */
+  function irVerticalScroller(fromEl, root) {
+    const reset = fromEl?.closest?.("pre.vditor-reset");
+    if (reset) {
+      const oy = getComputedStyle(reset).overflowY;
+      if ((oy === "auto" || oy === "scroll" || oy === "overlay") && reset.scrollHeight > reset.clientHeight + 2) {
+        return reset;
+      }
+    }
+    return fromEl?.closest?.(".vditor-ir") || root?.querySelector?.(".vditor-ir");
+  }
+
   function currentEditorMode(vditor) {
     const iv = vditor?.vditor || vditor;
     return iv?.currentMode || "ir";
@@ -405,8 +417,7 @@
     document.addEventListener("selectionchange", scheduleSync);
     root.addEventListener("keyup", scheduleSync);
     root.addEventListener("mouseup", scheduleSync);
-    // 实际滚动容器是 vditor-reset（overflow-x: auto 使 overflow-y 计算为 auto），
-    // scroll 事件不冒泡，挂 document 捕获阶段才能跟随任何容器滚动
+    // 纵向由 .vditor-ir（或外层 overflow 容器）滚动；scroll 不冒泡，捕获阶段跟随
     document.addEventListener("scroll", () => {
       if (!bar.hidden && lastCell?.isConnected) {
         positionTableToolbar(bar, lastCell.closest("table"));
@@ -440,6 +451,21 @@
       notifyTableEdit(vditor, root);
       scheduleSync();
     });
+
+    root.addEventListener("wheel", (e) => {
+      const vditor = getVditor?.();
+      if (root.classList.contains("is-preview") || currentEditorMode(vditor) !== "ir") return;
+      if (!e.target?.closest?.(".vditor-ir table")) return;
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const scroller = irVerticalScroller(e.target, root);
+      if (!scroller) return;
+      const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      if (max <= 0) return;
+      const next = Math.max(0, Math.min(max, scroller.scrollTop + e.deltaY));
+      if (next === scroller.scrollTop) return;
+      e.preventDefault();
+      scroller.scrollTop = next;
+    }, { passive: false, capture: true });
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Tab" || e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
