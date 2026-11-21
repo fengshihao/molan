@@ -22,7 +22,7 @@
       guideWelcomeAlt: "墨览开卷页，侧栏有一份样例文档",
       guideCap01: "开卷。红印是「打开文件夹」，左侧列出内置样例。",
       guideNote01:
-        "要用自己的文档：点「打开文件夹」，选择本机目录。Chrome 与 Edge 支持写回原文件；其他浏览器仍可阅读、编辑，保存时会下载一份 Markdown。",
+        "要用自己的文档：点「打开文件夹」，选择本机目录。Chrome 与 Edge 支持写回原文件；其他浏览器仍可阅读、编辑，保存时会下载一份 Markdown。侧栏「+」可新建文档：已打开文件夹时写入该目录；否则 Chrome / Edge 会弹出另存为，其它浏览器可先起草再下载。",
       guideH02: "先阅读",
       guideP02Html:
         "文档默认是<strong>预览</strong>。表格、流程图、公式都在纸面上排好。没有改动就关掉，不会弹出保存。",
@@ -159,7 +159,7 @@
       guideWelcomeAlt: "molan welcome page with a sample in the sidebar",
       guideCap01: "Welcome. The red seal opens a folder; samples are listed on the left.",
       guideNote01:
-        "For your own docs: click Open folder and pick a directory. Chrome and Edge can write back; other browsers can still read and edit, then download Markdown on save.",
+        "For your own docs: click Open folder and pick a directory. Chrome and Edge can write back; other browsers can still read and edit, then download Markdown on save. The sidebar + creates a new document: into the open folder when possible, otherwise Save As in Chrome / Edge, or a draft you can download.",
       guideH02: "Read first",
       guideP02Html:
         "Documents open in <strong>preview</strong>. Tables, diagrams, and math are laid out on the paper. Close without edits and nothing asks you to save.",

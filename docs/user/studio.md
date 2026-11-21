@@ -1,6 +1,6 @@
 # 浏览器工作室
 
-在浏览器里打开本地 Markdown 文件夹：预览优先，可切换编辑；Chrome / Edge 支持写回原文件。
+在浏览器里打开本地 Markdown 文件夹：预览优先，可切换编辑；Chrome / Edge 支持写回原文件。侧栏「+」可新建文档（写入当前文件夹，或先起草再下载 / 另存为）。
 
 - 官网（GitHub Pages）：https://fengshihao.github.io/molan/  
 - 在线试读：https://fengshihao.github.io/molan/try/  

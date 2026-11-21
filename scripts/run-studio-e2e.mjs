@@ -18,6 +18,7 @@ const suite = [
   "editor-e2e.mjs",
   "buttons-e2e.mjs",
   "table-e2e.mjs",
+  "file-e2e.mjs",
 ];
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith("-"));

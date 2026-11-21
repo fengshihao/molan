@@ -102,9 +102,10 @@ assert(html.indexOf('id="copyBtn"') < html.indexOf('id="pdfBtn"'), "copy comes b
 assert(html.includes("./vendor/vditor/dist/method.min.js"), "html loads local method.min.js");
 assert(html.includes("./vendor/vditor/dist/js/lute/lute.min.js"), "html preloads local lute");
 assert(html.includes("molan-editor.js?v=20261017d"), "studio html cache-busts table editor");
-assert(html.includes("molan.css?v=20261017d"), "studio html cache-busts table css");
-assert(html.includes("molan-i18n.js?v=20261025a"), "studio html cache-busts table i18n");
-assert(html.includes("molan-app.js?v=20260905c"), "studio html cache-busts studio app");
+assert(html.includes("molan.css?v=20261121a"), "studio html cache-busts table css");
+assert(html.includes("molan-i18n.js?v=20261121a"), "studio html cache-busts table i18n");
+assert(html.includes("molan-app.js?v=20261121a"), "studio html cache-busts studio app");
+assert(html.includes('id="newFileBtn"'), "studio has a new-file button");
 assert(html.includes("molan-pwa.js?v=20261025a"), "studio html loads PWA install helper");
 assert(html.includes('rel="manifest"'), "studio declares web app manifest");
 assert(existsSync(join(viewer, "manifest.webmanifest")), "studio ships webmanifest");
@@ -139,6 +140,7 @@ for (const path of [
   join(viewer, "molan-app.js"),
   join(viewer, "serve.mjs"),
   join(viewer, "scripts/table-e2e.mjs"),
+  join(viewer, "scripts/file-e2e.mjs"),
   join(root, "media/vscode-bridge.js"),
 ]) {
   const result = spawnSync(process.execPath, ["--check", path], { encoding: "utf8" });
@@ -147,6 +149,9 @@ for (const path of [
 
 const app = readFileSync(join(viewer, "molan-app.js"), "utf8");
 assert(app.includes("openLocalMarkdownLink"), "browser opens in-folder markdown links");
+assert(app.includes("async function newMarkdownFile"), "browser can create a new markdown file");
+assert(readFileSync(join(viewer, "molan-i18n.js"), "utf8").includes("newFileHintScratch"), "i18n has new-file copy");
+assert(readFileSync(join(viewer, "molan.css"), "utf8").includes(".toolbar-new"), "css for new-file button");
 assert(app.includes("seedSampleLibrary"), "browser lists the built-in sample without a extra button");
 assert(app.includes("loadDemoLibrary"), "browser can open built-in samples via ?demo");
 assert(app.includes('SAMPLE_DOC = "实例演示.md"'), "studio keeps a single sample document");

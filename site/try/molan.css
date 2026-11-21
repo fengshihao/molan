@@ -975,7 +975,7 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 0;
+      gap: 8px;
       flex-shrink: 0;
       transition: gap 0.56s var(--ease);
     }
@@ -1058,6 +1058,42 @@
       flex-shrink: 0;
     }
 
+    .toolbar-new {
+      appearance: none;
+      flex: 0 0 var(--ctrl);
+      width: var(--ctrl);
+      height: var(--ctrl);
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sidebar-fg);
+      background: color-mix(in srgb, var(--sidebar-fg) 8%, transparent);
+      border: 1px solid var(--sidebar-line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s var(--ease), background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .toolbar-new svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+
+    .toolbar-new:hover {
+      transform: translateY(-1px);
+      background: color-mix(in srgb, var(--sidebar-fg) 14%, transparent);
+      border-color: color-mix(in srgb, var(--accent-soft) 55%, var(--sidebar-line));
+    }
+
+    .toolbar-new:active { transform: translateY(0); }
+
+    .toolbar-new:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
     .toolbar-pick:hover {
       transform: translateY(-1px);
       box-shadow:
@@ -1098,7 +1134,10 @@
     @media (prefers-reduced-motion: reduce) {
       .toolbar-pick,
       .toolbar-pick:hover,
-      .toolbar-pick:active {
+      .toolbar-pick:active,
+      .toolbar-new,
+      .toolbar-new:hover,
+      .toolbar-new:active {
         transform: none;
       }
       .toolbar-pick.is-hint::after {
@@ -1699,6 +1738,13 @@
     .editor-wrap > .vditor-outline li.is-pick > span {
       color: var(--accent-deep);
       background: color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    .editor-wrap > .vditor-outline li.is-reading > span {
+      color: var(--accent-deep);
+      background: color-mix(in srgb, var(--accent) 11%, transparent);
+    }
+    .editor-wrap > .vditor-outline li.is-reading.is-pick > span {
+      background: color-mix(in srgb, var(--accent) 20%, transparent);
     }
 
     .reader-actions #saveBtn {
@@ -2976,6 +3022,7 @@
       .search-wrap,
       .toolbar-pick,
       .toolbar-pick-label,
+      .toolbar-new,
       .icon-btn,
       .reader-actions #saveBtn,
       .reader-actions .icon-btn svg.icon-edit,
@@ -3028,6 +3075,37 @@
       height: 0;
       overflow: auto !important;
       user-select: text;
+    }
+
+    .molan-gesture-hint {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 0;
+      padding: 7px 22px 8px;
+      border-bottom: 1px solid var(--hairline);
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    .molan-gesture-hint p {
+      margin: 0;
+    }
+
+    .molan-gesture-hint__close {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .molan-gesture-hint__close:hover {
+      color: var(--ink);
     }
 
     .editor-wrap.is-lite-preview .molan-preview {
@@ -3212,7 +3290,15 @@
       box-sizing: border-box;
       margin: 0 auto !important;
       padding: 22px 40px 56px 52px !important;
+      /*
+       * Vditor 默认 height:100% 且 overflow-x:auto 会让 overflow-y 也变成 auto，
+       * pre 成为内层纵向滚动容器；焦点在表格单元格时滚轮无法把下方行滚进视口（#21）。
+       * 纸面随内容增高，由外层 .vditor-ir 统一纵向滚动；横向仍可在 pre 内滚宽表。
+       */
       overflow-x: auto;
+      overflow-y: visible !important;
+      height: auto !important;
+      min-height: 100%;
       font-family: var(--reader-font) !important;
       font-size: var(--reader-size) !important;
       line-height: var(--reader-leading) !important;
@@ -4889,7 +4975,6 @@
     .molan-mermaid-editor-preview svg {
       max-width: none;
       max-height: none;
-      height: auto;
       pointer-events: none;
       shape-rendering: geometricPrecision;
       text-rendering: geometricPrecision;
@@ -5069,6 +5154,7 @@
       .status-bar,
       .welcome,
       .toast,
+      .molan-gesture-hint,
       .lightbox,
       .molan-find-bar,
       .molan-format-bar,

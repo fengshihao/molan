@@ -8,7 +8,8 @@
     "e2e": "node ../../scripts/run-studio-e2e.mjs",
     "e2e:editor": "node ./scripts/editor-e2e.mjs",
     "e2e:buttons": "node ./scripts/buttons-e2e.mjs",
-    "e2e:table": "node ./scripts/table-e2e.mjs"
+    "e2e:table": "node ./scripts/table-e2e.mjs",
+    "e2e:file": "node ./scripts/file-e2e.mjs"
   },
   "devDependencies": {
     "puppeteer": "^24.22.3"
