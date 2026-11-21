@@ -45,7 +45,7 @@
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch((err) => {
+      navigator.serviceWorker.register("./sw.js?v=20261121b").catch((err) => {
         console.warn("molan PWA: service worker register failed", err);
       });
     });

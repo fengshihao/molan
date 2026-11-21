@@ -1060,25 +1060,57 @@
 
     .toolbar-new {
       appearance: none;
-      flex: 0 0 var(--ctrl);
-      width: var(--ctrl);
+      flex: 0 0 auto;
       height: var(--ctrl);
-      padding: 0;
+      min-width: var(--ctrl);
+      padding: 0 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
       color: var(--sidebar-fg);
-      background: color-mix(in srgb, var(--sidebar-fg) 8%, transparent);
-      border: 1px solid var(--sidebar-line);
+      background: var(--sidebar-fill-strong);
+      border: 1px solid color-mix(in srgb, var(--sidebar-fg) 34%, var(--sidebar-line));
       border-radius: 8px;
       cursor: pointer;
+      overflow: visible;
       transition: transform 0.2s var(--ease), background 0.2s ease, border-color 0.2s ease;
     }
 
     .toolbar-new svg {
       width: 15px;
       height: 15px;
+      min-width: 15px;
+      min-height: 15px;
       display: block;
+      flex-shrink: 0;
+      overflow: visible;
+    }
+
+    .toolbar-new-label {
+      min-width: 0;
+      max-width: 6em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.86rem;
+      letter-spacing: 0.16em;
+      line-height: 1;
+    }
+
+    .toolbar.has-search .toolbar-new {
+      flex: 0 0 var(--ctrl);
+      width: var(--ctrl);
+      padding: 0;
+      gap: 0;
+    }
+
+    .toolbar.has-search .toolbar-new-label {
+      max-width: 0;
+      opacity: 0;
+      pointer-events: none;
     }
 
     .toolbar-new:hover {
@@ -3022,6 +3054,7 @@
       .search-wrap,
       .toolbar-pick,
       .toolbar-pick-label,
+      .toolbar-new-label,
       .toolbar-new,
       .icon-btn,
       .reader-actions #saveBtn,
