@@ -4,6 +4,7 @@
  */
 (() => {
   const pickBtn = document.getElementById("pickBtn");
+  const newFileBtn = document.getElementById("newFileBtn");
   const dirInput = document.getElementById("dirInput");
   const searchInput = document.getElementById("searchInput");
   const fileList = document.getElementById("fileList");
@@ -117,7 +118,7 @@
   let folderName = "";
   let currentFolderId = null;
   let recentFolders = [];
-  let folderSource = null; // "fs-access" | "legacy" | "demo"
+  let folderSource = null; // "fs-access" | "legacy" | "demo" | "scratch"
   let folderHandle = null;
   let reloading = false;
   let dirty = false;
@@ -552,7 +553,9 @@
   }
 
   function isCompatSaveMode() {
-    return folderSource === "legacy";
+    if (folderSource === "legacy" || folderSource === "scratch") return true;
+    const file = files.find((f) => f.path === activePath);
+    return !!(file && !file.handle);
   }
 
   function syncSaveButton() {
@@ -1547,7 +1550,7 @@
       setActiveFileItem(path);
       readerTitle.textContent = file.name.replace(/\.(md|markdown|mdx|mdown)$/i, "");
       baselineText = text;
-      await editorApi.setPreview(true);
+      await editorApi.setPreview(!opts.edit);
       await editorApi.setValue(text, true);
       setDirty(false);
       statusLeft.textContent = `${file.name} · ${((file.size || text.length) / 1024).toFixed(1)} KB`;
@@ -1634,6 +1637,233 @@
     }
   }
 
+  function defaultNewMarkdown(name) {
+    const title = String(name || "").replace(/\.(md|markdown|mdx|mdown)$/i, "") || t("unnamed");
+    return `# ${title}\n\n`;
+  }
+
+  function normalizeMarkdownName(raw) {
+    let name = String(raw || "").trim().replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ");
+    if (!name || name === "." || name === "..") return "";
+    if (name.startsWith(".")) return "";
+    if (!/\.(md|markdown|mdx|mdown)$/i.test(name)) name += ".md";
+    return name;
+  }
+
+  function newFileDirAndPath(name) {
+    if (folderSource === "fs-access") {
+      return { dir: ".", path: name };
+    }
+    const dir = folderName || t("scratchFolder");
+    return { dir, path: `${dir}/${name}` };
+  }
+
+  function fileNameTaken(name) {
+    const { path } = newFileDirAndPath(name);
+    const lower = name.toLowerCase();
+    return files.some((f) => f.path === path || f.name.toLowerCase() === lower);
+  }
+
+  function uniqueMarkdownName(desired) {
+    const normalized = normalizeMarkdownName(desired) || `${t("unnamed")}.md`;
+    if (!fileNameTaken(normalized)) return normalized;
+    const stem = normalized.replace(/\.(md|markdown|mdx|mdown)$/i, "");
+    const ext = normalized.slice(stem.length) || ".md";
+    for (let i = 2; i < 200; i++) {
+      const next = `${stem}-${i}${ext}`;
+      if (!fileNameTaken(next)) return next;
+    }
+    return `${stem}-${Date.now()}${ext}`;
+  }
+
+  function promptNewFileName({ scratch = false } = {}) {
+    return new Promise((resolve) => {
+      document.getElementById("molanNewFileDialog")?.remove();
+      const mask = document.createElement("div");
+      mask.id = "molanNewFileDialog";
+      mask.className = "molan-image-url-mask";
+      mask.innerHTML = `
+        <form class="molan-image-url-dialog" role="dialog" aria-modal="true" aria-labelledby="molanNewFileTitle" novalidate>
+          <div class="molan-image-url-title" id="molanNewFileTitle"></div>
+          <p class="molan-image-url-hint"></p>
+          <input class="molan-image-url-input" type="text" autocomplete="off" spellcheck="false" />
+          <div class="molan-image-url-actions">
+            <button type="button" class="molan-image-url-cancel"></button>
+            <button type="submit" class="molan-image-url-ok"></button>
+          </div>
+        </form>
+      `;
+      const form = mask.querySelector(".molan-image-url-dialog");
+      const input = mask.querySelector(".molan-image-url-input");
+      const cancel = mask.querySelector(".molan-image-url-cancel");
+      mask.querySelector(".molan-image-url-title").textContent = t("newFileTitle");
+      mask.querySelector(".molan-image-url-hint").textContent = scratch ? t("newFileHintScratch") : t("newFileHint");
+      input.placeholder = t("newFilePlaceholder");
+      input.value = uniqueMarkdownName(`${t("unnamed")}.md`);
+      cancel.textContent = t("newFileCancel");
+      mask.querySelector(".molan-image-url-ok").textContent = t("newFileCreate");
+      let settled = false;
+      const finish = (name) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("keydown", onKey, true);
+        mask.remove();
+        resolve(name);
+      };
+      const onKey = (e) => {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        finish("");
+      };
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = normalizeMarkdownName(input.value);
+        if (!name) {
+          input.classList.add("is-invalid");
+          toast(t("newFileInvalid"));
+          input.focus();
+          input.select();
+          return;
+        }
+        if (fileNameTaken(name)) {
+          input.classList.add("is-invalid");
+          toast(t("newFileExists", { name }));
+          input.focus();
+          input.select();
+          return;
+        }
+        finish(name);
+      });
+      cancel.addEventListener("click", () => finish(""));
+      mask.addEventListener("click", (e) => {
+        if (e.target === mask) finish("");
+      });
+      form.addEventListener("click", (e) => e.stopPropagation());
+      window.addEventListener("keydown", onKey, true);
+      document.body.appendChild(mask);
+      requestAnimationFrame(() => {
+        input.focus();
+        input.select();
+      });
+    });
+  }
+
+  async function upsertAndOpen(entry, opts = {}) {
+    const idx = files.findIndex((f) => f.path === entry.path);
+    if (idx >= 0) files[idx] = entry;
+    else files.push(entry);
+    files.sort((a, b) => a.path.localeCompare(b.path, locale()));
+    renderSidebarList();
+    statusLeft.textContent = t("indexed", { n: files.length });
+    toast(t("newFileCreated", { name: entry.name }));
+    await openFile(entry.path, { force: true, edit: opts.edit !== false });
+  }
+
+  async function createFromFileHandle(handle) {
+    const name = normalizeMarkdownName(handle.name) || handle.name;
+    const text = defaultNewMarkdown(name);
+    const writable = await handle.createWritable();
+    await writable.write(text);
+    await writable.close();
+    if (!folderSource) {
+      folderSource = "scratch";
+      folderName = folderName || t("scratchFolder");
+    }
+    const { dir, path } = newFileDirAndPath(name);
+    await upsertAndOpen({
+      path,
+      name,
+      dir,
+      size: new Blob([text]).size,
+      handle,
+      text,
+    });
+  }
+
+  async function createInOpenFolder(name) {
+    const ok = await ensurePermission(folderHandle, "readwrite");
+    if (!ok) {
+      toast(t("noWritePermission"));
+      await createScratchFile(name);
+      return;
+    }
+    try {
+      try {
+        await folderHandle.getFileHandle(name);
+        toast(t("newFileExists", { name }));
+        return;
+      } catch (err) {
+        if (!err || err.name !== "NotFoundError") throw err;
+      }
+      const handle = await folderHandle.getFileHandle(name, { create: true });
+      const text = defaultNewMarkdown(name);
+      const writable = await handle.createWritable();
+      await writable.write(text);
+      await writable.close();
+      const { dir, path } = newFileDirAndPath(name);
+      await upsertAndOpen({
+        path,
+        name,
+        dir,
+        size: new Blob([text]).size,
+        handle,
+        text,
+      });
+    } catch (err) {
+      console.warn(err);
+      toast(t("newFileFail"));
+      await createScratchFile(name);
+    }
+  }
+
+  async function createScratchFile(name) {
+    if (!folderSource || folderSource === "demo") {
+      if (!folderSource) {
+        folderSource = "scratch";
+        folderName = folderName || t("scratchFolder");
+      }
+    }
+    const { dir, path } = newFileDirAndPath(name);
+    const text = defaultNewMarkdown(name);
+    await upsertAndOpen({
+      path,
+      name,
+      dir,
+      size: new Blob([text]).size,
+      text,
+    });
+  }
+
+  async function newMarkdownFile() {
+    if (!confirmDiscardIfDirty()) return;
+    if (folderHandle && folderSource === "fs-access") {
+      const name = await promptNewFileName();
+      if (!name) return;
+      await createInOpenFolder(name);
+      return;
+    }
+    if (!allowCompatPicker && typeof window.showSaveFilePicker === "function") {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: uniqueMarkdownName(`${t("unnamed")}.md`),
+          types: [{
+            description: "Markdown",
+            accept: { "text/markdown": [".md"], "text/plain": [".md"] },
+          }],
+        });
+        await createFromFileHandle(handle);
+        return;
+      } catch (err) {
+        if (err && err.name === "AbortError") return;
+        console.warn(err);
+      }
+    }
+    const name = await promptNewFileName({ scratch: true });
+    if (!name) return;
+    await createScratchFile(name);
+  }
+
   async function pickFolder() {
     if (!confirmDiscardIfDirty()) return;
     statusLeft.textContent = t("openingPicker");
@@ -1656,6 +1886,10 @@
       openCompatPicker();
     }
   }
+
+  newFileBtn?.addEventListener("click", () => {
+    void newMarkdownFile();
+  });
 
   pickBtn?.addEventListener("click", () => {
     markPickHintSeen();
