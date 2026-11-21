@@ -1,7 +1,8 @@
 /**
  * 墨览 PWA：缓存应用壳，满足可安装条件；本地文档仍走 File System Access。
+ * 壳资源网络优先，避免 ignoreSearch 把 ?v= 新 CSS/JS 配成旧缓存。
  */
-const CACHE = "molan-shell-v1";
+const CACHE = "molan-shell-v2";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -41,22 +42,19 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((cached) => {
-      const network = fetch(req)
-        .then((res) => {
-          if (
-            res &&
-            res.ok &&
-            (url.pathname.endsWith("/") ||
-              /\.(html|js|css|png|webmanifest|svg|woff2)$/i.test(url.pathname))
-          ) {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then((res) => {
+        if (
+          res &&
+          res.ok &&
+          (url.pathname.endsWith("/") ||
+            /\.(html|js|css|png|webmanifest|svg|woff2)$/i.test(url.pathname))
+        ) {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
+        }
+        return res;
+      })
+      .catch(() => caches.match(req, { ignoreSearch: true }))
   );
 });
