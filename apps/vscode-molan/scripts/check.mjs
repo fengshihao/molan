@@ -249,6 +249,8 @@ assert(editorSource.includes("function bindPreviewCopy"), "preview selection cop
 assert(editorSource.includes("markdownFromPreviewSelection"), "preview copy maps selection to Markdown");
 assert(editorSource.includes("markdownFromPreviewCode"), "preview code selection copy keeps fences");
 assert(editorSource.includes("fencedMarkdownForCodeSelection"), "code selection is wrapped in a fence");
+assert(editorSource.includes("markdownFromPreviewMath"), "preview math selection copy keeps TeX");
+assert(editorSource.includes("pickMathRawFromSource"), "math copy reads $ / $$ from source");
 assert(editorSource.includes("mermaidCopySource(shell, getVditor)"), "mermaid edit recovers source the same way as copy-code");
 
 const bridge = readFileSync(join(root, "media/vscode-bridge.js"), "utf8");

@@ -267,6 +267,65 @@ async function main() {
     );
 
     await page.evaluate(async () => {
+      await window.__molan.setValue([
+        "行内 $E = mc^2$ 结束。",
+        "",
+        "$$",
+        "\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}",
+        "$$",
+      ].join("\n"), true);
+    });
+    await page.waitForSelector("#molanPreviewBody .katex", { timeout: 15000 });
+    const mathCopy = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      window.__mathCopies = [];
+      window.__molanHostCopyText = (text) => { window.__mathCopies.push(String(text ?? "")); };
+      const copyNow = () => {
+        const before = window.__mathCopies.length;
+        document.dispatchEvent(new ClipboardEvent("copy", { bubbles: true, cancelable: true }));
+        return window.__mathCopies.length > before ? window.__mathCopies[window.__mathCopies.length - 1] : "";
+      };
+      const selectNode = (el) => {
+        if (!el) return;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      };
+      const root = document.getElementById("molanPreviewBody") || document.querySelector(".vditor-preview, .vditor-reset");
+      const display = root.querySelector(".katex-display")
+        || root.querySelector("[data-type='math-block']")
+        || [...root.querySelectorAll(".language-math")].find((el) => el.tagName !== "SPAN");
+      const inline = [...root.querySelectorAll("span.language-math")].find((el) => !el.closest(".katex-display"))
+        || [...root.querySelectorAll(".katex")].find((el) => !el.closest(".katex-display"));
+      selectNode(inline);
+      const inlineMd = copyNow();
+      await wait(120);
+      selectNode(display);
+      const displayMd = copyNow();
+      return {
+        inlineMd,
+        displayMd,
+        hasInline: !!inline,
+        hasDisplay: !!display,
+        annotation: display?.querySelector('annotation[encoding="application/x-tex"]')?.textContent || "",
+      };
+    });
+    assert(mathCopy.hasInline, "预览应渲染行内公式");
+    assert(mathCopy.hasDisplay, "预览应渲染块级公式");
+    assert(
+      mathCopy.inlineMd === "$E = mc^2$",
+      `行内公式复制应贴回源文 $…$，实际「${mathCopy.inlineMd}」`,
+    );
+    assert(
+      mathCopy.displayMd.includes("$$")
+        && mathCopy.displayMd.includes("\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}")
+        && !mathCopy.displayMd.includes("<"),
+      `块级公式复制应贴回源文 $$…$$，实际「${mathCopy.displayMd}」 annotation=「${mathCopy.annotation}」`,
+    );
+
+    await page.evaluate(async () => {
       await window.__molan.setValue(
         "# 流程图\n\n```mermaid\nflowchart TD\n  A[开始] --> B{是否继续?}\n  B -->|是| C[完成]\n  B -->|否| D[结束]\n```\n",
         true,

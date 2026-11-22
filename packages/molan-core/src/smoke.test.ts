@@ -171,6 +171,9 @@ test("预览复制保留 Markdown 标记", () => {
   assert.match(src, /function markdownFromPreviewHtml/);
   assert.match(src, /function markdownFromPreviewTable/);
   assert.match(src, /function markdownFromPreviewCode/);
+  assert.match(src, /function markdownFromPreviewMath/);
+  assert.match(src, /function findMathSpansInSource/);
+  assert.match(src, /function pickMathRawFromSource/);
   assert.match(src, /function fencedMarkdownForCodeSelection/);
   assert.match(src, /lute\.HTML2Md/);
   assert.match(src, /copySelection\(\)/);
@@ -226,6 +229,38 @@ test("预览复制保留 Markdown 标记", () => {
     fenceApi.fencedMarkdownForCodeSelection("nope", "a```b", "a```b", ""),
     "````\na```b\n````",
   );
+
+  const mathApi = new Function(
+    `${["normalizeTex", "findMathSpansInSource", "pickMathRawFromSource"].map((name) => take(name)).join("\n")}\nreturn { pickMathRawFromSource, findMathSpansInSource };`,
+  )() as {
+    pickMathRawFromSource: (source: string, texHint: string, displayHint: boolean | null, blockRaw?: string) => string;
+    findMathSpansInSource: (source: string) => { raw: string; display: boolean; tex: string }[];
+  };
+  const mathSrc = [
+    "行内 $E = mc^2$ 和 `$not math$`。",
+    "",
+    "```js",
+    "const price = '$12';",
+    "```",
+    "",
+    "$$",
+    "\\sum_{i=1}^{n} i",
+    "$$",
+    "",
+    "重复 $E = mc^2$ 再来一次。",
+  ].join("\n");
+  const spans = mathApi.findMathSpansInSource(mathSrc);
+  assert.equal(spans.filter((hit) => !hit.display).map((hit) => hit.raw).join("|"), "$E = mc^2$|$E = mc^2$");
+  assert.equal(spans.filter((hit) => hit.display).map((hit) => hit.raw).join("\n"), "$$\n\\sum_{i=1}^{n} i\n$$");
+  assert.equal(
+    mathApi.pickMathRawFromSource(mathSrc, "\\sum_{i=1}^{n} i", true),
+    "$$\n\\sum_{i=1}^{n} i\n$$",
+  );
+  assert.equal(
+    mathApi.pickMathRawFromSource(mathSrc, "E=mc^2", false, "重复 $E = mc^2$ 再来一次。"),
+    "$E = mc^2$",
+  );
+  assert.equal(mathApi.pickMathRawFromSource("no math here", "E=mc^2", false), "");
 });
 
 test("表格里 Tab 跳到下一格，最后一格再 Tab 加一行", () => {

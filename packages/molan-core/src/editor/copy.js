@@ -377,11 +377,197 @@
     );
   }
 
+  function normalizeTex(value) {
+    return String(value || "")
+      .replace(/^\s*\\displaystyle\s*/, "")
+      .replace(/\s+/g, "")
+      .trim();
+  }
+
+  function findMathSpansInSource(source) {
+    const src = String(source || "");
+    const hits = [];
+    let i = 0;
+    const atLineStart = (index) => index === 0 || src[index - 1] === "\n";
+    while (i < src.length) {
+      if (atLineStart(i)) {
+        const indent = src.slice(i).match(/^ {0,3}(`{3,}|~{3,})/);
+        if (indent) {
+          const fence = indent[1];
+          const nl = src.indexOf("\n", i + indent[0].length);
+          if (nl < 0) break;
+          const close = src.indexOf(`\n${fence}`, nl);
+          if (close < 0) break;
+          i = close + 1 + fence.length;
+          continue;
+        }
+      }
+      if (src[i] === "`") {
+        let ticks = 1;
+        while (src[i + ticks] === "`") ticks += 1;
+        const close = src.indexOf("`".repeat(ticks), i + ticks);
+        i = close < 0 ? src.length : close + ticks;
+        continue;
+      }
+      if (src.startsWith("$$", i) && src[i - 1] !== "\\") {
+        const close = src.indexOf("$$", i + 2);
+        if (close < 0) break;
+        hits.push({
+          start: i,
+          end: close + 2,
+          display: true,
+          tex: src.slice(i + 2, close),
+          raw: src.slice(i, close + 2),
+        });
+        i = close + 2;
+        continue;
+      }
+      if (src[i] === "$" && src[i - 1] !== "\\") {
+        let close = i + 1;
+        let found = -1;
+        while (close < src.length) {
+          if (src[close] === "\n") break;
+          if (src[close] === "$" && src[close - 1] !== "\\") {
+            found = close;
+            break;
+          }
+          close += 1;
+        }
+        if (found < 0) {
+          i += 1;
+          continue;
+        }
+        const tex = src.slice(i + 1, found);
+        if (tex) {
+          hits.push({
+            start: i,
+            end: found + 1,
+            display: false,
+            tex,
+            raw: src.slice(i, found + 1),
+          });
+        }
+        i = found + 1;
+        continue;
+      }
+      i += 1;
+    }
+    return hits;
+  }
+
+  function pickMathRawFromSource(source, texHint, displayHint, blockRaw) {
+    const hits = findMathSpansInSource(source);
+    if (!hits.length) return "";
+    const want = normalizeTex(texHint);
+    let pool = want ? hits.filter((hit) => normalizeTex(hit.tex) === want) : hits;
+    if (!pool.length) return "";
+    if (displayHint === true) {
+      const display = pool.filter((hit) => hit.display);
+      if (display.length) pool = display;
+    } else if (displayHint === false) {
+      const inline = pool.filter((hit) => !hit.display);
+      if (inline.length) pool = inline;
+    }
+    const block = String(blockRaw || "");
+    if (pool.length > 1 && block) {
+      const inBlock = pool.filter((hit) => block.includes(hit.raw));
+      if (inBlock.length) pool = inBlock;
+    }
+    if (pool.length === 1) return pool[0].raw;
+    if (block) {
+      const blockHits = findMathSpansInSource(block);
+      const matched = want
+        ? blockHits.filter((hit) => normalizeTex(hit.tex) === want)
+        : blockHits;
+      if (matched.length === 1) return matched[0].raw;
+      const trimmed = block.trim();
+      if (/^\$\$[\s\S]*\$\$$/.test(trimmed)) return trimmed;
+    }
+    return "";
+  }
+
+  function isDisplayMathEl(el) {
+    if (!el) return false;
+    if (el.classList?.contains("katex-display")) return true;
+    if (el.getAttribute?.("data-type") === "math-block") return true;
+    if (el.classList?.contains("language-math") && el.tagName !== "SPAN") return true;
+    return !!el.closest?.(".katex-display, [data-type='math-block'], div.language-math, pre.language-math");
+  }
+
+  function mathHostsInRange(root, range) {
+    if (!root || !range) return [];
+    const selector = ".katex-display, [data-type='math-block'], .language-math, [data-type='math-inline'], .katex";
+    const seen = [];
+    root.querySelectorAll(selector).forEach((el) => {
+      try {
+        if (!range.intersectsNode(el)) return;
+      } catch (_) {
+        return;
+      }
+      seen.push(el);
+    });
+    return seen.filter((el) => !seen.some((other) => other !== el && other.contains(el)));
+  }
+
+  function texFromMathEl(el) {
+    const dataEl = el?.hasAttribute?.("data-math") ? el : el?.closest?.("[data-math]");
+    const dataMath = dataEl?.getAttribute?.("data-math");
+    if (dataMath) return String(dataMath).trim();
+    const ann = el?.querySelector?.('annotation[encoding="application/x-tex"]');
+    if (ann) return String(ann.textContent || "").trim();
+    const code = el?.matches?.("code") ? el : el?.querySelector?.("code");
+    if (code && !code.querySelector(".katex")) return String(code.textContent || "").trim();
+    return "";
+  }
+
+  function selectionIsMostlyMath(range, mathEl) {
+    let node = range.commonAncestorContainer;
+    if (node?.nodeType === 3) node = node.parentElement;
+    if (mathEl.contains(node) || node === mathEl) return true;
+    try {
+      const wrap = document.createElement("div");
+      wrap.appendChild(range.cloneContents());
+      wrap.querySelectorAll(".katex, .katex-display, .language-math, [data-type='math-inline'], [data-type='math-block']").forEach((el) => el.remove());
+      wrap.querySelectorAll("annotation").forEach((el) => el.remove());
+      return collapseWs(wrap.textContent).length <= 2;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function mathBlockRawFromMap(source, root, mathEl) {
+    if (typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") return "";
+    const host = typeof closestTopBlock === "function" ? closestTopBlock(mathEl, root) : null;
+    const blocks = topLevelBlocks(root);
+    const mdBlocks = splitMdBlocks(source);
+    if (!host || mdBlocks.length !== blocks.length) return "";
+    const idx = blocks.indexOf(host);
+    if (idx < 0) return "";
+    return mdBlocks[idx]?.text || "";
+  }
+
+  function markdownFromPreviewMath(source, root, range) {
+    if (!root || !range || range.collapsed) return "";
+    const hosts = mathHostsInRange(root, range);
+    if (hosts.length !== 1) return "";
+    const mathEl = hosts[0];
+    if (!selectionIsMostlyMath(range, mathEl)) return "";
+    const blockRaw = mathBlockRawFromMap(source, root, mathEl);
+    return pickMathRawFromSource(
+      source,
+      texFromMathEl(mathEl),
+      isDisplayMathEl(mathEl),
+      blockRaw,
+    );
+  }
+
   function markdownFromPreviewSelection(root, range, source) {
     if (!root || !range) return "";
     const clipped = typeof clipRangeToRoot === "function" ? clipRangeToRoot(root, range) : range;
     const fromCode = markdownFromPreviewCode(source, root, clipped);
     if (fromCode) return fromCode;
+    const fromMath = markdownFromPreviewMath(source, root, clipped);
+    if (fromMath) return fromMath;
     const fromTable = markdownFromPreviewTable(source, root, clipped);
     if (fromTable) return fromTable;
 
