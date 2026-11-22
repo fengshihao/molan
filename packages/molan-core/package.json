@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "node ../../scripts/run-tsc.mjs -p tsconfig.json --noEmit",
     "test": "node ../../scripts/run-ts-tests.mjs"
   },
   "dependencies": {

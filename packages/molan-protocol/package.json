@@ -13,9 +13,9 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "node ../../scripts/run-tsc.mjs -p tsconfig.json",
+    "dev": "node ../../scripts/run-tsc.mjs -p tsconfig.json --watch",
+    "typecheck": "node ../../scripts/run-tsc.mjs -p tsconfig.json --noEmit",
     "test": "node ../../scripts/run-ts-tests.mjs"
   },
   "dependencies": {
