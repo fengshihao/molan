@@ -97,6 +97,8 @@
       copyImageFail: "复制图片失败",
       cannotEdit: "无法进入编辑",
       enteredEdit: "已进入源码编辑，点空白处退出",
+      gestureHint: "双击选中段落 · {alt}+双击或 {mod}E 编辑",
+      gestureHintClose: "知道了",
       editSource: "编辑源码",
       viewDiagram: "观看流程图",
       copyCode: "复制代码",
@@ -691,10 +693,10 @@
   function setSvgDisplaySize(svg, width, height) {
     svg.setAttribute("width", String(width));
     svg.setAttribute("height", String(height));
-    svg.style.width = `${width}px`;
-    svg.style.height = `${height}px`;
-    svg.style.maxWidth = "none";
-    svg.style.maxHeight = "none";
+    svg.style.setProperty("width", `${width}px`, "important");
+    svg.style.setProperty("height", `${height}px`, "important");
+    svg.style.setProperty("max-width", "none", "important");
+    svg.style.setProperty("max-height", "none", "important");
   }
 
   function computeSvgFitDisplay(natural, maxW, maxH, insetFactor = 0.94) {
@@ -2109,6 +2111,18 @@
     return root?.querySelector?.(".vditor-ir") || root;
   }
 
+  /** 编辑区纵向滚动容器：避免 pre.vditor-reset 内层滚动时表格单元格持焦滚轮不生效（#21） */
+  function irVerticalScroller(fromEl, root) {
+    const reset = fromEl?.closest?.("pre.vditor-reset");
+    if (reset) {
+      const oy = getComputedStyle(reset).overflowY;
+      if ((oy === "auto" || oy === "scroll" || oy === "overlay") && reset.scrollHeight > reset.clientHeight + 2) {
+        return reset;
+      }
+    }
+    return fromEl?.closest?.(".vditor-ir") || root?.querySelector?.(".vditor-ir");
+  }
+
   function currentEditorMode(vditor) {
     const iv = vditor?.vditor || vditor;
     return iv?.currentMode || "ir";
@@ -2367,8 +2381,7 @@
     document.addEventListener("selectionchange", scheduleSync);
     root.addEventListener("keyup", scheduleSync);
     root.addEventListener("mouseup", scheduleSync);
-    // 实际滚动容器是 vditor-reset（overflow-x: auto 使 overflow-y 计算为 auto），
-    // scroll 事件不冒泡，挂 document 捕获阶段才能跟随任何容器滚动
+    // 纵向由 .vditor-ir（或外层 overflow 容器）滚动；scroll 不冒泡，捕获阶段跟随
     document.addEventListener("scroll", () => {
       if (!bar.hidden && lastCell?.isConnected) {
         positionTableToolbar(bar, lastCell.closest("table"));
@@ -2402,6 +2415,21 @@
       notifyTableEdit(vditor, root);
       scheduleSync();
     });
+
+    root.addEventListener("wheel", (e) => {
+      const vditor = getVditor?.();
+      if (root.classList.contains("is-preview") || currentEditorMode(vditor) !== "ir") return;
+      if (!e.target?.closest?.(".vditor-ir table")) return;
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const scroller = irVerticalScroller(e.target, root);
+      if (!scroller) return;
+      const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      if (max <= 0) return;
+      const next = Math.max(0, Math.min(max, scroller.scrollTop + e.deltaY));
+      if (next === scroller.scrollTop) return;
+      e.preventDefault();
+      scroller.scrollTop = next;
+    }, { passive: false, capture: true });
 
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Tab" || e.altKey || e.ctrlKey || e.metaKey || e.isComposing) return;
@@ -3119,11 +3147,15 @@
         return `<li data-level="${level}"><span data-target-id="lite-${i}">${escapeOutlineText(h.textContent)}</span></li>`;
       })
       .join("");
+    attachOutlineScrollTargets();
+    scheduleOutlineScrollSpy();
     return panel;
   }
 
   let outlineRefreshTimer = 0;
   let outlinePickIndex = -1;
+  let outlineReadingIndex = -1;
+  let outlineScrollSpyTimer = 0;
 
   function outlineItemSpans() {
     const panel = vditorOutlineEl();
@@ -3146,6 +3178,112 @@
     const li = items[outlinePickIndex]?.closest("li");
     li?.classList.add("is-pick");
     li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function previewHeadingsForOutline() {
+    const root = document.getElementById("molanPreviewBody") || document.querySelector(".molan-preview");
+    if (!root) return [];
+    return [...root.querySelectorAll("h1, h2, h3, h4, h5, h6")];
+  }
+
+  function previewScrollerForOutline() {
+    if (typeof readingScroller === "function") return readingScroller(true);
+    const root = document.getElementById("molanPreviewBody") || document.querySelector(".molan-preview");
+    if (!root) return null;
+    let node = root.parentElement;
+    while (node && node !== document.documentElement) {
+      const style = getComputedStyle(node);
+      const oy = style.overflowY;
+      if ((oy === "auto" || oy === "scroll" || oy === "overlay") && node.scrollHeight > node.clientHeight + 2) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function activePreviewHeadingIndex() {
+    const scroller = previewScrollerForOutline();
+    const heads = previewHeadingsForOutline();
+    if (!scroller || !heads.length) return -1;
+    const offset = Math.min(112, Math.max(56, scroller.clientHeight * 0.24));
+  const probe = scroller.scrollTop + offset;
+    let best = 0;
+    for (let i = 0; i < heads.length; i += 1) {
+      const el = heads[i];
+      let top = el.offsetTop;
+      if (el.offsetParent && el.offsetParent !== scroller) {
+        top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      }
+      if (top <= probe + 2) best = i;
+    }
+    return best;
+  }
+
+  function paintOutlineReading() {
+    const panel = vditorOutlineEl();
+    if (!panel) return;
+    const items = outlineItemSpans();
+    panel.querySelectorAll("li.is-reading").forEach((li) => li.classList.remove("is-reading"));
+    if (outlineReadingIndex < 0 || outlineReadingIndex >= items.length) return;
+    const li = items[outlineReadingIndex]?.closest("li");
+    li?.classList.add("is-reading");
+    if (outlineIsOpen()) li?.scrollIntoView({ block: "nearest" });
+  }
+
+  function previewingForOutlineSpy() {
+    if (outlineCtx?.getPreviewing?.()) return true;
+    const body = document.getElementById("molanPreviewBody");
+    const host = document.getElementById("molanPreview");
+    if (!body?.childElementCount) return false;
+    if (!host) return true;
+    return getComputedStyle(host).display !== "none";
+  }
+
+  function flushOutlineScrollSpy() {
+    if (!previewingForOutlineSpy()) {
+      if (outlineReadingIndex !== -1) {
+        outlineReadingIndex = -1;
+        paintOutlineReading();
+      }
+      return;
+    }
+    const next = activePreviewHeadingIndex();
+    if (next === outlineReadingIndex) return;
+    outlineReadingIndex = next;
+    paintOutlineReading();
+  }
+
+  function scheduleOutlineScrollSpy() {
+    clearTimeout(outlineScrollSpyTimer);
+    outlineScrollSpyTimer = window.setTimeout(flushOutlineScrollSpy, 48);
+  }
+
+  const outlineScrollSpySeen = new WeakSet();
+
+  function attachOutlineScrollTargets() {
+    const nodes = [
+      document.getElementById("molanPreviewBody"),
+      typeof readingScroller === "function" ? readingScroller(true) : null,
+      typeof readingScroller === "function" ? readingScroller(false) : null,
+      document.querySelector(".vditor-ir"),
+      document.querySelector(".vditor-wysiwyg"),
+    ].filter(Boolean);
+    for (const node of nodes) {
+      if (outlineScrollSpySeen.has(node)) continue;
+      outlineScrollSpySeen.add(node);
+      node.addEventListener("scroll", () => {
+        if (!previewingForOutlineSpy()) return;
+        scheduleOutlineScrollSpy();
+      }, { passive: true });
+    }
+  }
+
+  function bindOutlineScrollSpy() {
+    if (bindOutlineScrollSpy.bound) return;
+    bindOutlineScrollSpy.bound = true;
+    attachOutlineScrollTargets();
+    window.addEventListener("resize", () => scheduleOutlineScrollSpy());
   }
 
   function activateOutlineItem(span) {
@@ -3177,6 +3315,7 @@
     if (outlineCtx?.getPreviewing?.()) {
       renderLiteOutline();
       relocateVditorOutline();
+      scheduleOutlineScrollSpy();
       return;
     }
     const inner = innerVditor(outlineCtx?.getVditor?.());
@@ -3289,6 +3428,8 @@
     } else if (shown) {
       shown.classList.add("is-in");
     }
+    attachOutlineScrollTargets();
+    flushOutlineScrollSpy();
   }
 
   function ensureEditorChrome(ctx) {
@@ -3414,8 +3555,11 @@
         e.preventDefault();
         e.stopPropagation();
         scrollToHeading(index);
+        window.setTimeout(scheduleOutlineScrollSpy, 420);
       }, true);
     }
+
+    bindOutlineScrollSpy();
 
     if (!ensureEditorChrome._bound) {
       ensureEditorChrome._bound = true;
@@ -6342,6 +6486,8 @@
       let previewPanY = 0;
       let previewDragging = false;
       let previewDragOrigin = null;
+      let previewViewEstablished = false;
+      let lastPreviewSource = "";
 
       const finish = (applied) => {
         if (settled) return;
@@ -6363,25 +6509,149 @@
         placeSvgCanvas(canvas, rect, width, height, previewPanX, previewPanY);
       };
 
+      const readSvgFrame = (svg) => {
+        const vb = svg?.viewBox?.baseVal;
+        if (vb && vb.width > 0 && vb.height > 0) {
+          return { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+        }
+        const natural = svgNaturalSize(svg);
+        return { x: 0, y: 0, width: Math.max(1, natural.width), height: Math.max(1, natural.height) };
+      };
+
+      const mermaidEditIsLocal = (prev, next) => {
+        const a = String(prev || "").trim();
+        const b = String(next || "").trim();
+        if (!a || !b) return false;
+        if (a === b) return true;
+        const longer = Math.max(a.length, b.length, 1);
+        if (Math.abs(a.length - b.length) / longer > 0.18) return false;
+        const lineDelta = Math.abs(a.split("\n").length - b.split("\n").length);
+        return lineDelta <= 2;
+      };
+
+      const textAffinity = (a, b) => {
+        if (!a || !b) return 0;
+        if (a === b) return 1;
+        const short = a.length <= b.length ? a : b;
+        const long = a.length <= b.length ? b : a;
+        if (long.includes(short)) return 0.75 + 0.2 * (short.length / long.length);
+        return 0;
+      };
+
+      const previewNodeMetrics = () => {
+        const root = preview.getBoundingClientRect();
+        const cx = root.left + root.width / 2;
+        const cy = root.top + root.height / 2;
+        const nodes = [];
+        preview.querySelectorAll("g.node, g.actor").forEach((el) => {
+          const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+          if (!text) return;
+          const box = el.getBoundingClientRect();
+          if (box.width < 1 || box.height < 1) return;
+          nodes.push({
+            text,
+            dx: box.left + box.width / 2 - cx,
+            dy: box.top + box.height / 2 - cy,
+            h: box.height,
+          });
+        });
+        return nodes;
+      };
+
+      const capturePreviewCamera = () => {
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        if (!previewViewEstablished || !svg || preview.classList.contains("is-error")) return null;
+        const frame = readSvgFrame(svg);
+        const nodes = previewNodeMetrics();
+        let focus = null;
+        for (const node of nodes) {
+          const dist = node.dx * node.dx + node.dy * node.dy;
+          if (!focus || dist < focus.dist) focus = { ...node, dist };
+        }
+        return {
+          frame,
+          px: (previewFitW * previewScale) / frame.width,
+          scale: previewScale,
+          panX: previewPanX,
+          panY: previewPanY,
+          nodes,
+          focus,
+        };
+      };
+
+      const holdPreviewCamera = (svg, snap) => {
+        if (!svg) {
+          previewFitW = 1;
+          previewFitH = 1;
+          applyPreviewTransform();
+          return;
+        }
+        if (!snap) {
+          const rect = preview.getBoundingClientRect();
+          const display = fitSvgToBox(svg, rect.width, rect.height, 24);
+          previewFitW = display.width;
+          previewFitH = display.height;
+          applyPreviewTransform();
+          return;
+        }
+        const frame = readSvgFrame(svg);
+        ensureSvgViewBox(svg, { width: frame.width, height: frame.height });
+        storeSvgNaturalSize(svg, { width: frame.width, height: frame.height });
+        let px = snap.px > 0 ? snap.px : (snap.frame.width > 0 ? 1 / snap.frame.width : 1);
+        const place = () => {
+          previewScale = snap.scale;
+          previewFitW = Math.max(1, (frame.width * px) / previewScale);
+          previewFitH = Math.max(1, (frame.height * px) / previewScale);
+          applyPreviewTransform();
+        };
+        previewPanX = snap.panX;
+        previewPanY = snap.panY;
+        place();
+        void preview.offsetHeight;
+        const now = previewNodeMetrics();
+        const ratios = [];
+        for (const prev of snap.nodes) {
+          const next = now.find((node) => node.text === prev.text);
+          if (!next || prev.h < 4) continue;
+          ratios.push(prev.h / next.h);
+        }
+        if (ratios.length >= 2) {
+          ratios.sort((a, b) => a - b);
+          const mid = ratios[Math.floor(ratios.length / 2)];
+          const spread = ratios[ratios.length - 1] - ratios[0];
+          if (spread < 0.12 && Math.abs(mid - 1) > 0.08) {
+            px *= mid;
+            place();
+            void preview.offsetHeight;
+          }
+        }
+        const fresh = previewNodeMetrics();
+        let target = null;
+        if (snap.focus) {
+          for (const node of fresh) {
+            const score = textAffinity(snap.focus.text, node.text);
+            if (score < 0.72) continue;
+            const dist = Math.hypot(node.dx - snap.focus.dx, node.dy - snap.focus.dy);
+            const rank = score * 10000 - dist;
+            if (!target || rank > target.rank) target = { node, rank };
+          }
+        }
+        if (target) {
+          previewPanX += snap.focus.dx - target.node.dx;
+          previewPanY += snap.focus.dy - target.node.dy;
+          applyPreviewTransform();
+        }
+      };
+
       const resetPreviewView = () => {
-        const canvas = preview.querySelector(".molan-mermaid-editor-preview-canvas");
-        const svg = canvas?.querySelector("svg");
         previewScale = 1;
         previewPanX = 0;
         previewPanY = 0;
         previewDragging = false;
         previewDragOrigin = null;
         preview.classList.remove("is-dragging");
-        if (svg) {
-          const rect = preview.getBoundingClientRect();
-          const display = fitSvgToBox(svg, rect.width, rect.height, 24);
-          previewFitW = display.width;
-          previewFitH = display.height;
-        } else {
-          previewFitW = 1;
-          previewFitH = 1;
-        }
-        applyPreviewTransform();
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        holdPreviewCamera(svg, null);
       };
 
       const setPreviewScale = (next, origin) => {
@@ -6409,18 +6679,83 @@
         }[c]))}</pre>`;
       };
 
+      const extractBracketLabels = (src) => {
+        const labels = [];
+        const re = /\[([^\]\n]*)\]|\{([^}\n]*)\}|\(([^)\n]*)\)|\|([^|\n]*)\|/g;
+        let match = re.exec(src);
+        while (match) {
+          labels.push(String(match[1] ?? match[2] ?? match[3] ?? match[4] ?? "").trim());
+          match = re.exec(src);
+        }
+        return labels;
+      };
+
+      const labelSkeleton = (src) => String(src || "")
+        .replace(/\[[^\]\n]*\]/g, "[]")
+        .replace(/\{[^}\n]*\}/g, "{}")
+        .replace(/\([^)\n]*\)/g, "()")
+        .replace(/\|[^|\n]*\|/g, "||");
+
+      const tryPatchPreviewLabels = (next) => {
+        const prev = lastPreviewSource;
+        if (!prev || !previewViewEstablished || preview.classList.contains("is-error")) return false;
+        if (labelSkeleton(prev) !== labelSkeleton(next)) return false;
+        const oldLabels = extractBracketLabels(prev);
+        const newLabels = extractBracketLabels(next);
+        if (!oldLabels.length || oldLabels.length !== newLabels.length) return false;
+        const svg = preview.querySelector(".molan-mermaid-editor-preview-canvas svg");
+        if (!svg) return false;
+        const changes = [];
+        for (let i = 0; i < oldLabels.length; i += 1) {
+          if (oldLabels[i] !== newLabels[i]) changes.push([oldLabels[i], newLabels[i]]);
+        }
+        if (!changes.length) {
+          lastPreviewSource = next;
+          return true;
+        }
+        const used = new Set();
+        for (const [from, to] of changes) {
+          let hit = false;
+          svg.querySelectorAll("g.node, g.edgeLabel").forEach((el) => {
+            if (hit || used.has(el)) return;
+            const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+            if (text !== from) return;
+            const textEl = el.querySelector("text");
+            if (!textEl) return;
+            const tspans = [...textEl.querySelectorAll("tspan")];
+            if (tspans.length > 1) return;
+            if (tspans.length === 1) tspans[0].textContent = to;
+            else textEl.textContent = to;
+            used.add(el);
+            hit = true;
+          });
+          if (!hit) return false;
+        }
+        lastPreviewSource = next;
+        return true;
+      };
+
       const renderPreview = async () => {
         const seq = ++previewSeq;
         const text = textarea.value.trim();
         if (!text) {
           preview.classList.remove("is-error");
           preview.innerHTML = "";
+          previewViewEstablished = false;
           resetPreviewView();
           return;
         }
         if (!global.mermaid || typeof global.mermaid.render !== "function") {
           showPreviewError(t("diagramNotReady"));
           return;
+        }
+        if (tryPatchPreviewLabels(text)) return;
+        const hold = mermaidEditIsLocal(lastPreviewSource, text);
+        const camera = hold ? capturePreviewCamera() : null;
+        if (!camera) {
+          previewScale = 1;
+          previewPanX = 0;
+          previewPanY = 0;
         }
         try {
           applyMermaidTheme();
@@ -6433,7 +6768,9 @@
           uniquifySvgIds(liveSvg);
           vectorizeSvgForeignObjects(liveSvg);
           orthogonalizeFlowEdges(liveSvg);
-          resetPreviewView();
+          holdPreviewCamera(liveSvg, camera);
+          previewViewEstablished = true;
+          lastPreviewSource = text;
         } catch (err) {
           if (seq !== previewSeq) return;
           showPreviewError(err);
@@ -8312,9 +8649,27 @@
     };
   }
 
-  /* --- preview-dblclick: 预览里双击段落进入编辑 --- */
+  /* --- preview-dblclick: 预览里双击选中段落；Alt+双击进入编辑 --- */
+  function selectPreviewBlock(block) {
+    if (!block) return;
+    const range = document.createRange();
+    try {
+      range.selectNodeContents(block);
+    } catch (_) {
+      return;
+    }
+    const sel = window.getSelection();
+    if (!sel) return;
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
   function bindPreviewDblclickEdit(root, handlers) {
-    if (!root || root.dataset.molanPreviewDblclick === "1") return;
+    if (!root) return;
+    if (root.dataset.molanPreviewDblclick === "1") {
+      ensureGestureHint();
+      return;
+    }
     root.dataset.molanPreviewDblclick = "1";
 
     const blocked = [
@@ -8337,12 +8692,61 @@
       if (modeBtn && (modeBtn.hidden || modeBtn.disabled)) return;
       const block = closestTopBlock(e.target, root);
       if (!block) return;
-      const spot = captureReadingSpotFromBlock(block, e.clientY);
-      if (!spot) return;
       e.preventDefault();
       e.stopPropagation();
-      void handlers.enterEdit?.(spot);
+      if (e.altKey) {
+        const spot = captureReadingSpotFromBlock(block, e.clientY);
+        if (!spot) return;
+        void handlers.enterEdit?.(spot);
+        return;
+      }
+      selectPreviewBlock(block);
     });
+    ensureGestureHint();
+  }
+
+  const GESTURE_HINT_KEY = "molan-gesture-hint";
+
+  function gestureHintDismissed() {
+    try { return localStorage.getItem(GESTURE_HINT_KEY) === "off"; }
+    catch (_) { return false; }
+  }
+
+  function dismissGestureHint() {
+    try { localStorage.setItem(GESTURE_HINT_KEY, "off"); }
+    catch (_) { /* ignore */ }
+    document.getElementById("molanGestureHint")?.remove();
+  }
+
+  function ensureGestureHint() {
+    const preview = document.getElementById("molanPreview") || document.querySelector(".molan-preview");
+    if (!preview) return;
+    const modeBtn = document.getElementById("modeBtn");
+    const canEdit = !document.body.classList.contains("is-readonly")
+      && !(modeBtn && (modeBtn.hidden || modeBtn.disabled));
+    if (!canEdit || gestureHintDismissed()) {
+      document.getElementById("molanGestureHint")?.remove();
+      return;
+    }
+    let bar = document.getElementById("molanGestureHint");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "molanGestureHint";
+      bar.className = "molan-gesture-hint";
+      bar.setAttribute("role", "note");
+      bar.innerHTML = `<p></p><button type="button" class="molan-gesture-hint__close"></button>`;
+      bar.querySelector("button").addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissGestureHint();
+      });
+      preview.insertBefore(bar, preview.firstChild);
+    }
+    const alt = isApplePlatform() ? "Option" : "Alt";
+    bar.querySelector("p").textContent = t("gestureHint", { alt, mod: primaryModPrefix() });
+    const closeBtn = bar.querySelector("button");
+    closeBtn.textContent = t("gestureHintClose");
+    closeBtn.setAttribute("aria-label", t("gestureHintClose"));
   }
 
   /* --- paste-image: 粘贴剪贴板截图，交给宿主落盘并插入相对路径 --- */
@@ -8672,6 +9076,58 @@
     return String(source).slice(span.start, span.end);
   }
 
+  function isPipeTableMarkdown(text) {
+    const lines = String(text || "").split("\n");
+    if (lines.length < 2) return false;
+    return /\|/.test(lines[0]) && /^\s*\|?[\s:|-]*-{3,}/.test(lines[1]);
+  }
+
+  function tableElementFromRange(root, range) {
+    if (!root || !range) return null;
+    let node = range.commonAncestorContainer;
+    if (node?.nodeType === 3) node = node.parentElement;
+    const table = node?.closest?.("table");
+    if (!table || !root.contains(table)) return null;
+    return table;
+  }
+
+  function markdownFromPreviewTable(source, root, range) {
+    if (!root || !range || typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") {
+      return "";
+    }
+    const tableEl = tableElementFromRange(root, range);
+    if (!tableEl) return "";
+    const mdBlocks = splitMdBlocks(source);
+    const blocks = topLevelBlocks(root);
+    const host = typeof closestTopBlock === "function" ? closestTopBlock(tableEl, root) : null;
+    if (host && blocks.length && mdBlocks.length === blocks.length) {
+      const idx = blocks.indexOf(host);
+      if (idx >= 0) {
+        const md = mdBlocks[idx]?.text;
+        if (isPipeTableMarkdown(md)) return md;
+      }
+    }
+    const anchor = flattenTableCopyAnchor(tableEl);
+    if (!anchor) return "";
+    const hit = mdBlocks.find((b) => isPipeTableMarkdown(b.text) && tableMarkdownMatchesAnchor(b.text, anchor));
+    return hit?.text || "";
+  }
+
+  function flattenTableCopyAnchor(table) {
+    if (!table) return "";
+    return [...table.querySelectorAll("th, td")]
+      .map((cell) => String(cell.textContent || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .join("\t");
+  }
+
+  function tableMarkdownMatchesAnchor(md, anchor) {
+    const cells = String(anchor || "").split("\t").filter(Boolean);
+    if (!cells.length) return false;
+    const compact = String(md || "").replace(/\s+/g, " ");
+    return cells.every((cell) => compact.includes(cell.replace(/\s+/g, " ")));
+  }
+
   function markdownFromPreviewBlocks(source, root, range) {
     if (typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") return "";
     const blocks = topLevelBlocks(root);
@@ -8714,9 +9170,379 @@
     return mdBlocks.slice(first, last + 1).map((b) => b.text).join("\n\n");
   }
 
+  function normalizeCodeText(text) {
+    return String(text || "").replace(/\u200b/g, "").replace(/\r\n/g, "\n").replace(/\n+$/, "");
+  }
+
+  function codeTextKey(text) {
+    return normalizeCodeText(text).replace(/^\n/, "");
+  }
+
+  function parseFenceBlock(text) {
+    const lines = String(text || "").replace(/\r\n/g, "\n").split("\n");
+    if (lines.length < 2) return null;
+    const open = lines[0].match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (!open) return null;
+    const mark = open[1][0];
+    const len = open[1].length;
+    let closeAt = lines.length;
+    for (let i = 1; i < lines.length; i += 1) {
+      const found = lines[i].match(/^ {0,3}(`{3,}|~{3,})\s*$/);
+      if (found && found[1][0] === mark && found[1].length >= len) {
+        closeAt = i;
+        break;
+      }
+    }
+    if (closeAt >= lines.length) return null;
+    const info = String(open[2] || "").trim();
+    const token = info.split(/\s+/)[0] || "";
+    const lang = token.split(String.fromCharCode(123))[0].replace(/,$/, "");
+    return {
+      lang,
+      body: lines.slice(1, closeAt).join("\n"),
+      raw: lines.slice(0, closeAt + 1).join("\n"),
+    };
+  }
+
+  function canonicalCodeLang(lang) {
+    const key = String(lang || "").trim().toLowerCase();
+    const alias = {
+      js: "javascript",
+      javascript: "javascript",
+      jsx: "javascript",
+      ts: "typescript",
+      typescript: "typescript",
+      tsx: "typescript",
+      py: "python",
+      python: "python",
+      sh: "bash",
+      shell: "bash",
+      bash: "bash",
+      zsh: "bash",
+      yml: "yaml",
+      yaml: "yaml",
+      md: "markdown",
+      markdown: "markdown",
+      html: "xml",
+      svg: "xml",
+      xml: "xml",
+    };
+    return alias[key] || key;
+  }
+
+  function fenceMarkdown(lang, body) {
+    const info = String(lang || "").trim().split(/\s+/)[0] || "";
+    const safe = /^[A-Za-z0-9_+#.-]*$/.test(info) ? info : "";
+    const text = codeTextKey(body);
+    let fence = "```";
+    while (text.includes(fence) || safe.includes(fence)) fence += "`";
+    return `${fence}${safe}\n${text}\n${fence}`;
+  }
+
+  function findSourceFence(source, codeNorm, langHint) {
+    if (!codeNorm || typeof splitMdBlocks !== "function") return null;
+    const hits = [];
+    for (const block of splitMdBlocks(source)) {
+      const fence = parseFenceBlock(block.text);
+      if (!fence || codeTextKey(fence.body) !== codeNorm) continue;
+      hits.push(fence);
+    }
+    if (!hits.length) return null;
+    if (hits.length === 1) return hits[0];
+    const hint = canonicalCodeLang(langHint);
+    return hits.find((fence) => canonicalCodeLang(fence.lang) === hint) || hits[0];
+  }
+
+  function fencedMarkdownForCodeSelection(source, selected, codeText, langHint) {
+    const selectedKey = codeTextKey(selected);
+    if (!selectedKey) return "";
+    const fence = findSourceFence(source, codeTextKey(codeText), langHint);
+    if (fence && selectedKey === codeTextKey(fence.body)) return fence.raw;
+    const domLang = String(langHint || "").trim().toLowerCase();
+    const lang = fence
+      ? fence.lang
+      : (domLang === "plaintext" || domLang === "undefined" ? "" : langHint);
+    return fenceMarkdown(lang, selectedKey);
+  }
+
+  function closestPre(node) {
+    const el = node?.nodeType === 1 ? node : node?.parentElement;
+    if (!el) return null;
+    if (el.tagName === "PRE") return el;
+    return el.closest?.("pre") || null;
+  }
+
+  function preFromBoundary(container, offset, isStart) {
+    if (!container) return null;
+    if (container.nodeType === 3) return closestPre(container);
+    if (container.nodeType !== 1) return null;
+    const index = isStart ? offset : offset - 1;
+    const child = index >= 0 ? container.childNodes[index] : null;
+    if (child) {
+      const fromChild = closestPre(child);
+      if (fromChild) return fromChild;
+    }
+    return closestPre(container);
+  }
+
+  function clipRangeToElement(el, range) {
+    if (!el || !range) return null;
+    const clipped = range.cloneRange();
+    const bound = document.createRange();
+    bound.selectNodeContents(el);
+    try {
+      if (clipped.compareBoundaryPoints(Range.START_TO_START, bound) < 0) {
+        clipped.setStart(bound.startContainer, bound.startOffset);
+      }
+      if (clipped.compareBoundaryPoints(Range.END_TO_END, bound) > 0) {
+        clipped.setEnd(bound.endContainer, bound.endOffset);
+      }
+    } catch (_) {
+      return null;
+    }
+    if (clipped.collapsed) return null;
+    return clipped;
+  }
+
+  function codeLanguage(pre, code) {
+    const names = `${code?.className || ""} ${pre?.className || ""}`.split(/\s+/);
+    for (const name of names) {
+      const found = /^(?:language|lang)-([A-Za-z0-9_+-]+)$/.exec(name);
+      if (!found) continue;
+      const lang = found[1].toLowerCase();
+      if (!lang || lang === "undefined" || lang === "plaintext" || lang === "hljs") continue;
+      return found[1];
+    }
+    return "";
+  }
+
+  function skipPreviewCodePre(pre) {
+    if (!pre || !pre.querySelector?.("code")) return true;
+    if (pre.classList?.contains("vditor-ir__marker--pre")) return true;
+    if (pre.closest?.(".vditor-ir__marker--pre, .language-mermaid, .molan-mermaid-shell")) return true;
+    const lang = codeLanguage(pre, pre.querySelector("code")).toLowerCase();
+    if (lang === "mermaid" || lang === "math" || lang === "katex") return true;
+    return !!pre.querySelector(".language-mermaid, .language-math, .katex, .katex-display");
+  }
+
+  function codeBodyText(code) {
+    if (!code) return "";
+    const clone = code.cloneNode(true);
+    clone.querySelectorAll(".vditor-copy, button, .hljs-ln-numbers").forEach((el) => el.remove());
+    return clone.textContent || "";
+  }
+
+  function markdownFromPreviewCode(source, root, range) {
+    if (!root || !range || range.collapsed) return "";
+    const startPre = preFromBoundary(range.startContainer, range.startOffset, true);
+    const endPre = preFromBoundary(range.endContainer, range.endOffset, false);
+    if (!startPre || startPre !== endPre || !root.contains(startPre) || skipPreviewCodePre(startPre)) return "";
+    const code = startPre.querySelector(":scope > code") || startPre.querySelector("code");
+    if (!code) return "";
+    const clipped = clipRangeToElement(code, range);
+    if (!clipped) return "";
+    return fencedMarkdownForCodeSelection(
+      source,
+      clipped.toString(),
+      codeBodyText(code),
+      codeLanguage(startPre, code),
+    );
+  }
+
+  function normalizeTex(value) {
+    return String(value || "")
+      .replace(/^\s*\\displaystyle\s*/, "")
+      .replace(/\s+/g, "")
+      .trim();
+  }
+
+  function findMathSpansInSource(source) {
+    const src = String(source || "");
+    const hits = [];
+    let i = 0;
+    const atLineStart = (index) => index === 0 || src[index - 1] === "\n";
+    while (i < src.length) {
+      if (atLineStart(i)) {
+        const indent = src.slice(i).match(/^ {0,3}(`{3,}|~{3,})/);
+        if (indent) {
+          const fence = indent[1];
+          const nl = src.indexOf("\n", i + indent[0].length);
+          if (nl < 0) break;
+          const close = src.indexOf(`\n${fence}`, nl);
+          if (close < 0) break;
+          i = close + 1 + fence.length;
+          continue;
+        }
+      }
+      if (src[i] === "`") {
+        let ticks = 1;
+        while (src[i + ticks] === "`") ticks += 1;
+        const close = src.indexOf("`".repeat(ticks), i + ticks);
+        i = close < 0 ? src.length : close + ticks;
+        continue;
+      }
+      if (src.startsWith("$$", i) && src[i - 1] !== "\\") {
+        const close = src.indexOf("$$", i + 2);
+        if (close < 0) break;
+        hits.push({
+          start: i,
+          end: close + 2,
+          display: true,
+          tex: src.slice(i + 2, close),
+          raw: src.slice(i, close + 2),
+        });
+        i = close + 2;
+        continue;
+      }
+      if (src[i] === "$" && src[i - 1] !== "\\") {
+        let close = i + 1;
+        let found = -1;
+        while (close < src.length) {
+          if (src[close] === "\n") break;
+          if (src[close] === "$" && src[close - 1] !== "\\") {
+            found = close;
+            break;
+          }
+          close += 1;
+        }
+        if (found < 0) {
+          i += 1;
+          continue;
+        }
+        const tex = src.slice(i + 1, found);
+        if (tex) {
+          hits.push({
+            start: i,
+            end: found + 1,
+            display: false,
+            tex,
+            raw: src.slice(i, found + 1),
+          });
+        }
+        i = found + 1;
+        continue;
+      }
+      i += 1;
+    }
+    return hits;
+  }
+
+  function pickMathRawFromSource(source, texHint, displayHint, blockRaw) {
+    const hits = findMathSpansInSource(source);
+    if (!hits.length) return "";
+    const want = normalizeTex(texHint);
+    let pool = want ? hits.filter((hit) => normalizeTex(hit.tex) === want) : hits;
+    if (!pool.length) return "";
+    if (displayHint === true) {
+      const display = pool.filter((hit) => hit.display);
+      if (display.length) pool = display;
+    } else if (displayHint === false) {
+      const inline = pool.filter((hit) => !hit.display);
+      if (inline.length) pool = inline;
+    }
+    const block = String(blockRaw || "");
+    if (pool.length > 1 && block) {
+      const inBlock = pool.filter((hit) => block.includes(hit.raw));
+      if (inBlock.length) pool = inBlock;
+    }
+    if (pool.length === 1) return pool[0].raw;
+    if (block) {
+      const blockHits = findMathSpansInSource(block);
+      const matched = want
+        ? blockHits.filter((hit) => normalizeTex(hit.tex) === want)
+        : blockHits;
+      if (matched.length === 1) return matched[0].raw;
+      const trimmed = block.trim();
+      if (/^\$\$[\s\S]*\$\$$/.test(trimmed)) return trimmed;
+    }
+    return "";
+  }
+
+  function isDisplayMathEl(el) {
+    if (!el) return false;
+    if (el.classList?.contains("katex-display")) return true;
+    if (el.getAttribute?.("data-type") === "math-block") return true;
+    if (el.classList?.contains("language-math") && el.tagName !== "SPAN") return true;
+    return !!el.closest?.(".katex-display, [data-type='math-block'], div.language-math, pre.language-math");
+  }
+
+  function mathHostsInRange(root, range) {
+    if (!root || !range) return [];
+    const selector = ".katex-display, [data-type='math-block'], .language-math, [data-type='math-inline'], .katex";
+    const seen = [];
+    root.querySelectorAll(selector).forEach((el) => {
+      try {
+        if (!range.intersectsNode(el)) return;
+      } catch (_) {
+        return;
+      }
+      seen.push(el);
+    });
+    return seen.filter((el) => !seen.some((other) => other !== el && other.contains(el)));
+  }
+
+  function texFromMathEl(el) {
+    const dataEl = el?.hasAttribute?.("data-math") ? el : el?.closest?.("[data-math]");
+    const dataMath = dataEl?.getAttribute?.("data-math");
+    if (dataMath) return String(dataMath).trim();
+    const ann = el?.querySelector?.('annotation[encoding="application/x-tex"]');
+    if (ann) return String(ann.textContent || "").trim();
+    const code = el?.matches?.("code") ? el : el?.querySelector?.("code");
+    if (code && !code.querySelector(".katex")) return String(code.textContent || "").trim();
+    return "";
+  }
+
+  function selectionIsMostlyMath(range, mathEl) {
+    let node = range.commonAncestorContainer;
+    if (node?.nodeType === 3) node = node.parentElement;
+    if (mathEl.contains(node) || node === mathEl) return true;
+    try {
+      const wrap = document.createElement("div");
+      wrap.appendChild(range.cloneContents());
+      wrap.querySelectorAll(".katex, .katex-display, .language-math, [data-type='math-inline'], [data-type='math-block']").forEach((el) => el.remove());
+      wrap.querySelectorAll("annotation").forEach((el) => el.remove());
+      return collapseWs(wrap.textContent).length <= 2;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function mathBlockRawFromMap(source, root, mathEl) {
+    if (typeof topLevelBlocks !== "function" || typeof splitMdBlocks !== "function") return "";
+    const host = typeof closestTopBlock === "function" ? closestTopBlock(mathEl, root) : null;
+    const blocks = topLevelBlocks(root);
+    const mdBlocks = splitMdBlocks(source);
+    if (!host || mdBlocks.length !== blocks.length) return "";
+    const idx = blocks.indexOf(host);
+    if (idx < 0) return "";
+    return mdBlocks[idx]?.text || "";
+  }
+
+  function markdownFromPreviewMath(source, root, range) {
+    if (!root || !range || range.collapsed) return "";
+    const hosts = mathHostsInRange(root, range);
+    if (hosts.length !== 1) return "";
+    const mathEl = hosts[0];
+    if (!selectionIsMostlyMath(range, mathEl)) return "";
+    const blockRaw = mathBlockRawFromMap(source, root, mathEl);
+    return pickMathRawFromSource(
+      source,
+      texFromMathEl(mathEl),
+      isDisplayMathEl(mathEl),
+      blockRaw,
+    );
+  }
+
   function markdownFromPreviewSelection(root, range, source) {
     if (!root || !range) return "";
     const clipped = typeof clipRangeToRoot === "function" ? clipRangeToRoot(root, range) : range;
+    const fromCode = markdownFromPreviewCode(source, root, clipped);
+    if (fromCode) return fromCode;
+    const fromMath = markdownFromPreviewMath(source, root, clipped);
+    if (fromMath) return fromMath;
+    const fromTable = markdownFromPreviewTable(source, root, clipped);
+    if (fromTable) return fromTable;
+
     const fromSource = markdownFromPreviewSource(source, root, clipped);
     const temp = document.createElement("div");
     try {
@@ -8971,6 +9797,8 @@
         previewSelection.decorate();
         armPreviewTasks(previewBody);
         scheduleOutlineRefresh();
+        attachOutlineScrollTargets();
+        scheduleOutlineScrollSpy();
       };
       if (spot && lastPreviewSource === sourceText && previewBody.childElementCount) {
         finishPreview();
@@ -9701,6 +10529,13 @@
     return clone.innerHTML || "";
   }
 
+  let exportSaver = null;
+
+  /** 扩展注册后，可打印网页走保存对话框，而不是 webview 里点链下载 */
+  function setExportSaver(fn) {
+    exportSaver = typeof fn === "function" ? fn : null;
+  }
+
   function downloadBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -9713,10 +10548,10 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
-  function downloadPrintableHtml() {
+  async function downloadPrintableHtml() {
     const title = printDocumentTitle();
     const body = clonePreviewHtml();
-    if (!body.trim()) return false;
+    if (!body.trim()) return { status: "failed" };
     const css = collectSameOriginCss();
     const html = `<!DOCTYPE html>
 <html class="${printDocClass()}" lang="${document.documentElement.lang || "zh-CN"}" data-theme="xuan">
@@ -9795,8 +10630,18 @@
   </script>
 </body>
 </html>`;
-    downloadBlob(`${safeFileName(title)}.html`, new Blob([html], { type: "text/html;charset=utf-8" }));
-    return true;
+    const filename = `${safeFileName(title)}.html`;
+    if (typeof exportSaver === "function") {
+      try {
+        const saved = await exportSaver({ filename, text: html });
+        if (saved?.status === "saved" || saved?.status === "cancelled" || saved?.status === "failed") {
+          return saved;
+        }
+      } catch (_) { /* 宿主没写成 */ }
+      return { status: "failed" };
+    }
+    downloadBlob(filename, new Blob([html], { type: "text/html;charset=utf-8" }));
+    return { status: "downloaded" };
   }
 
   function isolatePreviewForPrint() {
@@ -10068,8 +10913,14 @@
       await waitFrame();
 
       if (unsafePrint) {
-        if (!downloadPrintableHtml()) {
+        const saved = await downloadPrintableHtml();
+        if (!saved || saved.status === "failed") {
           toast(t("exportPdfFail"));
+          return;
+        }
+        if (saved.status === "cancelled") return;
+        if (saved.status === "saved") {
+          toast(t("exportPdfSaved", { path: saved.path || "" }));
           return;
         }
         toast(t("exportPdfUseBrowser"));
@@ -10100,6 +10951,7 @@
     countWords,
     exportPdf,
     exportPng,
+    setExportSaver,
     escapeMdAlt,
     applyMermaidTheme,
     refreshMermaidDiagrams,
