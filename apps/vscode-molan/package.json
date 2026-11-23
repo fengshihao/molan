@@ -117,6 +117,16 @@
         "category": "墨览"
       },
       {
+        "command": "molan.undo",
+        "title": "撤销",
+        "category": "墨览"
+      },
+      {
+        "command": "molan.redo",
+        "title": "重做",
+        "category": "墨览"
+      },
+      {
         "command": "molan.formatItalic",
         "title": "斜体",
         "category": "墨览"
@@ -186,6 +196,24 @@
         "when": "activeCustomEditorId == 'molan.markdownEditor'"
       },
       {
+        "command": "molan.undo",
+        "key": "ctrl+z",
+        "mac": "cmd+z",
+        "when": "activeCustomEditorId == 'molan.markdownEditor' && !inputFocus"
+      },
+      {
+        "command": "molan.redo",
+        "key": "ctrl+y",
+        "mac": "cmd+shift+z",
+        "when": "activeCustomEditorId == 'molan.markdownEditor' && !inputFocus"
+      },
+      {
+        "command": "molan.redo",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+y",
+        "when": "activeCustomEditorId == 'molan.markdownEditor' && !inputFocus"
+      },
+      {
         "command": "molan.formatItalic",
         "key": "ctrl+i",
         "mac": "cmd+i",
@@ -240,6 +268,14 @@
         },
         {
           "command": "molan.cut",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.undo",
+          "when": "activeCustomEditorId == 'molan.markdownEditor'"
+        },
+        {
+          "command": "molan.redo",
           "when": "activeCustomEditorId == 'molan.markdownEditor'"
         },
         {

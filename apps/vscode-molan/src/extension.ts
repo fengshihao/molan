@@ -64,6 +64,8 @@ export function activate(context: vscode.ExtensionContext): void {
       MolanEditorProvider.postToActive("formatBold");
     }),
     vscode.commands.registerCommand("molan.cut", () => MolanEditorProvider.postToActive("cut")),
+    vscode.commands.registerCommand("molan.undo", () => MolanEditorProvider.postToActive("undo")),
+    vscode.commands.registerCommand("molan.redo", () => MolanEditorProvider.postToActive("redo")),
     vscode.commands.registerCommand("molan.formatItalic", () => {
       usageEvent("format");
       MolanEditorProvider.postToActive("formatItalic");

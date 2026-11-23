@@ -3074,6 +3074,9 @@
       window.setTimeout(syncHistoryChrome, 80);
       return;
     }
+    // 编辑态撤销栈已经空了。不要退回去撤预览记录，否则会把当前稿子整篇换掉。
+    const native = outlineCtx?.getVditorRoot?.()?.querySelector(`.vditor-toolbar [data-type="${type}"]`);
+    if (native) return;
     if (type === "undo") outlineCtx?.undoDoc?.();
     else outlineCtx?.redoDoc?.();
   }
@@ -3574,7 +3577,20 @@
       });
       document.addEventListener("keydown", (e) => {
         if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-        if (String(e.key).toLowerCase() !== "z") return;
+        const key = String(e.key || "").toLowerCase();
+        const undoKey = key === "z" && !e.shiftKey;
+        const redoKey = (key === "z" && e.shiftKey) || (key === "y" && !e.shiftKey);
+        if (!undoKey && !redoKey) return;
+        // VS Code 在 webview 窗口上监听 Ctrl/Cmd+Z，preventDefault 后再交给工作台 undo。
+        // 新建文件还留在那条栈顶，第一次撤销就会弹出「是否撤销创建」，确认后整篇被删掉。
+        // 编辑区快捷键改由扩展命令送回；输入框、源码框仍走原生撤销，不能让工作台抢走。
+        if (isVscodeHost()) {
+          const field = e.target?.closest?.("input, textarea, select");
+          const toggle = field?.matches?.("input[type='checkbox'], input[type='radio']");
+          if (field && !toggle) e.stopPropagation();
+          return;
+        }
+        if (key !== "z") return;
         if (e.target?.closest?.("input, textarea")) return;
         if (!outlineCtx?.getPreviewing?.() && !sourceOpen) return;
         const wantRedo = !!e.shiftKey;
@@ -8771,12 +8787,41 @@
     return !!target.closest(PASTE_IMAGE_SKIP);
   }
 
+  function editingSurfaceOf(node) {
+    const el = node?.nodeType === 1 ? node : node?.parentElement;
+    return el?.closest?.(".vditor-ir, .vditor-wysiwyg, .vditor-sv") || null;
+  }
+
+  // 选区还在时，VS Code 用 execCommand("paste") 唤起粘贴，里面再 execCommand("delete") 是嵌套调用，会被忽略。
+  // 结果是新文字插进选区中间，原来的字还在。先删掉选区，后面的插入才是替换。
+  function clearExpandedEditorSelection(e) {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    let range;
+    try { range = sel.getRangeAt(0); } catch (_) { return; }
+    const host = editingSurfaceOf(range.commonAncestorContainer);
+    if (!host || host.getAttribute("contenteditable") === "false") return;
+    if (e.target !== host && !host.contains(e.target)) return;
+    try { range.deleteContents(); } catch (_) { return; }
+    try {
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (_) { /* 选区已经收成光标 */ }
+  }
+
   function bindClipboardImagePaste(root, ctx) {
-    if (!root || typeof ctx?.saveClipboardImage !== "function") return () => {};
+    if (!root) return () => {};
     const onPaste = async (e) => {
       if (pasteTargetSkipsImageInsert(e.target)) return;
       const file = imageFileFromClipboard(e.clipboardData);
-      if (!file) return;
+      if (!file) {
+        const data = e.clipboardData;
+        const plain = data?.getData?.("text/plain") || "";
+        const html = data?.getData?.("text/html") || "";
+        if (plain || html) clearExpandedEditorSelection(e);
+        return;
+      }
+      if (typeof ctx?.saveClipboardImage !== "function") return;
       e.preventDefault();
       e.stopPropagation();
       try {
@@ -9898,7 +9943,10 @@
           toolbar: [
             "bold", "italic", "strike", "inline-code", "link",
             "table",
-            "undo", "redo",
+            // VS Code 会吃掉 Ctrl/Cmd+Z。热键留给扩展命令，避免和 Vditor 各撤一次。
+            ...(isVscodeHost()
+              ? [{ name: "undo", hotkey: "" }, { name: "redo", hotkey: "" }]
+              : ["undo", "redo"]),
             "edit-mode", "outline",
           ],
           toolbarConfig: { pin: true, hide: false },
@@ -10979,6 +11027,11 @@
     /** 扩展把 Cmd/Ctrl+X 送进 webview 后调用 */
     cut() {
       return lastEditorApi?.cutSelection?.() === true;
+    },
+    /** 扩展把 Cmd/Ctrl+Z / Y 送回 webview。编辑态走 Vditor，预览态走文档历史。 */
+    history: {
+      undo() { runHistory("undo"); },
+      redo() { runHistory("redo"); },
     },
     /** 预览态复制：把选区写成 Markdown */
     copy() {

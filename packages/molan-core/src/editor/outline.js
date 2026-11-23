@@ -78,6 +78,9 @@
       window.setTimeout(syncHistoryChrome, 80);
       return;
     }
+    // 编辑态撤销栈已经空了。不要退回去撤预览记录，否则会把当前稿子整篇换掉。
+    const native = outlineCtx?.getVditorRoot?.()?.querySelector(`.vditor-toolbar [data-type="${type}"]`);
+    if (native) return;
     if (type === "undo") outlineCtx?.undoDoc?.();
     else outlineCtx?.redoDoc?.();
   }
@@ -578,7 +581,20 @@
       });
       document.addEventListener("keydown", (e) => {
         if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-        if (String(e.key).toLowerCase() !== "z") return;
+        const key = String(e.key || "").toLowerCase();
+        const undoKey = key === "z" && !e.shiftKey;
+        const redoKey = (key === "z" && e.shiftKey) || (key === "y" && !e.shiftKey);
+        if (!undoKey && !redoKey) return;
+        // VS Code 在 webview 窗口上监听 Ctrl/Cmd+Z，preventDefault 后再交给工作台 undo。
+        // 新建文件还留在那条栈顶，第一次撤销就会弹出「是否撤销创建」，确认后整篇被删掉。
+        // 编辑区快捷键改由扩展命令送回；输入框、源码框仍走原生撤销，不能让工作台抢走。
+        if (isVscodeHost()) {
+          const field = e.target?.closest?.("input, textarea, select");
+          const toggle = field?.matches?.("input[type='checkbox'], input[type='radio']");
+          if (field && !toggle) e.stopPropagation();
+          return;
+        }
+        if (key !== "z") return;
         if (e.target?.closest?.("input, textarea")) return;
         if (!outlineCtx?.getPreviewing?.() && !sourceOpen) return;
         const wantRedo = !!e.shiftKey;

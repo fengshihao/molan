@@ -289,7 +289,10 @@
           toolbar: [
             "bold", "italic", "strike", "inline-code", "link",
             "table",
-            "undo", "redo",
+            // VS Code 会吃掉 Ctrl/Cmd+Z。热键留给扩展命令，避免和 Vditor 各撤一次。
+            ...(isVscodeHost()
+              ? [{ name: "undo", hotkey: "" }, { name: "redo", hotkey: "" }]
+              : ["undo", "redo"]),
             "edit-mode", "outline",
           ],
           toolbarConfig: { pin: true, hide: false },

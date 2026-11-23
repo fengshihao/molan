@@ -511,7 +511,18 @@ test("粘贴截图会交给宿主落盘并插入 Markdown", () => {
   const src = editorSrc();
   assert.match(src, /function bindClipboardImagePaste/);
   assert.match(src, /function imageFileFromClipboard/);
+  assert.match(src, /function clearExpandedEditorSelection/);
+  assert.match(src, /range\.deleteContents\(\)/);
   assert.match(src, /saveClipboardImage: options\.saveClipboardImage/);
+});
+
+test("VS Code 里撤销不交给工作台新建文件栈", () => {
+  const src = editorSrc();
+  assert.match(src, /hotkey: ""/);
+  assert.match(src, /e\.stopPropagation\(\)/);
+  assert.match(src, /新建文件还留在那条栈顶/);
+  assert.match(src, /history: \{/);
+  assert.match(src, /undo\(\) \{ runHistory\("undo"\); \}/);
 });
 
 test("文本复制有 clipboard API 降级和流程图源码回退", () => {

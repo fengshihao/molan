@@ -30,6 +30,7 @@ declare global {
       find?: { open(): void; next(): void; prev(): void };
       format?: { bold(): boolean; italic(): boolean; link(): boolean };
       cut?(): boolean;
+      history?: { undo(): void; redo(): void };
       toggleMode?(): boolean;
       outline?: { toggle?(): void | Promise<void>; close?(): void };
       setExportSaver?(
@@ -325,6 +326,14 @@ function bootVscodeBridge() {
     }
     if (msg.type === "cut") {
       window.MolanEditor.cut?.();
+      return;
+    }
+    if (msg.type === "undo") {
+      window.MolanEditor.history?.undo();
+      return;
+    }
+    if (msg.type === "redo") {
+      window.MolanEditor.history?.redo();
       return;
     }
     if (msg.type === "formatItalic") {

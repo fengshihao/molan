@@ -591,6 +591,11 @@
     cut() {
       return lastEditorApi?.cutSelection?.() === true;
     },
+    /** 扩展把 Cmd/Ctrl+Z / Y 送回 webview。编辑态走 Vditor，预览态走文档历史。 */
+    history: {
+      undo() { runHistory("undo"); },
+      redo() { runHistory("redo"); },
+    },
     /** 预览态复制：把选区写成 Markdown */
     copy() {
       return lastEditorApi?.copySelection?.() === true;
