@@ -44,7 +44,9 @@ function restoreZod() {
 }
 
 function protocolTsc() {
-  return run("pnpm", ["--filter", "@molan/protocol", "exec", "tsc", "-p", "tsconfig.json", "--noEmit"]);
+  return run(process.execPath, [join(repoRoot, "scripts", "run-tsc.mjs"), "-p", "tsconfig.json", "--noEmit"], {
+    cwd: protocol,
+  });
 }
 
 try {
