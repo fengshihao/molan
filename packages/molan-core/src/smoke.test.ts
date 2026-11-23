@@ -519,6 +519,7 @@ test("粘贴截图会交给宿主落盘并插入 Markdown", () => {
 test("VS Code 里撤销不交给工作台新建文件栈", () => {
   const src = editorSrc();
   assert.match(src, /hotkey: ""/);
+  assert.match(src, /"bold", "italic", "strike", "inline-code", "link", "table", "undo", "redo"/);
   assert.match(src, /e\.stopPropagation\(\)/);
   assert.match(src, /新建文件还留在那条栈顶/);
   assert.match(src, /history: \{/);

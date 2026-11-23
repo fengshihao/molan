@@ -286,15 +286,15 @@
           cache: { enable: false },
           undoDelay: 200,
           hint: { delay: 400 },
-          toolbar: [
-            "bold", "italic", "strike", "inline-code", "link",
-            "table",
-            // VS Code 会吃掉 Ctrl/Cmd+Z。热键留给扩展命令，避免和 Vditor 各撤一次。
-            ...(isVscodeHost()
-              ? [{ name: "undo", hotkey: "" }, { name: "redo", hotkey: "" }]
-              : ["undo", "redo"]),
-            "edit-mode", "outline",
-          ],
+          // VS Code 会把 B/I/K/G/Z 再交给扩展。这些热键留空，避免和 Vditor 各做一次。
+          toolbar: (isVscodeHost()
+            ? ["bold", "italic", "strike", "inline-code", "link", "table", "undo", "redo", "edit-mode", "outline"]
+              .map((name) => (
+                name === "strike" || name === "table" || name === "edit-mode" || name === "outline"
+                  ? name
+                  : { name, hotkey: "" }
+              ))
+            : ["bold", "italic", "strike", "inline-code", "link", "table", "undo", "redo", "edit-mode", "outline"]),
           toolbarConfig: { pin: true, hide: false },
           preview: {
             delay: 800,
